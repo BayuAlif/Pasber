@@ -119,7 +119,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Have an account?{" "}
-          <a href="#" className="text-[#000121] hover:underline">
+          <a href="/auth/login" className="text-[#000121] hover:underline">
             Login
           </a>
         </p>
