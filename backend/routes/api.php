@@ -1,9 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
-Route::get('/hello', function () {
-    return response()->json([
-        'message' => 'Halo dari Laravel API'
-    ]);
-});
+
+Route::post('/register', [AuthController::class, 'register']);
