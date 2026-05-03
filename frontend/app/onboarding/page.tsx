@@ -5,16 +5,34 @@ import Link from 'next/link';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // State untuk modal
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleConfirmLogout = () => {
-    // Logic pembersihan sesi di sini (localStorage/cookies)
-    router.push("/auth/login");
+  const handleLogout = async () => {
+    console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
+
+    const token = localStorage.getItem('token');
+
+    const res = await fetch('http://127.0.0.1:8000/api/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("STATUS LOGOUT:", res.status);
+
+    localStorage.removeItem('token');
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
+    console.log("COOKIE SETELAH LOGOUT:", document.cookie);
+
+    router.push('/auth/login');
   };
 
   return (
     <div className="relative min-h-screen w-full bg-[#0d1117] text-white font-sans flex flex-col overflow-hidden">
-      
+
       {/* NAVBAR ATAS */}
       <nav className="relative z-10 w-full p-8 flex justify-between items-center bg-gradient-to-b from-black/20 to-transparent">
         <div className="flex items-center gap-2">
@@ -23,14 +41,14 @@ export default function DashboardPage() {
             Engineering
           </span>
         </div>
-        
+
         <div className="flex items-center gap-6">
           <div className="hidden md:flex flex-col items-end">
             <span className="text-orange-500 text-[10px] font-black tracking-widest uppercase">Onboarding Process</span>
             <span className="text-[10px] text-gray-500 font-bold tracking-widest">STAGE 1 / 3</span>
           </div>
           {/* Tombol memicu modal */}
-          <button 
+          <button
             onClick={() => setShowLogoutModal(true)}
             className="ml-4 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors border border-red-500/20 px-4 py-2 rounded-lg bg-red-500/5"
           >
@@ -82,11 +100,11 @@ export default function DashboardPage() {
       {showLogoutModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Overlay */}
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
-            onClick={() => setShowLogoutModal(false)} 
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowLogoutModal(false)}
           />
-          
+
           {/* Card Modal */}
           <div className="relative z-10 w-full max-w-sm bg-[#161b22] border border-white/10 rounded-[2rem] p-10 text-center shadow-2xl">
             <div className="mx-auto w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mb-6">
@@ -94,21 +112,21 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </div>
-            
+
             <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tight">Akhiri Sesi?</h3>
             <p className="text-gray-400 text-sm mb-8 leading-relaxed">
               Anda akan keluar dari portal teknik PASBER.
             </p>
-            
+
             <div className="grid grid-cols-2 gap-4">
-              <button 
+              <button
                 onClick={() => setShowLogoutModal(false)}
                 className="py-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all border border-white/5"
               >
                 Batal
               </button>
-              <button 
-                onClick={handleConfirmLogout}
+              <button
+                onClick={handleLogout}
                 className="py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-red-900/20"
               >
                 Ya, Keluar

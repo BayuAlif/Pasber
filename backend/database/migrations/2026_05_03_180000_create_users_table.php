@@ -17,6 +17,15 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['customer', 'admin']);
+            $table->string('noKontak', 20)->nullable();
+            $table->text('alamat')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('fotoProfile')->nullable();
+            $table->foreignId('bengkel_id')
+                  ->nullable()
+                  ->constrained('bengkels')
+                  ->onDelete('cascade');
             $table->rememberToken();
             $table->timestamps();
         });

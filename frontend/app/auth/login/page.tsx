@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
@@ -10,41 +10,62 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  const handleLogin = async(e: React.FormEvent) => {
-    e.preventDefault();
+
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); // 🔥 pindahin ke atas
+
     try {
       const res = await fetch('http://127.0.0.1:8000/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
-      if (res.ok) {
-        router.push("/dashboard");
-      } else {
+      const data = await res.json();
+
+      console.log("STATUS:", res.status);
+      console.log("LOGIN RESPONSE:", data);
+
+      if (!res.ok) {
+        console.log("LOGIN GAGAL");
         setShowErrorModal(true);
+        return;
       }
+
+      // ✅ simpan token
+      localStorage.setItem('token', data.token);
+      document.cookie = `token=${data.token}; path=/`;
+
+      console.log("TOKEN DISIMPAN:", data.token);
+
+      // ✅ redirect
+      router.push("/onboarding");
+
     } catch (error) {
+      console.log("ERROR:", error);
       setShowErrorModal(true);
     }
   };
 
   return (
     <div className="min-h-screen w-full flex bg-[#0d1117] text-white font-sans overflow-hidden">
-      
-      {/* SISI KIRI: IMAGE & BRANDING */}
+
       <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-16 overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src="/tools-bg.jpg" 
-            className="w-full h-full object-cover opacity-40 grayscale" 
-            alt="Mechanic working" 
+          <img
+            src="/images/auth/Mekanik.jpg"
+            className="w-full h-full object-cover opacity-40 grayscale"
+            alt="Mechanic working"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d1117] via-transparent to-[#0d1117]/20" />
         </div>
 
-        {/* Content Atas */}
         <div className="relative z-10">
           <span className="text-orange-500 font-black tracking-[0.3em] text-sm uppercase">PASBER</span>
           <h1 className="text-6xl font-bold mt-4 leading-tight">Pasti Beres.</h1>
@@ -53,7 +74,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Content Bawah: Support */}
         <div className="relative z-10 flex gap-8">
           <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center gap-4">
             <div className="text-orange-500">
@@ -66,7 +86,7 @@ export default function LoginPage() {
               <p className="text-sm font-semibold">cs@pasber.auto</p>
             </div>
           </div>
-          
+
           <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center gap-4">
             <div className="text-orange-500">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,7 +101,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* SISI KANAN: LOGIN FORM */}
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 lg:p-24 bg-[#10141b]">
         <div className="w-full max-w-md">
           <h2 className="text-4xl font-bold mb-2">Masuk</h2>
@@ -169,7 +188,7 @@ export default function LoginPage() {
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">Login Gagal</h2>
             <p className="text-gray-400 text-sm mb-8">Email atau password salah. Coba lagi!</p>
-            <button 
+            <button
               onClick={() => setShowErrorModal(false)}
               className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs"
             >
