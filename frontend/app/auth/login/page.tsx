@@ -45,7 +45,7 @@ export default function LoginPage() {
       console.log("TOKEN DISIMPAN:", data.token);
 
       // ✅ redirect
-      router.push("/onboarding");
+      router.push("/onBoarding");
 
     } catch (error) {
       console.log("ERROR:", error);
@@ -166,16 +166,21 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-10 text-center text-sm text-gray-500">
-            Belum memiliki akun? <Link href="/auth/register" className="text-orange-500 font-bold">Daftar Sekarang</Link>
-          </p>
+          <div className="mt-10 flex flex-col items-center gap-3 text-sm">
+            <p className="text-gray-500">
+              Belum memiliki akun? <Link href="/auth/register" className="text-orange-500 font-bold">Daftar Sekarang</Link>
+            </p>
+            <Link href="/auth/forgot-password" title="Forgot Password" className="text-[11px] text-gray-600 hover:text-orange-400 uppercase font-bold tracking-widest transition-colors">
+              Forgot Password?
+            </Link>
+          </div>
 
-          <div className="mt-20 flex justify-between items-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+          <div className="mt-20 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
             <span>© Pasti Beres.</span>
           </div>
         </div>
       </div>
-
+      
       {/* MODAL GAGAL (Sesuai desain sebelumnya) */}
       {showErrorModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
