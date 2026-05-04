@@ -1,18 +1,18 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Wrench, 
-  Activity, 
-  CreditCard, 
-  Settings, 
-  LogOut, 
-  Search, 
-  Bell, 
-  Car, 
-  Box, 
+import { useState, useEffect } from 'react';
+import {
+  LayoutDashboard,
+  Wrench,
+  Activity,
+  CreditCard,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  Car,
+  Box,
   CheckCircle2,
   ChevronRight
 } from 'lucide-react';
@@ -20,20 +20,60 @@ import {
 export default function DashboardPage() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  type User = {
+    name: string;
+    role: string;
+    fotoProfile?: string;
+  };
 
-  const handleLogout = () => {
-    setIsLoggingOut(true);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch('http://127.0.0.1:8000/api/user', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      console.log("USER DATA:", data);
+
+      setUser(data);
+    };
+
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
+
+    const token = localStorage.getItem('token');
+
+    const res = await fetch('http://127.0.0.1:8000/api/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("STATUS LOGOUT:", res.status);
+
     localStorage.removeItem('token');
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    
-    setTimeout(() => {
-      router.push('/auth/login');
-    }, 1000);
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
+    console.log("COOKIE SETELAH LOGOUT:", document.cookie);
+
+    router.push('/auth/login');
   };
 
   return (
     <div className="flex min-h-screen bg-[#0d1117] text-gray-300 font-sans">
-      
+
       <aside className="w-64 border-r border-white/5 flex flex-col p-6">
         <div className="mb-10">
           <h1 className="text-xl font-black italic tracking-tighter text-white">PASBER</h1>
@@ -41,25 +81,31 @@ export default function DashboardPage() {
         </div>
 
         <nav className="flex-1 space-y-2">
-          <NavItem icon={<LayoutDashboard size={18}/>} label="Dashboard" active />
-          <NavItem icon={<Wrench size={18}/>} label="Servis Aktif" />
-          <NavItem icon={<Activity size={18}/>} label="Diagnosa Mesin" />
-          <NavItem icon={<CreditCard size={18}/>} label="Invoice & Pembayaran" />
-          <NavItem icon={<Settings size={18}/>} label="Pengaturan Sistem" />
+          <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active />
+          <NavItem icon={<Wrench size={18} />} label="Servis Aktif" />
+          <NavItem icon={<Activity size={18} />} label="Diagnosa Mesin" />
+          <NavItem icon={<CreditCard size={18} />} label="Invoice & Pembayaran" />
+          <NavItem icon={<Settings size={18} />} label="Pengaturan Sistem" />
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-orange-500 overflow-hidden border border-white/10">
-              <img src="/images/avatar.jpg" alt="Profile" className="w-full h-full object-cover" />
+              <img src={
+                user?.fotoProfile
+                  ? `http://127.0.0.1:8000/storage/${user.fotoProfile}`
+                  : "/images/avatar.jpg"
+              }
+                alt="Profile"
+                className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white">Mara Hana Lara</p>
-              <p className="text-[10px] text-gray-500">Head Engineer</p>
+              <p className="text-xs font-bold text-white">{user?.name || "Loading..."}</p>
+              <p className="text-[10px] text-gray-500">{user?.role || "User"}</p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleLogout}
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all group"
           >
@@ -73,7 +119,7 @@ export default function DashboardPage() {
       </aside>
 
       <main className="flex-1 p-10 overflow-y-auto">
-        
+
         <header className="flex justify-between items-start mb-8">
           <div>
             <h2 className="text-2xl font-bold text-white">Sistem Kontrol Bengkel</h2>
@@ -82,9 +128,9 @@ export default function DashboardPage() {
           <div className="flex gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
-              <input 
-                type="text" 
-                placeholder="ID Servis/Plat Nomor" 
+              <input
+                type="text"
+                placeholder="ID Servis/Plat Nomor"
                 className="bg-[#161b22] border border-white/5 rounded-lg py-2 pl-10 pr-4 text-xs outline-none focus:border-orange-500/50 w-64"
               />
             </div>
@@ -117,16 +163,16 @@ export default function DashboardPage() {
             </div>
 
             <div className="w-full h-80 bg-black/40 rounded-2xl border border-white/5 mb-6 flex flex-col justify-end p-6">
-               <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
-                    <span className="text-gray-400">Tugas Saat Ini</span>
-                    <span className="text-orange-500">65%</span>
-                  </div>
-                  <h4 className="text-sm font-bold text-white">Engine Tuning (Protokol V12)</h4>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div className="w-[65%] h-full bg-orange-600" />
-                  </div>
-               </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-gray-400">Tugas Saat Ini</span>
+                  <span className="text-orange-500">65%</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Engine Tuning (Protokol V12)</h4>
+                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="w-[65%] h-full bg-orange-600" />
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -165,7 +211,7 @@ export default function DashboardPage() {
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: any, label: string, active?: boolean }) {
+function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
   return (
     <div className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-all ${active ? 'bg-orange-600/10 text-orange-500 border border-orange-500/20' : 'hover:bg-white/5 text-gray-500'}`}>
       {icon}
@@ -174,7 +220,14 @@ function NavItem({ icon, label, active = false }: { icon: any, label: string, ac
   );
 }
 
-function StatCard({ label, value, icon, border }: any) {
+type StatCardProps = {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  border: string;
+};
+
+function StatCard({ label, value, icon, border }: StatCardProps) {
   return (
     <div className={`bg-[#161b22] p-6 rounded-2xl border border-white/5 border-l-4 ${border} flex justify-between items-start`}>
       <div>
@@ -186,7 +239,12 @@ function StatCard({ label, value, icon, border }: any) {
   );
 }
 
-function TelemetryItem({ label, value }: any) {
+type TelemetryItemProps = {
+  label: string;
+  value: string;
+};
+
+function TelemetryItem({ label, value }: TelemetryItemProps) {
   return (
     <div className="bg-black/20 p-4 rounded-xl border border-white/5">
       <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
@@ -195,7 +253,15 @@ function TelemetryItem({ label, value }: any) {
   );
 }
 
-function QueueItem({ title, plate, time, status, done = false }: any) {
+type QueueItemProps = {
+  title: string;
+  plate: string;
+  time?: string;
+  status: string;
+  done?: boolean;
+};
+
+function QueueItem({ title, plate, time, status, done = false }: QueueItemProps) {
   return (
     <div className="p-4 hover:bg-white/5 rounded-2xl transition-all cursor-pointer group">
       <div className="flex justify-between items-start mb-1">
@@ -207,12 +273,12 @@ function QueueItem({ title, plate, time, status, done = false }: any) {
       <p className="text-[10px] text-gray-500 font-medium mb-2">{plate}</p>
       {time && (
         <div className="flex items-center gap-2 text-[9px] text-gray-600">
-           <div className="w-1 h-1 rounded-full bg-gray-600" /> Estimasi Mulai: {time} WIB
+          <div className="w-1 h-1 rounded-full bg-gray-600" /> Estimasi Mulai: {time} WIB
         </div>
       )}
       {done && (
         <div className="flex items-center gap-2 text-[9px] text-green-500 font-bold">
-           <CheckCircle2 size={10} /> Pengecekan Akhir Selesai
+          <CheckCircle2 size={10} /> Pengecekan Akhir Selesai
         </div>
       )}
     </div>

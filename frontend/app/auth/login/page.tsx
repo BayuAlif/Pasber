@@ -9,9 +9,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); // 🔥 pindahin ke atas
+    e.preventDefault();
 
     try {
       const res = await fetch('http://127.0.0.1:8000/api/login', {
@@ -36,14 +37,22 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ simpan token
+       if (!res.ok) {
+        setErrorMessage(data.debug || data.message || 'Terjadi kesalahan');
+        setShowErrorModal(true);
+        return;
+      }
+
       localStorage.setItem('token', data.token);
       document.cookie = `token=${data.token}; path=/`;
 
       console.log("TOKEN DISIMPAN:", data.token);
 
-      // ✅ redirect
-      router.push("/onboarding");
+      if (data.user.is_profile_complete) {
+        router.push("/dashboard");
+      } else {
+        router.push("/onboarding");
+      }
 
     } catch (error) {
       console.log("ERROR:", error);
@@ -178,7 +187,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      
+
       {/* MODAL GAGAL (Sesuai desain sebelumnya) */}
       {showErrorModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -190,7 +199,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">Login Gagal</h2>
-            <p className="text-gray-400 text-sm mb-8">Email atau password salah. Coba lagi!</p>
+            <p className="text-gray-400 text-sm mb-8">{errorMessage}!</p>
             <button
               onClick={() => setShowErrorModal(false)}
               className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs"

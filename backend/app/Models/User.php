@@ -26,7 +26,8 @@ class User extends Authenticatable
         'noKontak',
         'alamat',
         'fotoProfile',
-        'bengkel_id'
+        'bengkel_id',
+        'is_profile_complete'
     ];
 
     /**

@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  console.log("MIDDLEWARE HIT:", request.nextUrl.pathname);
+  const pathname = request.nextUrl.pathname;
+
+  console.log("MIDDLEWARE HIT:", pathname);
 
   const token = request.cookies.get('token')?.value;
 
-  if (!token && request.nextUrl.pathname.startsWith('/onboarding')) {
+  const isProtectedRoute =
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/Profile') ||
+    pathname.startsWith('/dashboard');
+
+  if (isProtectedRoute && !token) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
@@ -16,9 +23,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/onboarding/:path*',
-    '/onboarding/page2/:path*',
-    '/onboarding/page3/:path*',
     '/Profile/:path*',
+    '/dashboard/:path*'
   ],
 };
-

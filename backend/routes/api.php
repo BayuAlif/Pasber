@@ -14,6 +14,7 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
+    Route::get('/dahsboard', [AuthController::class, 'dashboard']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

@@ -68,30 +68,38 @@ public function register(Request $request)
     {
         $user = $request->user();
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'noKontak' => 'required|string|max:20',
-            'alamat' => 'required|string',
-            'fotoProfil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'noKontak' => 'required|string|max:20',
+                'alamat' => 'required|string',
+                'fotoProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        }
 
-        if ($request->hasFile('fotoProfil')) {
+        if ($request->hasFile('fotoProfile')) {
 
-            if ($user->fotoProfil) {
-                Storage::disk('public')->delete($user->fotoProfil);
+            if ($user->fotoProfile) {
+                Storage::disk('public')->delete($user->fotoProfile);
             }
 
-            $file = $request->file('fotoProfil');
-
+            $file = $request->file('fotoProfile');
             $path = $file->store('profile', 'public');
-
-            $user->fotoProfil = $path;
-            $user->foto_url = Storage::url($path);
+            $user->fotoProfile = $path;
         }
 
         $user->name = $request->name;
         $user->noKontak = $request->noKontak;
         $user->alamat = $request->alamat;
+
+        if ($request->noKontak && $request->alamat) {
+            $user->is_profile_complete = true;
+        }
 
         $user->save();
 

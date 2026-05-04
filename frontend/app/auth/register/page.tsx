@@ -39,13 +39,27 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.log("RESP BUKAN JSON:", text);
+        alert("Response tidak valid dari server");
+        return;
+      }
 
       if (res.ok) {
         alert("Register berhasil");
         router.push('/auth/login');
       } else {
-        alert(data.message || "Register gagal");
+        if (data.errors) {
+          const allErrors = Object.values(data.errors).flat().join('\n');
+          alert(allErrors);
+        } else {
+          alert(data.message || "Register gagal");
+        }
       }
 
     } catch (err) {
