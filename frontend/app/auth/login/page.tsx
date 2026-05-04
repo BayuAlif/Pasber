@@ -10,8 +10,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); // 🔥 pindahin ke atas
 

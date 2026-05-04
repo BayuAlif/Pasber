@@ -5,14 +5,12 @@ import { useState, useEffect, useRef } from 'react';
 export default function FinalStepPage() {
   const router = useRouter();
   
-  // States untuk data user dan upload
   const [userData, setUserData] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Fetch data email & nama saat halaman load
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -39,7 +37,6 @@ export default function FinalStepPage() {
     fetchUserData();
   }, []);
 
-  // 2. Handle perubahan file foto
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -48,12 +45,9 @@ export default function FinalStepPage() {
     }
   };
 
-  // 3. Handle Submit (Simpan data & Foto)
   const handleSaveProfile = async () => {
     const formData = new FormData();
     if (selectedFile) formData.append('photo', selectedFile);
-    // Tambahkan field lain sesuai kebutuhan backend kamu
-    // formData.append('phone', ...);
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -61,7 +55,6 @@ export default function FinalStepPage() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          // Jangan set Content-Type jika mengirim FormData
         },
         body: formData,
       });
@@ -78,7 +71,7 @@ export default function FinalStepPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#0d1117] text-white font-sans flex flex-col overflow-hidden">
-      {/* Navbar */}
+    
       <nav className="w-full p-8 flex justify-between items-center bg-gradient-to-b from-black/20 to-transparent">
         <div className="flex items-center gap-2">
           <span className="font-black tracking-tighter text-xl italic">PASBER</span>
@@ -91,11 +84,10 @@ export default function FinalStepPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
+  
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-4xl bg-[#161b22] border border-white/5 rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl">
           
-          {/* Left Side: Upload Photo */}
           <div className="w-full md:w-[40%] bg-black/20 p-12 flex flex-col items-center justify-center text-center border-r border-white/5">
             <div 
               className="relative group cursor-pointer"
@@ -113,7 +105,7 @@ export default function FinalStepPage() {
                   </>
                 )}
               </div>
-              {/* Hidden Input File */}
+
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -128,7 +120,7 @@ export default function FinalStepPage() {
             </p>
           </div>
 
-          {/* Right Side: Form Data */}
+      
           <div className="flex-1 p-10 md:p-14">
             <h2 className="text-2xl font-bold uppercase tracking-tight mb-2">Lengkapi Data Anda</h2>
             <p className="text-gray-500 text-xs mb-8">
@@ -136,7 +128,6 @@ export default function FinalStepPage() {
             </p>
 
             <form className="space-y-6">
-              {/* Data Terdaftar Section */}
               <div>
                 <span className="text-orange-600 text-[9px] font-black uppercase tracking-[0.2em] block mb-4">Data Terdaftar</span>
                 <div className="space-y-4">
@@ -161,7 +152,6 @@ export default function FinalStepPage() {
                 </div>
               </div>
 
-              {/* Data Tambahan Section */}
               <div>
                 <span className="text-orange-600 text-[9px] font-black uppercase tracking-[0.2em] block mb-4">Data Tambahan (Wajib Diisi)</span>
                 <div className="space-y-4">
