@@ -14,7 +14,6 @@ export default function FinalStepPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
 
-  // 1. Fetch data email & nama saat halaman load
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -43,7 +42,6 @@ export default function FinalStepPage() {
     fetchUserData();
   }, []);
 
-  // 2. Handle perubahan file foto
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -52,7 +50,6 @@ export default function FinalStepPage() {
     }
   };
 
-  // 3. Handle Submit (Simpan data & Foto)
   const handleSaveProfile = async () => {
     const formData = new FormData();
 
@@ -91,7 +88,7 @@ export default function FinalStepPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#0d1117] text-white font-sans flex flex-col overflow-hidden">
-      {/* Navbar */}
+    
       <nav className="w-full p-8 flex justify-between items-center bg-gradient-to-b from-black/20 to-transparent">
         <div className="flex items-center gap-2">
           <span className="font-black tracking-tighter text-xl italic">PASBER</span>
@@ -106,7 +103,7 @@ export default function FinalStepPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
+  
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-4xl bg-[#161b22] border border-white/5 rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl">
 
@@ -146,7 +143,7 @@ export default function FinalStepPage() {
             </p>
           </div>
 
-          {/* Right Side: Form Data */}
+      
           <div className="flex-1 p-10 md:p-14">
             <h2 className="text-2xl font-bold uppercase tracking-tight mb-2">Lengkapi Data Anda</h2>
             <p className="text-gray-500 text-xs mb-8">
