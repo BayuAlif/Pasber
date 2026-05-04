@@ -45,7 +45,7 @@ export default function LoginPage() {
       console.log("TOKEN DISIMPAN:", data.token);
 
       // ✅ redirect
-      router.push("/onBoarding");
+      router.push("/onboarding");
 
     } catch (error) {
       console.log("ERROR:", error);

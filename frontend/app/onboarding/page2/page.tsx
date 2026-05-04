@@ -33,7 +33,7 @@ export default function Stage2Page() {
             <p className="text-gray-400 text-sm leading-relaxed mb-8">Dapatkan pembaruan real-time mengenai setiap tahap pengerjaan unit Anda.</p>
             
             <button 
-              onClick={() => router.push('/onBoarding/page3')}
+              onClick={() => router.push('/onboarding/page3')}
               className="w-full bg-orange-600 hover:bg-orange-500 py-4 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95"
             >
               Lanjut <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>

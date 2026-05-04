@@ -26,6 +26,7 @@ return new class extends Migration
                   ->nullable()
                   ->constrained('bengkels')
                   ->onDelete('cascade');
+            $table->boolean('is_profile_complete')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

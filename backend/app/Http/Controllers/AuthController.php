@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -60,6 +61,43 @@ public function register(Request $request)
 
         return response()->json([
             'message' => 'Logout berhasil'
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'noKontak' => 'required|string|max:20',
+            'alamat' => 'required|string',
+            'fotoProfil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($request->hasFile('fotoProfil')) {
+
+            if ($user->fotoProfil) {
+                Storage::disk('public')->delete($user->fotoProfil);
+            }
+
+            $file = $request->file('fotoProfil');
+
+            $path = $file->store('profile', 'public');
+
+            $user->fotoProfil = $path;
+            $user->foto_url = Storage::url($path);
+        }
+
+        $user->name = $request->name;
+        $user->noKontak = $request->noKontak;
+        $user->alamat = $request->alamat;
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated',
+            'user' => $user
         ]);
     }
 }

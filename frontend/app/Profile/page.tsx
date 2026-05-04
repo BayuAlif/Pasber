@@ -4,19 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 
 export default function FinalStepPage() {
   const router = useRouter();
-  
+
   // States untuk data user dan upload
   const [userData, setUserData] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
 
   // 1. Fetch data email & nama saat halaman load
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('auth_token'); // Pastikan token tersimpan di sini
+        const token = localStorage.getItem('token');
         const response = await fetch('http://localhost:8000/api/user', {
           method: 'GET',
           headers: {
@@ -24,6 +26,8 @@ export default function FinalStepPage() {
             'Accept': 'application/json',
           },
         });
+
+        console.log("TOKEN USER:", token);
 
         if (response.ok) {
           const data = await response.json();
@@ -51,20 +55,28 @@ export default function FinalStepPage() {
   // 3. Handle Submit (Simpan data & Foto)
   const handleSaveProfile = async () => {
     const formData = new FormData();
-    if (selectedFile) formData.append('photo', selectedFile);
-    // Tambahkan field lain sesuai kebutuhan backend kamu
-    // formData.append('phone', ...);
+
+    formData.append('name', userData.name);
+    formData.append('noKontak', phone);
+    formData.append('alamat', address);
+
+    if (selectedFile) {
+      formData.append('fotoProfil', selectedFile); 
+    }
 
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
+
       const response = await fetch('http://localhost:8000/api/update-profile', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          // Jangan set Content-Type jika mengirim FormData
         },
         body: formData,
       });
+
+      const data = await response.json();
+      console.log("RESPONSE:", data);
 
       if (response.ok) {
         router.push('/dashboard');
@@ -76,13 +88,16 @@ export default function FinalStepPage() {
     }
   };
 
+
   return (
     <div className="min-h-screen w-full bg-[#0d1117] text-white font-sans flex flex-col overflow-hidden">
       {/* Navbar */}
       <nav className="w-full p-8 flex justify-between items-center bg-gradient-to-b from-black/20 to-transparent">
         <div className="flex items-center gap-2">
           <span className="font-black tracking-tighter text-xl italic">PASBER</span>
-          <span className="bg-white/10 border border-white/20 px-2 py-0.5 rounded text-[8px] font-bold tracking-widest uppercase text-gray-400">Engineering</span>
+          <span className="bg-white/10 border border-white/20 px-2 py-0.5 rounded text-[8px] font-bold tracking-widest uppercase text-gray-400">
+            Engineering
+          </span>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
           <span className="text-gray-500">Account Configuration</span>
@@ -94,10 +109,10 @@ export default function FinalStepPage() {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-4xl bg-[#161b22] border border-white/5 rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl">
-          
+
           {/* Left Side: Upload Photo */}
           <div className="w-full md:w-[40%] bg-black/20 p-12 flex flex-col items-center justify-center text-center border-r border-white/5">
-            <div 
+            <div
               className="relative group cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -109,19 +124,22 @@ export default function FinalStepPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500 group-hover:text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    <span className="text-[10px] mt-2 font-bold uppercase tracking-widest text-gray-500 group-hover:text-orange-500">Upload Foto</span>
+                    <span className="text-[10px] mt-2 font-bold uppercase tracking-widest text-gray-500 group-hover:text-orange-500">
+                      Upload Foto
+                    </span>
                   </>
                 )}
               </div>
-              {/* Hidden Input File */}
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                accept="image/*" 
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept="image/*"
               />
             </div>
+
             <h3 className="mt-8 font-bold uppercase tracking-widest text-sm">Foto Profil</h3>
             <p className="mt-2 text-gray-500 text-[10px] leading-relaxed max-w-[180px]">
               Silakan unggah foto identitas Anda untuk melengkapi profil sistem.
@@ -136,56 +154,87 @@ export default function FinalStepPage() {
             </p>
 
             <form className="space-y-6">
-              {/* Data Terdaftar Section */}
+
+              {/* Data Terdaftar */}
               <div>
-                <span className="text-orange-600 text-[9px] font-black uppercase tracking-[0.2em] block mb-4">Data Terdaftar</span>
+                <span className="text-orange-600 text-[9px] font-black uppercase tracking-[0.2em] block mb-4">
+                  Data Terdaftar
+                </span>
+
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Nama Lengkap</label>
-                    <input 
-                      type="text" 
-                      disabled 
-                      value={loading ? 'Memuat...' : userData.name} 
-                      className="w-full bg-[#0d1117] border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 cursor-not-allowed" 
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">
+                      Nama Lengkap
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={loading ? 'Memuat...' : userData.name}
+                      className="w-full bg-[#0d1117] border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 cursor-not-allowed"
                     />
                   </div>
+
                   <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Email</label>
-                    <input 
-                      type="email" 
-                      disabled 
-                      value={loading ? 'Memuat...' : userData.email} 
-                      className="w-full bg-[#0d1117] border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 cursor-not-allowed" 
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      disabled
+                      value={loading ? 'Memuat...' : userData.email}
+                      className="w-full bg-[#0d1117] border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 cursor-not-allowed"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Data Tambahan Section */}
+              {/* Data Tambahan */}
               <div>
-                <span className="text-orange-600 text-[9px] font-black uppercase tracking-[0.2em] block mb-4">Data Tambahan (Wajib Diisi)</span>
+                <span className="text-orange-600 text-[9px] font-black uppercase tracking-[0.2em] block mb-4">
+                  Data Tambahan (Wajib Diisi)
+                </span>
+
                 <div className="space-y-4">
+
+                  {/* PHONE */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Nomor Kontak (Aktif)</label>
-                    <input type="text" placeholder="+62 8..." className="w-full bg-[#0d1117] border border-white/10 focus:border-orange-500/50 outline-none rounded-xl px-4 py-3 text-sm transition-all" />
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">
+                      Nomor Kontak (Aktif)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="+62 8..."
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full bg-[#0d1117] border border-white/10 focus:border-orange-500/50 outline-none rounded-xl px-4 py-3 text-sm transition-all"
+                    />
                   </div>
+
+                  {/* ADDRESS */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Alamat Lengkap</label>
-                    <textarea placeholder="Masukkan detail alamat tempat tinggal saat ini..." rows={3} className="w-full bg-[#0d1117] border border-white/10 focus:border-orange-500/50 outline-none rounded-xl px-4 py-3 text-sm transition-all resize-none"></textarea>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">
+                      Alamat Lengkap
+                    </label>
+                    <textarea
+                      placeholder="Masukkan detail alamat tempat tinggal saat ini..."
+                      rows={3}
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="w-full bg-[#0d1117] border border-white/10 focus:border-orange-500/50 outline-none rounded-xl px-4 py-3 text-sm transition-all resize-none"
+                    />
                   </div>
+
                 </div>
               </div>
 
-              <button 
+              <button
                 type="button"
                 onClick={handleSaveProfile}
                 className="w-full bg-orange-600 hover:bg-orange-500 py-4 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] mt-4"
               >
                 Simpan & Masuk Dashboard
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
               </button>
+
             </form>
           </div>
         </div>
@@ -195,9 +244,9 @@ export default function FinalStepPage() {
       <footer className="w-full p-8 flex justify-between items-center text-[8px] font-bold text-gray-600 uppercase tracking-[0.2em]">
         <span>© 2024 PASBER AUTOMOTIVE ENGINEERING | TECHNICAL MASTERY</span>
         <div className="flex gap-6">
-          <span className="hover:text-gray-400 cursor-pointer transition-colors">System Status</span>
-          <span className="hover:text-gray-400 cursor-pointer transition-colors">API Documentation</span>
-          <span className="hover:text-gray-400 cursor-pointer transition-colors">Compliance</span>
+          <span className="hover:text-gray-400 cursor-pointer">System Status</span>
+          <span className="hover:text-gray-400 cursor-pointer">API Documentation</span>
+          <span className="hover:text-gray-400 cursor-pointer">Compliance</span>
         </div>
       </footer>
     </div>

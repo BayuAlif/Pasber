@@ -59,7 +59,7 @@ export default function DashboardPage() {
         <p className="text-gray-400 max-w-xl text-sm leading-relaxed mb-10">Pilih waktu servis, masukkan detail kendaraan, dan sampaikan keluhan Anda.</p>
 
         <button 
-          onClick={() => router.push('/onBoarding/page2')}
+          onClick={() => router.push('/onboarding/page2')}
           className="bg-orange-600 hover:bg-orange-500 text-white px-16 py-4 rounded-xl font-black uppercase tracking-[0.3em] text-xs transition-all active:scale-95 mb-8"
         >
           Lanjut
