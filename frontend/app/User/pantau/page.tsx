@@ -1,13 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
-  LayoutDashboard,
   Activity,
-  CalendarPlus,
-  History,
-  Receipt,
   Bell,
   ChevronDown,
   Search,
@@ -16,17 +11,8 @@ import {
   Clock,
   Wrench,
   Package,
-  FileText,
-  ChevronRight,
 } from "lucide-react";
-
-const navItems = [
-  { label: "Dashboard Saya", icon: LayoutDashboard, href: "/User/dashboard" },
-  { label: "Pantau Service", icon: Activity, href: "/User/pantau", active: true },
-  { label: "Booking Service", icon: CalendarPlus, href: "/User/service" },
-  { label: "Riwayat Service", icon: History, href: "/User/riwayat" },
-  { label: "Tagihan & Pembayaran", icon: Receipt, href: "/User/tagihan" },
-];
+import Sidebar from "@/app/components/sidebar/page";
 
 const progressSteps = [
   { label: "BOOKING\nAPPROVED", done: true },
@@ -40,21 +26,18 @@ const progressSteps = [
 const activityLog = [
   {
     icon: Wrench,
-    color: "#f97316",
     title: "Mekanik mulai mengerjakan",
     time: "10:45 WIB",
     source: "Service Area B: Oil",
   },
   {
     icon: CheckCircle2,
-    color: "#6b7280",
     title: "Mekanik ditugaskan",
     time: "10:15 WIB",
     source: "Admin Panel",
   },
   {
     icon: Package,
-    color: "#6b7280",
     title: "Suku cadang diproses",
     time: "10:00 WIB",
     source: "Gudang",
@@ -67,239 +50,62 @@ export default function PantauServicePage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "#0f1117",
-        fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-        color: "#e2e8f0",
-      }}
-    >
-      {/* Sidebar */}
-      <aside
-        style={{
-          width: 200,
-          background: "#13161e",
-          borderRight: "1px solid #1e2230",
-          display: "flex",
-          flexDirection: "column",
-          padding: "24px 0",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          bottom: 0,
-          zIndex: 10,
-        }}
-      >
-        {/* Logo */}
-        <div style={{ padding: "0 20px 28px" }}>
-          <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: "#fff" }}>
-            PASBER
-          </div>
-          <div style={{ fontSize: 9, letterSpacing: 3, color: "#4b5563", marginTop: 2 }}>
-            CUSTOMER PORTAL
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav style={{ flex: 1 }}>
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 20px",
-                fontSize: 13,
-                fontWeight: item.active ? 600 : 400,
-                color: item.active ? "#f97316" : "#9ca3af",
-                background: item.active ? "rgba(249,115,22,0.08)" : "transparent",
-                borderLeft: item.active ? "3px solid #f97316" : "3px solid transparent",
-                textDecoration: "none",
-                transition: "all 0.15s",
-              }}
-            >
-              <item.icon size={15} />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* User */}
-        <div
-          style={{
-            padding: "14px 20px",
-            borderTop: "1px solid #1e2230",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#fff",
-            }}
-          >
-            FS
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#e2e8f0" }}>
-              FARHAN SELAT SUNDA
-            </div>
-            <div style={{ fontSize: 10, color: "#4b5563" }}>Pelanggan reseller</div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: "10px 20px 0", borderTop: "1px solid #1e2230" }}>
-          <div style={{ fontSize: 9, color: "#374151", letterSpacing: 0.5 }}>
-            © 2026 PASBER AUTOMOTIVE ENGINEERING | CUSTOMER PORTAL
-          </div>
-        </div>
-      </aside>
+    <div className="flex min-h-screen bg-[#0f1117] font-sans text-slate-200">
+      <Sidebar />
 
       {/* Main */}
-      <main style={{ marginLeft: 200, flex: 1, padding: "32px 36px" }}>
+      <main className="ml-[200px] flex-1 p-8 px-9">
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 28,
-          }}
-        >
+        <div className="flex justify-between items-start mb-7">
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>
-              Pantau{" "}
-              <span style={{ color: "#f97316" }}>Service</span>
+            <h1 className="text-2xl font-bold m-0">
+              Pantau <span className="text-orange-500">Service</span>
             </h1>
-            <p style={{ fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>
+            <p className="text-sm text-gray-500 mt-1 mb-0">
               Pantau progress pengerjaan kendaraan Anda secara real-time.
             </p>
           </div>
-          <div
-            style={{
-              position: "relative",
-              width: 36,
-              height: 36,
-              background: "#1e2230",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              border: "1px solid #2a2f3e",
-            }}
-          >
-            <Bell size={16} color="#9ca3af" />
-            <span
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                width: 8,
-                height: 8,
-                background: "#f97316",
-                borderRadius: "50%",
-                border: "2px solid #13161e",
-              }}
-            />
+          <div className="relative w-9 h-9 bg-[#1e2230] rounded-lg flex items-center justify-center cursor-pointer border border-[#2a2f3e]">
+            <Bell size={16} className="text-gray-400" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border-2 border-[#13161e]" />
           </div>
         </div>
 
         {/* Search + Filter */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-          <div
-            style={{
-              flex: 1,
-              position: "relative",
-              maxWidth: 380,
-            }}
-          >
+        <div className="flex gap-3 mb-6">
+          <div className="relative flex-1 max-w-sm">
             <Search
               size={14}
-              color="#4b5563"
-              style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600"
             />
             <input
               type="text"
               placeholder="Cari no Work order atau kendaraan"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                background: "#1a1d28",
-                border: "1px solid #2a2f3e",
-                borderRadius: 8,
-                padding: "9px 12px 9px 34px",
-                fontSize: 13,
-                color: "#9ca3af",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
+              className="w-full bg-[#1a1d28] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-sm text-gray-400 outline-none placeholder-gray-600 box-border"
             />
           </div>
-          <div style={{ position: "relative" }}>
+          <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "#1a1d28",
-                border: "1px solid #2a2f3e",
-                borderRadius: 8,
-                padding: "9px 14px",
-                fontSize: 13,
-                color: "#9ca3af",
-                cursor: "pointer",
-              }}
+              className="flex items-center gap-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg py-2 px-3.5 text-sm text-gray-400 cursor-pointer"
             >
               {statusFilter}
               <ChevronDown size={13} />
             </button>
             {dropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 6px)",
-                  left: 0,
-                  background: "#1e2230",
-                  border: "1px solid #2a2f3e",
-                  borderRadius: 8,
-                  minWidth: 150,
-                  zIndex: 20,
-                  overflow: "hidden",
-                }}
-              >
+              <div className="absolute top-[calc(100%+6px)] left-0 bg-[#1e2230] border border-[#2a2f3e] rounded-lg min-w-[150px] z-20 overflow-hidden">
                 {["Semua Status", "Running", "Selesai", "Pending"].map((s) => (
                   <button
                     key={s}
-                    onClick={() => { setStatusFilter(s); setDropdownOpen(false); }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "9px 14px",
-                      textAlign: "left",
-                      fontSize: 13,
-                      color: statusFilter === s ? "#f97316" : "#9ca3af",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
+                    onClick={() => {
+                      setStatusFilter(s);
+                      setDropdownOpen(false);
                     }}
+                    className={`block w-full py-2 px-3.5 text-left text-sm bg-transparent border-none cursor-pointer ${
+                      statusFilter === s ? "text-orange-500" : "text-gray-400"
+                    }`}
                   >
                     {s}
                   </button>
@@ -310,121 +116,66 @@ export default function PantauServicePage() {
         </div>
 
         {/* Work Order Card */}
-        <div
-          style={{
-            background: "#13161e",
-            border: "1px solid #1e2230",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}
-        >
+        <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden">
           {/* WO Header */}
-          <div
-            style={{
-              padding: "20px 24px",
-              borderBottom: "1px solid #1e2230",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}
-          >
+          <div className="p-5 px-6 border-b border-[#1e2230] flex justify-between items-start">
             <div>
-              <div style={{ fontSize: 10, color: "#4b5563", letterSpacing: 1.5, marginBottom: 4 }}>
+              <div className="text-[10px] text-gray-600 tracking-[0.15em] mb-1">
                 WORK ORDER
               </div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1 }}>
+              <div className="text-[22px] font-bold text-white leading-none">
                 WO-2025-0042
               </div>
-              <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 4 }}>Legenda Astrea</div>
-              <div style={{ fontSize: 12, color: "#4b5563", marginTop: 2 }}>D 4621 XY</div>
+              <div className="text-sm text-gray-400 mt-1">Legenda Astrea</div>
+              <div className="text-xs text-gray-600 mt-0.5">D 4621 XY</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "5px 12px",
-                  background: "rgba(249,115,22,0.12)",
-                  border: "1px solid rgba(249,115,22,0.3)",
-                  borderRadius: 20,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#f97316",
-                  letterSpacing: 1,
-                }}
-              >
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: "#f97316",
-                    animation: "pulse 1.5s infinite",
-                  }}
-                />
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 py-1 px-3 bg-orange-500/10 border border-orange-500/30 rounded-full text-[11px] font-bold text-orange-500 tracking-widest">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                 RUNNING
               </span>
-              <ChevronDown size={16} color="#4b5563" />
+              <ChevronDown size={16} className="text-gray-600" />
             </div>
           </div>
 
           {/* Progress Tracker */}
-          <div style={{ padding: "20px 24px", borderBottom: "1px solid #1e2230" }}>
-            <div style={{ fontSize: 10, color: "#4b5563", letterSpacing: 1.5, marginBottom: 16 }}>
+          <div className="p-5 px-6 border-b border-[#1e2230]">
+            <div className="text-[10px] text-gray-600 tracking-[0.15em] mb-4">
               PROGRESS TRACKER
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
+            <div className="flex items-start">
               {progressSteps.map((step, i) => (
                 <div
                   key={i}
-                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}
+                  className="flex-1 flex flex-col items-center relative"
                 >
                   {/* Connector line left */}
                   {i > 0 && (
                     <div
-                      style={{
-                        position: "absolute",
-                        top: 11,
-                        left: 0,
-                        width: "50%",
-                        height: 2,
-                        background: progressSteps[i - 1].done ? "#f97316" : "#2a2f3e",
-                      }}
+                      className={`absolute top-[11px] left-0 w-1/2 h-0.5 ${
+                        progressSteps[i - 1].done
+                          ? "bg-orange-500"
+                          : "bg-[#2a2f3e]"
+                      }`}
                     />
                   )}
                   {/* Connector line right */}
                   {i < progressSteps.length - 1 && (
                     <div
-                      style={{
-                        position: "absolute",
-                        top: 11,
-                        right: 0,
-                        width: "50%",
-                        height: 2,
-                        background: step.done ? "#f97316" : "#2a2f3e",
-                      }}
+                      className={`absolute top-[11px] right-0 w-1/2 h-0.5 ${
+                        step.done ? "bg-orange-500" : "bg-[#2a2f3e]"
+                      }`}
                     />
                   )}
                   {/* Node */}
                   <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      background: step.current
-                        ? "#f97316"
+                    className={`w-6 h-6 rounded-full flex items-center justify-center relative z-10 box-border ${
+                      step.current
+                        ? "bg-orange-500 border-[3px] border-orange-500/30"
                         : step.done
-                        ? "#f97316"
-                        : "#2a2f3e",
-                      border: step.current ? "3px solid rgba(249,115,22,0.3)" : "none",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      position: "relative",
-                      zIndex: 1,
-                      boxSizing: "border-box",
-                    }}
+                        ? "bg-orange-500"
+                        : "bg-[#2a2f3e]"
+                    }`}
                   >
                     {step.done && !step.current && (
                       <CheckCircle2 size={12} color="#fff" strokeWidth={2.5} />
@@ -438,16 +189,13 @@ export default function PantauServicePage() {
                   </div>
                   {/* Label */}
                   <div
-                    style={{
-                      marginTop: 8,
-                      fontSize: 9,
-                      fontWeight: step.current ? 700 : 500,
-                      color: step.current ? "#f97316" : step.done ? "#9ca3af" : "#4b5563",
-                      textAlign: "center",
-                      whiteSpace: "pre-line",
-                      letterSpacing: 0.5,
-                      lineHeight: 1.4,
-                    }}
+                    className={`mt-2 text-[9px] text-center whitespace-pre-line tracking-wide leading-snug ${
+                      step.current
+                        ? "font-bold text-orange-500"
+                        : step.done
+                        ? "font-medium text-gray-400"
+                        : "font-medium text-gray-600"
+                    }`}
                   >
                     {step.label}
                   </div>
@@ -457,37 +205,21 @@ export default function PantauServicePage() {
           </div>
 
           {/* Info Grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 1,
-              background: "#1e2230",
-              borderBottom: "1px solid #1e2230",
-            }}
-          >
+          <div className="grid grid-cols-2 gap-px bg-[#1e2230] border-b border-[#1e2230]">
             {[
               { label: "TANGGAL MASUK", value: "15 Mei 2025" },
               { label: "JENIS SERVICE", value: "Ganti Oli" },
               { label: "ESTIMASI", value: "120 Menit", highlight: true },
               { label: "MEKANIK", value: "Bpk. Ahmad S." },
             ].map((item) => (
-              <div
-                key={item.label}
-                style={{
-                  background: "#13161e",
-                  padding: "16px 24px",
-                }}
-              >
-                <div style={{ fontSize: 10, color: "#4b5563", letterSpacing: 1.2, marginBottom: 6 }}>
+              <div key={item.label} className="bg-[#13161e] p-4 px-6">
+                <div className="text-[10px] text-gray-600 tracking-widest mb-1.5">
                   {item.label}
                 </div>
                 <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: item.highlight ? "#f97316" : "#e2e8f0",
-                  }}
+                  className={`text-[15px] font-semibold ${
+                    item.highlight ? "text-orange-500" : "text-slate-200"
+                  }`}
                 >
                   {item.value}
                 </div>
@@ -496,73 +228,44 @@ export default function PantauServicePage() {
           </div>
 
           {/* Activity Log */}
-          <div style={{ padding: "20px 24px" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 16,
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#6b7280",
-                letterSpacing: 1.2,
-              }}
-            >
-              <Clock size={13} color="#f97316" />
+          <div className="p-5 px-6">
+            <div className="flex items-center gap-2 mb-4 text-[11px] font-bold text-gray-500 tracking-widest">
+              <Clock size={13} className="text-orange-500" />
               LOG AKTIVITAS
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <div className="flex flex-col">
               {activityLog.map((item, i) => (
                 <div
                   key={i}
-                  style={{
-                    display: "flex",
-                    gap: 12,
-                    paddingBottom: i < activityLog.length - 1 ? 16 : 0,
-                    position: "relative",
-                  }}
+                  className={`flex gap-3 relative ${
+                    i < activityLog.length - 1 ? "pb-4" : ""
+                  }`}
                 >
                   {/* Vertical line */}
                   {i < activityLog.length - 1 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: 13,
-                        top: 26,
-                        bottom: 0,
-                        width: 1,
-                        background: "#1e2230",
-                      }}
-                    />
+                    <div className="absolute left-[13px] top-7 bottom-0 w-px bg-[#1e2230]" />
                   )}
                   <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background: i === 0 ? "rgba(249,115,22,0.12)" : "#1a1d28",
-                      border: `1px solid ${i === 0 ? "rgba(249,115,22,0.25)" : "#2a2f3e"}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      zIndex: 1,
-                    }}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 z-10 border ${
+                      i === 0
+                        ? "bg-orange-500/10 border-orange-500/25"
+                        : "bg-[#1a1d28] border-[#2a2f3e]"
+                    }`}
                   >
-                    <item.icon size={13} color={i === 0 ? "#f97316" : "#4b5563"} />
+                    <item.icon
+                      size={13}
+                      className={i === 0 ? "text-orange-500" : "text-gray-600"}
+                    />
                   </div>
                   <div>
                     <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: i === 0 ? "#e2e8f0" : "#6b7280",
-                      }}
+                      className={`text-sm font-semibold ${
+                        i === 0 ? "text-slate-200" : "text-gray-500"
+                      }`}
                     >
                       {item.title}
                     </div>
-                    <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>
+                    <div className="text-[11px] text-gray-600 mt-0.5">
                       {item.time} • {item.source}
                     </div>
                   </div>
@@ -574,11 +277,6 @@ export default function PantauServicePage() {
       </main>
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.3); }
-        }
-        a:hover > * { opacity: 0.85; }
         input::placeholder { color: #4b5563; }
         * { box-sizing: border-box; }
       `}</style>
