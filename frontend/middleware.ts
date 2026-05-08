@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   const isProtectedRoute =
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/Profile') ||
-    pathname.startsWith('/dashboard');
+    pathname.startsWith('/Admin');
 
   if (isProtectedRoute && !token) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
@@ -24,6 +24,6 @@ export const config = {
   matcher: [
     '/onboarding/:path*',
     '/Profile/:path*',
-    '/dashboard/:path*'
+    '/Admin/:path*'
   ],
 };

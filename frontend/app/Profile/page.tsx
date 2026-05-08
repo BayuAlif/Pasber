@@ -84,7 +84,7 @@ export default function FinalStepPage() {
       console.log("RESPONSE:", data);
 
       if (response.ok) {
-        router.push('/dashboard');
+        router.push('User/dashboard');
       } else {
         if (data.errors) {
           const allErrors = Object.values(data.errors).flat().join('\n');

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('fotoProfile')->nullable();
             $table->foreignId('bengkel_id')
                   ->nullable()
-                  ->constrained('bengkels')
+                  ->constrained('bengkel')
                   ->onDelete('cascade');
             $table->boolean('is_profile_complete')->default(false);
             $table->rememberToken();

@@ -18,4 +18,5 @@ class Bengkel extends Model
     {
         return $this->hasMany(User::class);
     }
+
 }
