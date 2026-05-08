@@ -1,266 +1,412 @@
 "use client";
 
-import React, { useState } from 'react';
-import { 
-  LayoutDashboard, CalendarCheck, Wrench, History, FileText, 
-  Bell, Clock, CheckCircle2, Car
-} from 'lucide-react';
-import Link from 'next/link';
+import React, { useState } from "react";
+import {
+  LayoutDashboard, Activity, CalendarPlus, History, Receipt,
+  Bell, Clock, CheckCircle2, Car, Bike, Plus, Trash2, X,
+  Wrench, ChevronLeft, ChevronRight,
+} from "lucide-react";
+import Link from "next/link";
 
-export default function BookingServicePasber() {
+// ─── Types ───────────────────────────────────────────────────────────────────
+type Vehicle = {
+  id: string;
+  type: "motor" | "mobil";
+  brand: string;
+  model: string;
+  plate: string;
+  year: string;
+};
+
+// ─── Nav items ────────────────────────────────────────────────────────────────
+const navItems = [
+  { label: "Dashboard Saya",     icon: LayoutDashboard, href: "/User/dashboard" },
+  { label: "Pantau Service",     icon: Activity,        href: "/User/pantau"    },
+  { label: "Booking Service",    icon: CalendarPlus,    href: "/User/service", active: true },
+  { label: "Riwayat Service",    icon: History,         href: "/User/riwayat"   },
+  { label: "Tagihan & Pembayaran", icon: Receipt,       href: "/User/tagihan"   },
+];
+
+// ─── Service options ──────────────────────────────────────────────────────────
+const serviceOptions = [
+  { id: "oli",     label: "Ganti Oli",      desc: "Penggantian oli mesin standar" },
+  { id: "tuneup",  label: "Tune Up",        desc: "Perawatan mesin menyeluruh"    },
+  { id: "ban",     label: "Ganti Ban",      desc: "Penggantian ban baru"          },
+  { id: "umum",    label: "Perbaikan Umum", desc: "Perbaikan komponen umum"       },
+];
+
+const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const sessions = ["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00"];
+const YEAR = 2026;
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function BookingServicePage() {
   const [step, setStep] = useState(1);
-  
-  // State Data Booking
-  const [selectedVehicle, setSelectedVehicle] = useState('astrea');
-  const [selectedService, setSelectedService] = useState('oli');
-  const [selectedDate, setSelectedDate] = useState(new Date().getDate());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); 
-  const [selectedTime, setSelectedTime] = useState('09:00');
 
-  const currentYear = 2026;
-  const months = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-  ];
+  // vehicles
+  const [vehicles, setVehicles]                   = useState<Vehicle[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedService, setSelectedService]     = useState("oli");
 
-  // Logika Kalender
-  const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (month: number, year: number) => {
-    const day = new Date(year, month, 1).getDay();
-    return day === 0 ? 6 : day - 1; 
+  // modal
+  const [showModal, setShowModal]   = useState(false);
+  const [vehicleType, setVehicleType] = useState<"motor" | "mobil">("motor");
+  const [vBrand, setVBrand]         = useState("");
+  const [vModel, setVModel]         = useState("");
+  const [vPlate, setVPlate]         = useState("");
+  const [vYear, setVYear]           = useState("");
+  const [formError, setFormError]   = useState("");
+
+  // schedule
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedDate,  setSelectedDate]  = useState(today.getDate());
+  const [selectedTime,  setSelectedTime]  = useState("09:00");
+
+  const getDays      = (m: number) => new Date(YEAR, m + 1, 0).getDate();
+  const getFirstDay  = (m: number) => { const d = new Date(YEAR, m, 1).getDay(); return d === 0 ? 6 : d - 1; };
+
+  const openModal = () => {
+    setVehicleType("motor"); setVBrand(""); setVModel(""); setVPlate(""); setVYear(""); setFormError("");
+    setShowModal(true);
   };
 
-  const daysInMonth = getDaysInMonth(selectedMonth, currentYear);
-  const firstDayIndex = getFirstDayOfMonth(selectedMonth, currentYear);
-  const sessions = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+  const saveVehicle = () => {
+    if (!vBrand.trim() || !vModel.trim() || !vPlate.trim()) { setFormError("Merek, model, dan nomor polisi wajib diisi."); return; }
+    const v: Vehicle = { id: Date.now().toString(), type: vehicleType, brand: vBrand.trim(), model: vModel.trim(), plate: vPlate.trim().toUpperCase(), year: vYear.trim() };
+    setVehicles(prev => [...prev, v]);
+    if (!selectedVehicleId) setSelectedVehicleId(v.id);
+    setShowModal(false);
+  };
 
+  const deleteVehicle = (id: string) => {
+    setVehicles(prev => prev.filter(v => v.id !== id));
+    if (selectedVehicleId === id) setSelectedVehicleId(null);
+  };
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+
+  // ─── render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-[#0F1117] text-gray-300 font-sans">
-      
-      {/* --- SIDEBAR --- */}
-      <aside className="hidden lg:flex w-64 bg-[#0F1117] border-r border-gray-800 flex-col p-6">
-        <div className="mb-10 text-white font-bold text-2xl uppercase tracking-widest">Pasber</div>
-        <nav className="flex-1 space-y-2">
-          <Link href="/User/dashboard">
-            <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard Saya" />
-          </Link>
-          <NavItem icon={<Wrench size={20}/>} label="Pantau Service" />
-          <NavItem icon={<CalendarCheck size={20}/>} label="Booking Service" active />
-          <NavItem icon={<History size={20}/>} label="Riwayat Service" />
-          <NavItem icon={<FileText size={20}/>} label="Tagihan & Pembayaran" />
+    <div style={{ display:"flex", minHeight:"100vh", background:"#0f1117", fontFamily:"'DM Sans','Segoe UI',sans-serif", color:"#e2e8f0" }}>
+
+      {/* ── SIDEBAR ── */}
+      <aside style={{ width:200, background:"#13161e", borderRight:"1px solid #1e2230", display:"flex", flexDirection:"column", padding:"24px 0", position:"fixed", top:0, left:0, bottom:0, zIndex:10 }}>
+        <div style={{ padding:"0 20px 28px" }}>
+          <div style={{ fontWeight:800, fontSize:18, letterSpacing:2, color:"#fff" }}>PASBER</div>
+          <div style={{ fontSize:9, letterSpacing:3, color:"#4b5563", marginTop:2 }}>CUSTOMER PORTAL</div>
+        </div>
+
+        <nav style={{ flex:1 }}>
+          {navItems.map(item => (
+            <Link key={item.href} href={item.href} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 20px", fontSize:13, fontWeight:item.active ? 600 : 400, color:item.active ? "#f97316" : "#9ca3af", background:item.active ? "rgba(249,115,22,0.08)" : "transparent", borderLeft:item.active ? "3px solid #f97316" : "3px solid transparent", textDecoration:"none" }}>
+              <item.icon size={15} />
+              {item.label}
+            </Link>
+          ))}
         </nav>
+
+        <div style={{ padding:"14px 20px", borderTop:"1px solid #1e2230", display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ width:30, height:30, borderRadius:"50%", background:"linear-gradient(135deg,#f97316,#ea580c)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#fff" }}>FS</div>
+          <div>
+            <div style={{ fontSize:11, fontWeight:600, color:"#e2e8f0" }}>FARHAN SELAT SUNDA</div>
+            <div style={{ fontSize:10, color:"#4b5563" }}>Pelanggan reseller</div>
+          </div>
+        </div>
+
+        <div style={{ padding:"10px 20px 0", borderTop:"1px solid #1e2230" }}>
+          <div style={{ fontSize:9, color:"#374151", letterSpacing:0.5 }}>© 2026 PASBER AUTOMOTIVE ENGINEERING | CUSTOMER PORTAL</div>
+        </div>
       </aside>
 
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-8">
+      {/* ── MAIN ── */}
+      <main style={{ marginLeft:200, flex:1, padding:"32px 36px" }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
           <div>
-            <h2 className="text-2xl font-bold text-white uppercase tracking-tight">
-              Booking <span className="text-[#FF5722]">Service</span>
-            </h2>
-            <p className="text-gray-500 text-sm mt-1 tracking-wide">
-              Selesaikan reservasi servis kendaraan Anda dengan mudah.
-            </p>
+            <h1 style={{ fontSize:26, fontWeight:700, margin:0 }}>Booking <span style={{ color:"#f97316" }}>Service</span></h1>
+            <p style={{ fontSize:13, color:"#6b7280", margin:"4px 0 0" }}>Selesaikan reservasi servis kendaraan Anda dengan mudah.</p>
           </div>
-          <button className="p-2.5 bg-[#161B22] rounded-xl border border-gray-800 text-gray-500 hover:text-white transition-colors">
-            <Bell size={20} />
-          </button>
-        </header>
-
-        {/* --- STEPPER PROGRESS --- */}
-        <div className="flex items-center justify-between mb-12 max-w-4xl mx-auto">
-          <StepIndicator number="1" label="Diagnosa" active={step === 1} done={step > 1} />
-          <div className={`flex-1 h-[1px] mx-4 ${step > 1 ? 'bg-orange-500' : 'bg-gray-800'}`} />
-          <StepIndicator number="2" label="Pilih Jadwal" active={step === 2} done={step > 2} />
-          <div className={`flex-1 h-[1px] mx-4 ${step > 2 ? 'bg-orange-500' : 'bg-gray-800'}`} />
-          <StepIndicator number="3" label="Konfirmasi" active={step === 3} />
+          <div style={{ width:36, height:36, background:"#1e2230", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", border:"1px solid #2a2f3e", position:"relative" }}>
+            <Bell size={16} color="#9ca3af" />
+          </div>
         </div>
 
-        <div className="max-w-5xl mx-auto">
-          
-          {/* --- PAGE 1: DIAGNOSA --- */}
-          {step === 1 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-500 items-stretch">
-              <div className="bg-[#161B22]/40 p-8 rounded-[24px] border border-gray-800/50 flex flex-col">
-                <h3 className="text-white font-bold text-xs mb-8 tracking-tight uppercase">Pilih Kendaraan</h3>
-                <div className="space-y-4">
-                  <VehicleCard 
-                    title="LEGENDA ASTREA" 
-                    plate="D 1234 XYZ" 
-                    active={selectedVehicle === 'astrea'} 
-                    onClick={() => setSelectedVehicle('astrea')} 
-                  />
-                  <VehicleCard 
-                    title="HONDA BRIO SATYA" 
-                    plate="D 8888 ABC" 
-                    active={selectedVehicle === 'brio'} 
-                    onClick={() => setSelectedVehicle('brio')} 
-                  />
+        {/* Stepper */}
+        <div style={{ display:"flex", alignItems:"center", marginBottom:32, maxWidth:520 }}>
+          {[{n:"1",l:"Diagnosa"},{n:"2",l:"Pilih Jadwal"},{n:"3",l:"Konfirmasi"}].map((s, i) => (
+            <React.Fragment key={s.n}>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                <div style={{ width:32, height:32, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, background: step > i+1 ? "#f97316" : step === i+1 ? "#f97316" : "#1a1d28", color: step >= i+1 ? "#fff" : "#4b5563", border: step >= i+1 ? "none" : "1px solid #2a2f3e" }}>
+                  {step > i+1 ? <CheckCircle2 size={16} /> : s.n}
                 </div>
+                <span style={{ fontSize:10, fontWeight:700, letterSpacing:1, color: step === i+1 ? "#fff" : "#4b5563", textTransform:"uppercase" }}>{s.l}</span>
+              </div>
+              {i < 2 && <div style={{ flex:1, height:1, background: step > i+1 ? "#f97316" : "#1e2230", margin:"0 10px", marginBottom:18 }} />}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* ── STEP 1: DIAGNOSA ── */}
+        {step === 1 && (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+
+            {/* Pilih Kendaraan */}
+            <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:12, padding:24, display:"flex", flexDirection:"column" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+                <div style={{ fontSize:10, color:"#4b5563", letterSpacing:1.5, fontWeight:700 }}>PILIH KENDARAAN</div>
+                <button onClick={openModal} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.25)", borderRadius:6, fontSize:11, fontWeight:700, color:"#f97316", cursor:"pointer" }}>
+                  <Plus size={12} /> Tambah
+                </button>
               </div>
 
-              <div className="bg-[#161B22]/40 p-8 rounded-[24px] border border-gray-800/50 flex flex-col">
-                <h3 className="text-white font-bold text-xs mb-8 tracking-tight uppercase">Jenis Service</h3>
-                <div className="space-y-3 mb-8">
-                  <ServiceCard title="GANTI OLI" desc="Penggantian oli mesin dan filter" active={selectedService === 'oli'} onClick={() => setSelectedService('oli')} />
-                  <ServiceCard title="TUNE UP" desc="Penggantian oli mesin dan filter" active={selectedService === 'tuneup'} onClick={() => setSelectedService('tuneup')} />
-                  <ServiceCard title="GANTI BAN" desc="Penggantian Ban depan/belakang" active={selectedService === 'ban'} onClick={() => setSelectedService('ban')} />
-                  <ServiceCard title="PERBAIKAN UMUM" desc="Identifikasi & perbaikan masalah" active={selectedService === 'umum'} onClick={() => setSelectedService('umum')} />
+              {vehicles.length === 0 ? (
+                <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"32px 0", textAlign:"center" }}>
+                  <div style={{ padding:16, background:"#1a1d28", borderRadius:12 }}><Car size={28} color="#374151" /></div>
+                  <p style={{ fontSize:12, fontWeight:700, color:"#4b5563", letterSpacing:1, textTransform:"uppercase" }}>Belum ada kendaraan</p>
+                  <p style={{ fontSize:11, color:"#374151" }}>Tambahkan kendaraan untuk melanjutkan</p>
                 </div>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {vehicles.map(v => (
+                    <div key={v.id} onClick={() => setSelectedVehicleId(v.id)} style={{ padding:"14px 16px", borderRadius:10, border:`2px solid ${selectedVehicleId===v.id?"#f97316":"#1e2230"}`, background: selectedVehicleId===v.id?"rgba(249,115,22,0.05)":"#0f1117", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                        <div style={{ padding:8, borderRadius:8, background: selectedVehicleId===v.id?"#f97316":"#1a1d28", color: selectedVehicleId===v.id?"#fff":"#4b5563" }}>
+                          {v.type==="motor" ? <Bike size={16}/> : <Car size={16}/>}
+                        </div>
+                        <div>
+                          <p style={{ fontSize:13, fontWeight:700, color:"#fff", textTransform:"uppercase" }}>{v.brand} {v.model}{v.year?` (${v.year})`:""}</p>
+                          <p style={{ fontSize:10, color:"#4b5563", fontFamily:"monospace", letterSpacing:1 }}>{v.plate}</p>
+                        </div>
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();deleteVehicle(v.id)}} style={{ padding:6, background:"transparent", border:"none", cursor:"pointer", color:"#374151" }}>
+                        <Trash2 size={14}/>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-white uppercase tracking-[0.2em] block">Deskripsi Masalah</label>
-                  <textarea 
-                    className="w-full h-32 bg-[#0F1117] border border-gray-800 rounded-xl p-4 text-sm text-gray-300 focus:outline-none focus:border-orange-500/50 transition-all resize-none"
-                    placeholder="Tuliskan keluhan kendaraan anda..."
-                  ></textarea>
-                  <button 
-                    onClick={() => setStep(2)} 
-                    className="w-full mt-4 bg-[#FF5722] text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-orange-600 active:scale-[0.98] transition-all"
-                  >
-                    NEXT
+            {/* Pilih Layanan */}
+            <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:12, padding:24, display:"flex", flexDirection:"column" }}>
+              <div style={{ fontSize:10, color:"#4b5563", letterSpacing:1.5, fontWeight:700, marginBottom:20 }}>PILIH LAYANAN</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:10, flex:1 }}>
+                {serviceOptions.map(s => (
+                  <div key={s.id} onClick={()=>setSelectedService(s.id)} style={{ padding:"14px 16px", borderRadius:10, border:`2px solid ${selectedService===s.id?"#f97316":"#1e2230"}`, background: selectedService===s.id?"rgba(249,115,22,0.05)":"#0f1117", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                      <div style={{ padding:8, borderRadius:8, background: selectedService===s.id?"#f97316":"#1a1d28" }}>
+                        <Wrench size={15} color={selectedService===s.id?"#fff":"#4b5563"} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize:13, fontWeight:700, color:"#fff" }}>{s.label}</p>
+                        <p style={{ fontSize:11, color:"#6b7280", marginTop:2 }}>{s.desc}</p>
+                      </div>
+                    </div>
+                    <div style={{ width:10, height:10, borderRadius:"50%", background: selectedService===s.id?"#f97316":"transparent", border:`2px solid ${selectedService===s.id?"#f97316":"#2a2f3e"}` }} />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => { if (!selectedVehicleId) { alert("Pilih kendaraan terlebih dahulu"); return; } setStep(2); }}
+                style={{ marginTop:20, width:"100%", padding:"12px", background:"#f97316", border:"none", borderRadius:8, fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer", letterSpacing:1.5, textTransform:"uppercase" }}
+              >
+                Lanjut: Pilih Jadwal →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 2: JADWAL ── */}
+        {step === 2 && (
+          <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:12, padding:28 }}>
+            {/* Month nav */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+              <div style={{ fontSize:10, color:"#4b5563", letterSpacing:1.5, fontWeight:700 }}>PILIH TANGGAL</div>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <button onClick={()=>setSelectedMonth(m=>Math.max(0,m-1))} style={{ width:28, height:28, background:"#1a1d28", border:"1px solid #2a2f3e", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#9ca3af" }}><ChevronLeft size={14}/></button>
+                <span style={{ fontSize:13, fontWeight:600, color:"#e2e8f0", minWidth:120, textAlign:"center" }}>{months[selectedMonth]} {YEAR}</span>
+                <button onClick={()=>setSelectedMonth(m=>Math.min(11,m+1))} style={{ width:28, height:28, background:"#1a1d28", border:"1px solid #2a2f3e", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#9ca3af" }}><ChevronRight size={14}/></button>
+              </div>
+            </div>
+
+            {/* Day headers */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:6, marginBottom:6 }}>
+              {["SN","SL","RB","KM","JM","SB","MN"].map(d=>(
+                <div key={d} style={{ textAlign:"center", fontSize:10, fontWeight:700, color:"#4b5563", letterSpacing:1, padding:"4px 0" }}>{d}</div>
+              ))}
+            </div>
+
+            {/* Calendar */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:6, marginBottom:28 }}>
+              {Array.from({length:getFirstDay(selectedMonth)}).map((_,i)=><div key={`e${i}`}/>)}
+              {Array.from({length:getDays(selectedMonth)}).map((_,i)=>{
+                const d=i+1;
+                const isSelected=selectedDate===d;
+                return (
+                  <button key={d} onClick={()=>setSelectedDate(d)} style={{ padding:"10px 0", borderRadius:8, border:`1px solid ${isSelected?"#f97316":"#1e2230"}`, background: isSelected?"#f97316":"#0f1117", fontSize:13, fontWeight:600, color: isSelected?"#fff":"#6b7280", cursor:"pointer" }}>
+                    {d}
                   </button>
+                );
+              })}
+            </div>
+
+            {/* Time slots */}
+            <div style={{ fontSize:10, color:"#4b5563", letterSpacing:1.5, fontWeight:700, marginBottom:14 }}>PILIH SESI</div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:28 }}>
+              {sessions.map(t=>{
+                const isSel=selectedTime===t;
+                return (
+                  <button key={t} onClick={()=>setSelectedTime(t)} style={{ padding:"10px 0", borderRadius:8, border:`1px solid ${isSel?"#f97316":"#1e2230"}`, background: isSel?"rgba(249,115,22,0.1)":"#0f1117", fontSize:12, fontWeight:600, color: isSel?"#f97316":"#6b7280", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                    <Clock size={12}/> {t}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display:"flex", gap:12 }}>
+              <button onClick={()=>setStep(1)} style={{ flex:1, padding:"12px", background:"#1a1d28", border:"1px solid #2a2f3e", borderRadius:8, fontSize:12, fontWeight:700, color:"#6b7280", cursor:"pointer", letterSpacing:1, textTransform:"uppercase" }}>← Kembali</button>
+              <button onClick={()=>setStep(3)} style={{ flex:2, padding:"12px", background:"#f97316", border:"none", borderRadius:8, fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer", letterSpacing:1.5, textTransform:"uppercase" }}>Lanjut: Konfirmasi →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: KONFIRMASI ── */}
+        {step === 3 && (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 360px", gap:16, alignItems:"start" }}>
+
+            {/* Left — detail ringkasan */}
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+
+              {/* Header card */}
+              <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:12, padding:"24px 28px" }}>
+                <p style={{ fontSize:10, color:"#4b5563", letterSpacing:1.5, fontWeight:700, textTransform:"uppercase", marginBottom:16 }}>RINGKASAN BOOKING</p>
+
+                {/* Kendaraan row */}
+                <div style={{ display:"flex", alignItems:"center", gap:16, paddingBottom:18, borderBottom:"1px solid #1e2230", marginBottom:18 }}>
+                  <div style={{ width:48, height:48, borderRadius:10, background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    {selectedVehicle?.type === "motor" ? <Bike size={22} color="#f97316"/> : <Car size={22} color="#f97316"/>}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <p style={{ fontSize:9, color:"#4b5563", letterSpacing:1.2, fontWeight:700, textTransform:"uppercase", marginBottom:4 }}>Kendaraan</p>
+                    <p style={{ fontSize:16, fontWeight:700, color:"#fff", textTransform:"uppercase", margin:0 }}>{selectedVehicle?.brand} {selectedVehicle?.model}{selectedVehicle?.year ? ` (${selectedVehicle.year})` : ""}</p>
+                    <p style={{ fontSize:11, color:"#4b5563", fontFamily:"monospace", letterSpacing:2, marginTop:3 }}>{selectedVehicle?.plate}</p>
+                  </div>
                 </div>
+
+                {/* Info grid */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:0 }}>
+                  {[
+                    { label:"Jenis Layanan", value: serviceOptions.find(s=>s.id===selectedService)?.label ?? "-", accent:true },
+                    { label:"Tanggal",       value:`${selectedDate} ${months[selectedMonth]} ${YEAR}` },
+                    { label:"Sesi Waktu",    value:`${selectedTime} WIB` },
+                  ].map((item, i) => (
+                    <div key={item.label} style={{ padding:"14px 0", paddingLeft: i > 0 ? 20 : 0, borderLeft: i > 0 ? "1px solid #1e2230" : "none" }}>
+                      <p style={{ fontSize:9, color:"#4b5563", letterSpacing:1.2, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>{item.label}</p>
+                      <p style={{ fontSize:14, fontWeight:700, color: item.accent ? "#f97316" : "#e2e8f0", margin:0 }}>{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+
+            </div>
+
+            {/* Right — action panel */}
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+
+              {/* Checklist */}
+              <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:12, padding:"22px 24px" }}>
+                <p style={{ fontSize:10, color:"#4b5563", letterSpacing:1.5, fontWeight:700, textTransform:"uppercase", marginBottom:16 }}>KONFIRMASI DATA</p>
+                <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                  {[
+                    "Kendaraan sudah sesuai",
+                    "Jenis servis sudah benar",
+                    "Tanggal & waktu sudah tepat",
+                    "Siap hadir sesuai jadwal",
+                  ].map((item, i) => (
+                    <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <div style={{ width:18, height:18, borderRadius:5, background:"rgba(249,115,22,0.12)", border:"1px solid rgba(249,115,22,0.3)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                        <CheckCircle2 size={11} color="#f97316"/>
+                      </div>
+                      <span style={{ fontSize:12, color:"#9ca3af" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:12, padding:"22px 24px", display:"flex", flexDirection:"column", gap:10 }}>
+                <button
+                  style={{ width:"100%", padding:"13px", background:"#f97316", border:"none", borderRadius:8, fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer", letterSpacing:1.5, textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
+                >
+                  <CheckCircle2 size={15}/> Konfirmasi Sekarang
+                </button>
+                <button
+                  onClick={()=>setStep(2)}
+                  style={{ width:"100%", padding:"11px", background:"transparent", border:"1px solid #2a2f3e", borderRadius:8, fontSize:12, fontWeight:600, color:"#6b7280", cursor:"pointer", letterSpacing:1, textTransform:"uppercase" }}
+                >
+                  ← Ganti Jadwal
+                </button>
+                <p style={{ fontSize:10, color:"#374151", textAlign:"center", margin:0, lineHeight:1.5 }}>
+                  Dengan mengkonfirmasi, Anda menyetujui syarat & ketentuan servis PASBER.
+                </p>
               </div>
             </div>
-          )}
-
-          {/* --- PAGE 2: JADWAL --- */}
-          {step === 2 && (
-            <div className="bg-[#161B22] p-8 md:p-10 rounded-[40px] border border-gray-800/50 animate-in fade-in duration-500">
-              <div className="flex justify-between items-center mb-10">
-                <h3 className="text-white font-bold uppercase text-[10px] tracking-[0.3em]">Pilih Tanggal</h3>
-                <div className="flex items-center bg-[#0F1117] border border-gray-800 rounded-xl px-2 py-1.5">
-                  <select 
-                    value={selectedMonth} 
-                    onChange={(e) => {
-                      setSelectedMonth(parseInt(e.target.value));
-                      setSelectedDate(1);
-                    }} 
-                    className="bg-transparent text-gray-400 text-[10px] font-bold uppercase px-3 outline-none"
-                  >
-                    {months.map((m, i) => i >= 4 && <option key={m} value={i} className="bg-[#161B22]">{m}</option>)}
-                  </select>
-                  <span className="text-gray-500 text-[10px] font-bold px-3 uppercase">2026</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-7 gap-4 mb-12">
-                {['SN','SL','RB','KM','JM','SB','MN'].map(d => <div key={d} className="text-[10px] font-black text-gray-700 text-center uppercase mb-2">{d}</div>)}
-                {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} className="py-6"></div>)}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const dateNum = i + 1;
-                  return (
-                    <button 
-                      key={dateNum} 
-                      onClick={() => setSelectedDate(dateNum)} 
-                      className={`py-5 rounded-[18px] border-2 font-bold text-sm transition-all ${selectedDate === dateNum ? 'bg-[#FF5722] border-[#FF5722] text-white shadow-lg' : 'bg-[#0F1117] border-gray-800/60 text-gray-600 hover:border-gray-500'}`}
-                    >
-                      {dateNum}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-5">
-                <button onClick={() => setStep(1)} className="flex-1 bg-[#1C2128] py-5 rounded-[20px] font-bold text-[10px] uppercase text-gray-500 border border-gray-800">KEMBALI</button>
-                <button onClick={() => setStep(3)} className="flex-[2] bg-[#FF5722] py-5 rounded-[20px] font-black text-[10px] uppercase text-white shadow-lg">NEXT: KONFIRMASI</button>
-              </div>
-            </div>
-          )}
-
-          {/* --- PAGE 3: KONFIRMASI --- */}
-          {step === 3 && (
-            <div className="max-w-4xl mx-auto bg-[#161B22] p-12 rounded-[48px] border border-gray-800 shadow-2xl text-center animate-in duration-500">
-              <div className="w-24 h-24 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-8">
-                <CheckCircle2 size={48} className="text-[#FF5722]" strokeWidth={2.5} />
-              </div>
-              <h3 className="text-3xl font-black text-white mb-3 uppercase tracking-tight">Cek Sekali Lagi!</h3>
-              <p className="text-gray-500 text-sm mb-12 max-w-sm mx-auto leading-relaxed">Pastikan semua data booking anda sudah benar sebelum diproses oleh sistem.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mb-12">
-                <div className="bg-[#0F1117] p-8 rounded-[32px] border border-gray-800 flex items-start gap-5 hover:border-gray-700 transition-colors">
-                   <div className="p-3.5 bg-gray-800/50 rounded-2xl text-orange-500"><Car size={26}/></div>
-                   <div>
-                     <p className="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-1.5">Kendaraan & Layanan</p>
-                     <p className="text-white font-bold text-[15px] uppercase">{selectedVehicle === 'astrea' ? 'Legenda Astrea' : 'Honda Brio'}</p>
-                     <p className="text-orange-500 text-[11px] font-bold uppercase tracking-wider mt-0.5">
-                       {selectedService === 'oli' ? 'Ganti Oli' : 
-                        selectedService === 'tuneup' ? 'Tune Up' : 
-                        selectedService === 'ban' ? 'Ganti Ban' : 'Perbaikan Umum'}
-                     </p>
-                   </div>
-                </div>
-                <div className="bg-[#0F1117] p-8 rounded-[32px] border border-gray-800 flex items-start gap-5 hover:border-gray-700 transition-colors">
-                   <div className="p-3.5 bg-gray-800/50 rounded-2xl text-orange-500"><Clock size={26}/></div>
-                   <div>
-                     <p className="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-1.5">Waktu Kedatangan</p>
-                     <p className="text-white font-bold text-[15px] uppercase">{selectedDate} {months[selectedMonth]} 2026</p>
-                     <p className="text-gray-400 text-[11px] font-bold uppercase tracking-wider mt-0.5">{selectedTime} WIB</p>
-                   </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-5">
-                <button onClick={() => setStep(2)} className="flex-1 bg-[#1C2128] py-5 rounded-[24px] font-bold text-[10px] uppercase text-gray-500 border border-gray-800">GANTI JADWAL</button>
-                <button className="flex-[2] bg-[#FF5722] py-5 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] text-white shadow-xl">KONFIRMASI SEKARANG</button>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
-    </div>
-  );
-}
 
-// --- SUB-COMPONENTS ---
-function NavItem({ icon, label, active = false }: any) {
-  return (
-    <div className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all ${active ? 'bg-orange-500/10 text-orange-500 border-l-[3px] border-orange-500' : 'text-gray-500 hover:bg-gray-800/30'}`}>
-      {icon} <span className="text-xs font-black uppercase tracking-widest">{label}</span>
-    </div>
-  );
-}
+      {/* ── MODAL TAMBAH KENDARAAN ── */}
+      {showModal && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:50 }}>
+          <div style={{ background:"#13161e", border:"1px solid #1e2230", borderRadius:14, padding:28, width:"100%", maxWidth:420 }}>
+            {/* Modal header */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:"#fff", letterSpacing:1, textTransform:"uppercase" }}>Tambah Kendaraan</span>
+              <button onClick={()=>setShowModal(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:"#6b7280" }}><X size={18}/></button>
+            </div>
 
-function StepIndicator({ number, label, active, done }: any) {
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center font-bold text-sm transition-all duration-500 ${active || done ? 'bg-[#FF5722] text-white shadow-lg' : 'bg-[#161B22] text-gray-700 border border-gray-800'}`}>
-        {done ? <CheckCircle2 size={20}/> : number}
-      </div>
-      <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${active ? 'text-white' : 'text-gray-700'}`}>{label}</span>
-    </div>
-  );
-}
+            {/* Type toggle */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:20 }}>
+              {(["motor","mobil"] as const).map(t=>(
+                <button key={t} onClick={()=>setVehicleType(t)} style={{ padding:"10px", borderRadius:8, border:`1px solid ${vehicleType===t?"#f97316":"#2a2f3e"}`, background: vehicleType===t?"rgba(249,115,22,0.08)":"#0f1117", fontSize:12, fontWeight:700, color: vehicleType===t?"#f97316":"#6b7280", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, textTransform:"capitalize" }}>
+                  {t==="motor"?<Bike size={15}/>:<Car size={15}/>} {t}
+                </button>
+              ))}
+            </div>
 
-function VehicleCard({ title, plate, active, onClick }: any) {
-  return (
-    <div onClick={onClick} className={`p-6 rounded-[24px] border-2 cursor-pointer transition-all duration-300 flex justify-between items-center ${active ? 'border-orange-500 bg-orange-500/5' : 'border-gray-800 bg-[#0F1117] hover:border-gray-700'}`}>
-      <div className="flex items-center gap-5">
-        <div className={`p-3 rounded-xl transition-colors ${active ? 'bg-orange-500 text-white shadow-lg' : 'bg-gray-800 text-gray-600'}`}><Car size={22}/></div>
-        <div className="text-left">
-          <p className="text-[13px] font-black text-white uppercase tracking-tight">{title}</p>
-          <p className="text-[10px] text-gray-600 font-mono tracking-widest">{plate}</p>
+            {/* Fields */}
+            {[
+              { label:"Merek *",        val:vBrand,  set:setVBrand,  ph:"Honda, Yamaha, Toyota..." },
+              { label:"Model *",        val:vModel,  set:setVModel,  ph:"Beat, Vario, Avanza..."   },
+              { label:"No. Polisi *",   val:vPlate,  set:setVPlate,  ph:"D 4621 XY"                },
+              { label:"Tahun",          val:vYear,   set:setVYear,   ph:"2022"                     },
+            ].map(f=>(
+              <div key={f.label} style={{ marginBottom:14 }}>
+                <label style={{ fontSize:10, color:"#4b5563", letterSpacing:1, fontWeight:700, textTransform:"uppercase", display:"block", marginBottom:6 }}>{f.label}</label>
+                <input
+                  value={f.val}
+                  onChange={e=>f.set(e.target.value)}
+                  placeholder={f.ph}
+                  style={{ width:"100%", background:"#0f1117", border:"1px solid #2a2f3e", borderRadius:8, padding:"10px 12px", fontSize:13, color:"#e2e8f0", outline:"none", boxSizing:"border-box" }}
+                />
+              </div>
+            ))}
+
+            {formError && <p style={{ fontSize:11, color:"#f87171", marginBottom:12 }}>{formError}</p>}
+
+            <div style={{ display:"flex", gap:10, marginTop:8 }}>
+              <button onClick={()=>setShowModal(false)} style={{ flex:1, padding:"11px", background:"transparent", border:"1px solid #2a2f3e", borderRadius:8, fontSize:12, fontWeight:700, color:"#6b7280", cursor:"pointer" }}>Batal</button>
+              <button onClick={saveVehicle} style={{ flex:2, padding:"11px", background:"#f97316", border:"none", borderRadius:8, fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer" }}>Simpan Kendaraan</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${active ? 'bg-orange-500 border-orange-500' : 'border-gray-800 opacity-50'}`}>
-        {active && <CheckCircle2 size={14} className="text-white" />}
-      </div>
-    </div>
-  );
-}
+      )}
 
-function ServiceCard({ title, desc, active, onClick }: any) {
-  return (
-    <div onClick={onClick} className={`p-5 rounded-2xl border-2 flex justify-between items-center cursor-pointer transition-all duration-300 ${active ? 'bg-orange-500/10 border-orange-500/60' : 'bg-[#0F1117] border-gray-800 hover:border-gray-700'}`}>
-      <div className="flex items-center gap-5">
-        <div className={`p-2.5 rounded-xl transition-colors ${active ? 'bg-orange-500 text-white' : 'bg-gray-800 text-gray-700'}`}><Wrench size={20}/></div>
-        <div className="text-left">
-          <p className="text-[12px] font-black text-white uppercase tracking-wider">{title}</p>
-          <p className="text-[10px] text-gray-500 tracking-tight mt-0.5 leading-none">{desc}</p>
-        </div>
-      </div>
-      <div className={`w-2.5 h-2.5 rounded-full border-2 transition-all ${active ? 'bg-orange-500 border-orange-500 scale-125' : 'border-gray-800 scale-100'}`} />
+      <style>{`input::placeholder{color:#374151;} *{box-sizing:border-box;}`}</style>
     </div>
   );
 }
