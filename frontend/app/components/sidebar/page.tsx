@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Activity,
   CalendarPlus,
   History,
   Receipt,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -28,6 +29,30 @@ type SidebarProps = {
 
 export default function Sidebar({ activeHref, user }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
+
+    const token = localStorage.getItem('token');
+
+    const res = await fetch('http://127.0.0.1:8000/api/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("STATUS LOGOUT:", res.status);
+
+    localStorage.removeItem('token');
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
+    console.log("COOKIE SETELAH LOGOUT:", document.cookie);
+
+    router.push('/auth/login');
+  };
 
   return (
     <aside className="fixed top-0 left-0 bottom-0 w-[200px] bg-[#13161e] border-r border-[#1e2230] flex flex-col py-6 z-10">
@@ -83,6 +108,17 @@ export default function Sidebar({ activeHref, user }: SidebarProps) {
           <div className="text-[10px] text-[#4b5563]">Pelanggan Terdaftar</div>
         </div>
       </div>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="mx-3 mt-2 mb-1 flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg
+          text-[12px] font-medium text-[#ef4444] bg-transparent border border-transparent
+          cursor-pointer transition-colors hover:bg-red-500/10 hover:border-red-500/20 w-[calc(100%-24px)]"
+      >
+        <LogOut size={14} />
+        Keluar
+      </button>
 
       {/* Footer */}
       <div className="px-5 pt-2.5 border-t border-[#1e2230]">
