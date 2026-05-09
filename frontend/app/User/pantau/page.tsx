@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Activity,
   Bell,
@@ -13,6 +13,8 @@ import {
   Package,
 } from "lucide-react";
 import Sidebar from "@/app/components/sidebar/page";
+
+type User = { name: string; fotoProfile?: string };
 
 const progressSteps = [
   { label: "BOOKING\nAPPROVED", done: true },
@@ -48,10 +50,27 @@ export default function PantauServicePage() {
   const [statusFilter, setStatusFilter] = useState("Semua Status");
   const [searchQuery, setSearchQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://127.0.0.1:8000/api/user", {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#0f1117] font-sans text-slate-200">
-      <Sidebar />
+    <div className="flex min-h-screen bg-[#0f1117]">
+      <Sidebar activeHref="/User/pantau" user={user} />
 
       {/* Main */}
       <main className="ml-[200px] flex-1 p-8 px-9">
@@ -283,3 +302,4 @@ export default function PantauServicePage() {
     </div>
   );
 }
+  

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Activity,
@@ -10,11 +11,11 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { label: "Dashboard Saya",      icon: LayoutDashboard, href: "/User/dashboard" },
-  { label: "Pantau Service",      icon: Activity,        href: "/User/pantau"    },
-  { label: "Booking Service",     icon: CalendarPlus,    href: "/User/service"   },
-  { label: "Riwayat Service",     icon: History,         href: "/User/riwayat"   },
-  { label: "Tagihan & Pembayaran",icon: Receipt,         href: "/User/tagihan"   },
+  { label: "Dashboard Saya",       icon: LayoutDashboard, href: "/User/dashboard" },
+  { label: "Pantau Service",       icon: Activity,        href: "/User/pantau"    },
+  { label: "Booking Service",      icon: CalendarPlus,    href: "/User/service"   },
+  { label: "Riwayat Service",      icon: History,         href: "/User/riwayat"   },
+  { label: "Tagihan & Pembayaran", icon: Receipt,         href: "/User/tagihan"   },
 ];
 
 type SidebarProps = {
@@ -26,6 +27,8 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ activeHref, user }: SidebarProps) {
+  const pathname = usePathname();
+
   return (
     <aside className="fixed top-0 left-0 bottom-0 w-[200px] bg-[#13161e] border-r border-[#1e2230] flex flex-col py-6 z-10">
 
@@ -38,7 +41,8 @@ export default function Sidebar({ activeHref, user }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1">
         {navItems.map((item) => {
-          const isActive = activeHref === item.href;
+          const isActive = activeHref === item.href ||
+            (pathname !== null && (pathname === item.href || pathname.startsWith(item.href + "/")));
           return (
             <Link
               key={item.href}
@@ -76,7 +80,7 @@ export default function Sidebar({ activeHref, user }: SidebarProps) {
           <div className="text-[11px] font-semibold text-[#e2e8f0]">
             {user?.name || "Loading..."}
           </div>
-          <div className="text-[10px] text-[#4b5563]">Pelanggan reseller</div>
+          <div className="text-[10px] text-[#4b5563]">Pelanggan Terdaftar</div>
         </div>
       </div>
 

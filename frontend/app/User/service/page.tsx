@@ -53,6 +53,15 @@ const sessions = [
 
 const YEAR = 2026;
 
+const bengkelOptions = [
+  { id: "farhan",   name: "Farhan Mekanik",        addr: "Jl. Melati No. 42, RT 005/RW 012, Kel. Menteng, Kec. Menteng" },
+  { id: "gigi",     name: "Gigi Mundur",            addr: "Komplek Ruko Permata Blok C-08, Jl. Raya Pajajaran" },
+  { id: "salah",    name: "Salah Sambung",          addr: "Perumahan Graha Kartika Blok D3/14, Jl. Sunset Road" },
+  { id: "spesialis",name: "Spesialis Penyakit Dalam", addr: "Kawasan Industri Jababeka Kav. 12-14, Jl. Jababeka Raya" },
+];
+
+
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function BookingServicePage() {
 
@@ -77,6 +86,7 @@ export default function BookingServicePage() {
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedDate,  setSelectedDate]  = useState(today.getDate());
   const [selectedTime,  setSelectedTime]  = useState("09:00");
+  const [selectedBengkel, setSelectedBengkel] = useState<string | null>("farhan");
 
   const fetchVehicles = async () => {
     try {
@@ -313,73 +323,115 @@ export default function BookingServicePage() {
 
         {/* ── STEP 2: JADWAL ── */}
         {step === 2 && (
-          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-7">
-            {/* Month nav */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">PILIH TANGGAL</div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setSelectedMonth((m) => Math.max(0, m - 1))}
-                  className="w-7 h-7 bg-[#1a1d28] border border-[#2a2f3e] rounded-md flex items-center justify-center cursor-pointer text-[#9ca3af]">
-                  <ChevronLeft size={14} />
+          <div className="grid gap-5 items-start" style={{ gridTemplateColumns: "1fr 380px" }}>
+
+            {/* LEFT — Kalender + Sesi */}
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-7">
+              {/* Month nav */}
+              <div className="flex justify-between items-center mb-6">
+                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">PILIH TANGGAL</div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setSelectedMonth((m) => Math.max(0, m - 1))}
+                    className="w-7 h-7 bg-[#1a1d28] border border-[#2a2f3e] rounded-md flex items-center justify-center cursor-pointer text-[#9ca3af]">
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="text-[13px] font-semibold text-[#e2e8f0] min-w-[120px] text-center">
+                    {months[selectedMonth]} {YEAR}
+                  </span>
+                  <button onClick={() => setSelectedMonth((m) => Math.min(11, m + 1))}
+                    className="w-7 h-7 bg-[#1a1d28] border border-[#2a2f3e] rounded-md flex items-center justify-center cursor-pointer text-[#9ca3af]">
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Day headers */}
+              <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+                {["SN","SL","RB","KM","JM","SB","MN"].map((d) => (
+                  <div key={d} className="text-center text-[10px] font-bold text-[#4b5563] tracking-[1px] py-1">{d}</div>
+                ))}
+              </div>
+
+              {/* Calendar */}
+              <div className="grid grid-cols-7 gap-1.5 mb-7">
+                {Array.from({ length: getFirstDay(selectedMonth) }).map((_, i) => <div key={`e${i}`} />)}
+                {Array.from({ length: getDays(selectedMonth) }).map((_, i) => {
+                  const d = i + 1;
+                  const isSel = selectedDate === d;
+                  return (
+                    <button key={d} onClick={() => setSelectedDate(d)}
+                      className={`py-2.5 rounded-lg border text-[13px] font-semibold cursor-pointer
+                        ${isSel ? "border-[#f97316] bg-[#f97316] text-white" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Time slots */}
+              <div className="flex items-center gap-2 mb-3.5">
+                <Clock size={13} color="#f97316" />
+                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">SESI TERSEDIA</div>
+              </div>
+              <div className="grid grid-cols-4 gap-2 mb-7">
+                {sessions.map((t) => {
+                  const isSel = selectedTime === t;
+                  return (
+                    <button key={t} onClick={() => setSelectedTime(t)}
+                      className={`py-2.5 rounded-lg border text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5
+                        ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setStep(1)}
+                  className="flex-1 py-3 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[12px] font-bold text-[#6b7280] cursor-pointer tracking-[1px] uppercase">
+                  ← Kembali
                 </button>
-                <span className="text-[13px] font-semibold text-[#e2e8f0] min-w-[120px] text-center">
-                  {months[selectedMonth]} {YEAR}
-                </span>
-                <button onClick={() => setSelectedMonth((m) => Math.min(11, m + 1))}
-                  className="w-7 h-7 bg-[#1a1d28] border border-[#2a2f3e] rounded-md flex items-center justify-center cursor-pointer text-[#9ca3af]">
-                  <ChevronRight size={14} />
+                <button onClick={() => { if (!selectedBengkel) { alert("Pilih bengkel terlebih dahulu"); return; } setStep(3); }}
+                  className="flex-[2] py-3 bg-[#f97316] border-none rounded-lg text-[12px] font-bold text-white cursor-pointer tracking-[1.5px] uppercase">
+                  Lanjut: Konfirmasi →
                 </button>
               </div>
             </div>
 
-            {/* Day headers */}
-            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
-              {["SN","SL","RB","KM","JM","SB","MN"].map((d) => (
-                <div key={d} className="text-center text-[10px] font-bold text-[#4b5563] tracking-[1px] py-1">{d}</div>
-              ))}
+            {/* RIGHT — Pilih Bengkel */}
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6">
+              <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold mb-5">PILIH BENGKEL</div>
+              <div className="flex flex-col gap-px">
+                {bengkelOptions.map((b, i) => {
+                  const isSel = selectedBengkel === b.id;
+                  return (
+                    <div key={b.id}
+                      onClick={() => setSelectedBengkel(b.id)}
+                      className={`flex items-start justify-between gap-3 px-4 py-4 cursor-pointer transition-all
+                        ${i < bengkelOptions.length - 1 ? "border-b border-[#1e2230]" : ""}
+                        ${isSel ? "bg-[rgba(249,115,22,0.05)]" : "hover:bg-[#1a1d28]"}`}>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] font-bold m-0 ${isSel ? "text-white" : "text-[#9ca3af]"}`}>
+                          {b.name}
+                        </p>
+                        <p className="text-[11px] text-[#4b5563] mt-1 m-0 leading-snug">{b.addr}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 border transition-all
+                        ${isSel
+                          ? "bg-[#f97316] border-[#f97316]"
+                          : "bg-transparent border-[#2a2f3e]"}`}>
+                        {isSel && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Calendar */}
-            <div className="grid grid-cols-7 gap-1.5 mb-7">
-              {Array.from({ length: getFirstDay(selectedMonth) }).map((_, i) => <div key={`e${i}`} />)}
-              {Array.from({ length: getDays(selectedMonth) }).map((_, i) => {
-                const d = i + 1;
-                const isSel = selectedDate === d;
-                return (
-                  <button key={d} onClick={() => setSelectedDate(d)}
-                    className={`py-2.5 rounded-lg border text-[13px] font-semibold cursor-pointer
-                      ${isSel ? "border-[#f97316] bg-[#f97316] text-white" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
-                    {d}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Time slots */}
-            <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold mb-3.5">PILIH SESI</div>
-            <div className="grid grid-cols-4 gap-2 mb-7">
-              {sessions.map((t) => {
-                const isSel = selectedTime === t;
-                return (
-                  <button key={t} onClick={() => setSelectedTime(t)}
-                    className={`py-2.5 rounded-lg border text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5
-                      ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
-                    <Clock size={12} /> {t}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-3">
-              <button onClick={() => setStep(1)}
-                className="flex-1 py-3 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[12px] font-bold text-[#6b7280] cursor-pointer tracking-[1px] uppercase">
-                ← Kembali
-              </button>
-              <button onClick={() => setStep(3)}
-                className="flex-[2] py-3 bg-[#f97316] border-none rounded-lg text-[12px] font-bold text-white cursor-pointer tracking-[1.5px] uppercase">
-                Lanjut: Konfirmasi →
-              </button>
-            </div>
           </div>
         )}
 
@@ -407,14 +459,15 @@ export default function BookingServicePage() {
                 </div>
 
                 {/* Info grid */}
-                <div className="grid grid-cols-3 gap-0">
+                <div className="grid grid-cols-2 gap-0">
                   {[
                     { label: "Jenis Layanan", value: serviceOptions.find((s) => s.id === selectedService)?.label ?? "-", accent: true },
-                    { label: "Tanggal",       value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
-                    { label: "Sesi Waktu",    value: `${selectedTime} WIB` },
+                    { label: "Bengkel",        value: bengkelOptions.find((b) => b.id === selectedBengkel)?.name ?? "-" },
+                    { label: "Tanggal",        value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
+                    { label: "Sesi Waktu",     value: `${selectedTime} WIB` },
                   ].map((item, i) => (
                     <div key={item.label}
-                      className={`py-3.5 ${i > 0 ? "pl-5 border-l border-[#1e2230]" : ""}`}>
+                      className={`py-3.5 ${i % 2 !== 0 ? "pl-5 border-l border-[#1e2230]" : ""} ${i >= 2 ? "border-t border-[#1e2230]" : ""}`}>
                       <p className="text-[9px] text-[#4b5563] tracking-[1.2px] font-bold uppercase mb-1.5">{item.label}</p>
                       <p className={`text-[14px] font-bold m-0 ${item.accent ? "text-[#f97316]" : "text-[#e2e8f0]"}`}>{item.value}</p>
                     </div>

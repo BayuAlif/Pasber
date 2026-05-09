@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bell,
   Bike,
@@ -286,13 +286,30 @@ function PaymentDetail({
 export default function TagihanPage() {
   const [tab, setTab] = useState<"belum" | "sudah">("belum");
   const [selectedBill, setSelectedBill] = useState<(typeof unpaidBills)[0] | null>(null);
+  const [user, setUser] = useState<{ name: string; fotoProfile?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://127.0.0.1:8000/api/user", {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <div
       className="flex min-h-screen bg-[#0f1117] text-slate-200"
       style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}
     >
-      <Sidebar />
+      <Sidebar activeHref="/User/tagihan" user={user} />
 
       <main className="ml-[200px] flex-1 p-8 px-9">
         {/* Header */}
