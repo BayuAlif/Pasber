@@ -14,19 +14,43 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
+  // ─── Inline validation errors ───────────────────────────────────────────
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({});
+
+  const validateName = (v: string) => {
+    if (!v.trim()) return "Nama lengkap wajib diisi";
+    if (v.trim().length < 3) return "Nama minimal 3 karakter";
+    return "";
+  };
+  const validateEmail = (v: string) => {
+    if (!v.trim()) return "Alamat email wajib diisi";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Format email tidak valid — pastikan ada @ dan domain yang benar";
+    return "";
+  };
+  const validatePassword = (v: string) => {
+    if (!v) return "Password wajib diisi";
+    if (v.length < 6) return "Password minimal 6 karakter";
+    return "";
+  };
+  const validateConfirm = (v: string, pw: string) => {
+    if (!v) return "Konfirmasi password wajib diisi";
+    if (v !== pw) return "Password tidak cocok — pastikan kedua kolom sama";
+    return "";
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const nameErr    = validateName(name);
+    const emailErr   = validateEmail(email);
+    const passErr    = validatePassword(password);
+    const confirmErr = validateConfirm(confirmPassword, password);
+    setErrors({ name: nameErr, email: emailErr, password: passErr, confirm: confirmErr });
+
+    if (nameErr || emailErr || passErr || confirmErr) return;
+
     if (!agreed) {
       alert("Harap setujui Syarat & Ketentuan terlebih dahulu");
-      return;
-    }
-    if (password.length < 6) {
-      alert("Password minimal harus 6 karakter");
-      return;
-    }
-    if (password !== confirmPassword) {
-      alert("Password tidak sama");
       return;
     }
 
@@ -124,11 +148,21 @@ export default function RegisterPage() {
                   type="text"
                   placeholder="Masukkan nama lengkap"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: validateName(e.target.value) })); }}
+                  onBlur={(e) => setErrors((prev) => ({ ...prev, name: validateName(e.target.value) }))}
                   required
-                  className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-orange-500/50 transition-all placeholder:text-gray-600"
+                  className={`w-full bg-black/40 border rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all placeholder:text-gray-600
+                    ${errors.name ? "border-red-500/60 focus:border-red-500" : "border-white/5 focus:border-orange-500/50"}`}
                 />
               </div>
+              {errors.name && (
+                <div className="flex items-start gap-1.5 mt-1.5 px-1">
+                  <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                  </svg>
+                  <span className="text-[11px] text-red-400 leading-tight">{errors.name}</span>
+                </div>
+              )}
             </div>
 
             {/* Email */}
@@ -144,11 +178,21 @@ export default function RegisterPage() {
                   type="email"
                   placeholder="admin@pasber.auto"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) })); }}
+                  onBlur={(e) => setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }))}
                   required
-                  className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-orange-500/50 transition-all placeholder:text-gray-600"
+                  className={`w-full bg-black/40 border rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all placeholder:text-gray-600
+                    ${errors.email ? "border-red-500/60 focus:border-red-500" : "border-white/5 focus:border-orange-500/50"}`}
                 />
               </div>
+              {errors.email && (
+                <div className="flex items-start gap-1.5 mt-1.5 px-1">
+                  <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                  </svg>
+                  <span className="text-[11px] text-red-400 leading-tight">{errors.email}</span>
+                </div>
+              )}
             </div>
 
             {/* Password row */}
@@ -164,10 +208,12 @@ export default function RegisterPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((prev) => ({ ...prev, password: validatePassword(e.target.value) })); }}
+                    onBlur={(e) => setErrors((prev) => ({ ...prev, password: validatePassword(e.target.value) }))}
                     placeholder="••••••••"
                     required
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-9 text-sm outline-none focus:border-orange-500/50 transition-all"
+                    className={`w-full bg-black/40 border rounded-xl py-3 pl-10 pr-9 text-sm outline-none transition-all
+                      ${errors.password ? "border-red-500/60 focus:border-red-500" : "border-white/5 focus:border-orange-500/50"}`}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
@@ -177,6 +223,14 @@ export default function RegisterPage() {
                     </svg>
                   </button>
                 </div>
+                {errors.password && (
+                  <div className="flex items-start gap-1.5 mt-1.5 px-1">
+                    <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                    </svg>
+                    <span className="text-[11px] text-red-400 leading-tight">{errors.password}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -190,10 +244,12 @@ export default function RegisterPage() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirm) setErrors((prev) => ({ ...prev, confirm: validateConfirm(e.target.value, password) })); }}
+                    onBlur={(e) => setErrors((prev) => ({ ...prev, confirm: validateConfirm(e.target.value, password) }))}
                     placeholder="••••••••"
                     required
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-9 text-sm outline-none focus:border-orange-500/50 transition-all"
+                    className={`w-full bg-black/40 border rounded-xl py-3 pl-10 pr-9 text-sm outline-none transition-all
+                      ${errors.confirm ? "border-red-500/60 focus:border-red-500" : "border-white/5 focus:border-orange-500/50"}`}
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
@@ -203,6 +259,14 @@ export default function RegisterPage() {
                     </svg>
                   </button>
                 </div>
+                {errors.confirm && (
+                  <div className="flex items-start gap-1.5 mt-1.5 px-1">
+                    <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                    </svg>
+                    <span className="text-[11px] text-red-400 leading-tight">{errors.confirm}</span>
+                  </div>
+                )}
               </div>
             </div>
 

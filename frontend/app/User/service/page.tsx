@@ -54,10 +54,10 @@ const sessions = [
 const YEAR = 2026;
 
 const bengkelOptions = [
-  { id: "farhan",   name: "Farhan Mekanik",        addr: "Jl. Melati No. 42, RT 005/RW 012, Kel. Menteng, Kec. Menteng" },
-  { id: "gigi",     name: "Gigi Mundur",            addr: "Komplek Ruko Permata Blok C-08, Jl. Raya Pajajaran" },
-  { id: "salah",    name: "Salah Sambung",          addr: "Perumahan Graha Kartika Blok D3/14, Jl. Sunset Road" },
-  { id: "spesialis",name: "Spesialis Penyakit Dalam", addr: "Kawasan Industri Jababeka Kav. 12-14, Jl. Jababeka Raya" },
+  { id: "farhan",    name: "Farhan Mekanik",           addr: "Jl. Melati No. 42, RT 005/RW 012, Kel. Menteng, Kec. Menteng",         lat: -6.1944,  lng: 106.8229 },
+  { id: "gigi",      name: "Gigi Mundur",               addr: "Komplek Ruko Permata Blok C-08, Jl. Raya Pajajaran",                   lat: -6.9175,  lng: 107.6191 },
+  { id: "salah",     name: "Salah Sambung",             addr: "Perumahan Graha Kartika Blok D3/14, Jl. Sunset Road",                  lat: -6.2297,  lng: 106.7532 },
+  { id: "spesialis", name: "Spesialis Penyakit Dalam",  addr: "Kawasan Industri Jababeka Kav. 12-14, Jl. Jababeka Raya",              lat: -6.3264,  lng: 107.1455 },
 ];
 
 
@@ -69,8 +69,8 @@ export default function BookingServicePage() {
 
   // vehicles
   const [vehicles, setVehicles]               = useState<Vehicle[]>([]);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState("oli");
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>(["oli"]);
 
   // modal
   const [showModal, setShowModal]   = useState(false);
@@ -87,6 +87,31 @@ export default function BookingServicePage() {
   const [selectedDate,  setSelectedDate]  = useState(today.getDate());
   const [selectedTime,  setSelectedTime]  = useState("09:00");
   const [selectedBengkel, setSelectedBengkel] = useState<string | null>("farhan");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // ─── Haversine Distance ─────────────────────────────────────────────────
+  const calcDistance = (lat1: number, lng1: number, lat2: number, lng2: number): string => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = R * c;
+    return dist < 1 ? `${(dist * 1000).toFixed(0)} m` : `${dist.toFixed(1)} km`;
+  };
+
+  // ─── Get User Location ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => setUserLocation({ lat: -6.9147, lng: 107.6098 }) // fallback: Bandung
+      );
+    }
+  }, []);
 
   const fetchVehicles = async () => {
     try {
@@ -151,7 +176,7 @@ export default function BookingServicePage() {
         year:  result.data.tahun,
       };
       setVehicles((prev) => [...prev, newVehicle]);
-      setSelectedVehicleId(newVehicle.id);
+      setSelectedVehicleIds((prev) => [...prev, newVehicle.id]);
       setShowModal(false);
     } catch (error) { console.error(error); }
   };
@@ -165,11 +190,11 @@ export default function BookingServicePage() {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       setVehicles((prev) => prev.filter((v) => v.id !== id));
-      if (selectedVehicleId === id) setSelectedVehicleId(null);
+      setSelectedVehicleIds((prev) => prev.filter((sid) => sid !== id));
     } catch (error) { console.error(error); }
   };
 
-  const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId);
+  const selectedVehicleList = vehicles.filter((v) => selectedVehicleIds.includes(v.id));
 
   const handleBooking = async () => {
     try {
@@ -180,18 +205,24 @@ export default function BookingServicePage() {
         `${String(bookingDate.getMonth() + 1).padStart(2, "0")}-` +
         `${String(bookingDate.getDate()).padStart(2, "0")} ` +
         `${selectedTime}:00`;
-      const response = await fetch(`${API_URL}/booking`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, Accept: "application/json" },
-        body: JSON.stringify({
-          kendaraanID: selectedVehicleId,
-          bengkel_id:  1,
-          Keluhan:     serviceOptions.find((s) => s.id === selectedService)?.label || "",
-          jadwalService: formattedDate,
-        }),
-      });
-      const result = await response.json();
-      console.log(result);
+      const keluhanLabel = selectedServices
+        .map((sid) => serviceOptions.find((s) => s.id === sid)?.label || "")
+        .filter(Boolean)
+        .join(", ");
+      for (const kendaraanID of selectedVehicleIds) {
+        const response = await fetch(`${API_URL}/booking`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, Accept: "application/json" },
+          body: JSON.stringify({
+            kendaraanID,
+            bengkel_id:  1,
+            Keluhan:     keluhanLabel,
+            jadwalService: formattedDate,
+          }),
+        });
+        const result = await response.json();
+        console.log(result);
+      }
       alert("Booking berhasil dibuat!");
     } catch (error) { console.error(error); alert("Booking gagal"); }
   };
@@ -264,27 +295,40 @@ export default function BookingServicePage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2.5">
-                  {vehicles.map((v) => (
-                    <div key={v.id} onClick={() => setSelectedVehicleId(v.id)}
-                      className={`px-4 py-3.5 rounded-[10px] border-2 cursor-pointer flex justify-between items-center
-                        ${selectedVehicleId === v.id ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]" : "border-[#1e2230] bg-[#0f1117]"}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${selectedVehicleId === v.id ? "bg-[#f97316] text-white" : "bg-[#1a1d28] text-[#4b5563]"}`}>
-                          {v.type === "motor" ? <Bike size={16} /> : <Car size={16} />}
+                  {vehicles.map((v) => {
+                    const isSel = selectedVehicleIds.includes(v.id);
+                    return (
+                      <div key={v.id} onClick={() => setSelectedVehicleIds((prev) => isSel ? prev.filter((id) => id !== v.id) : [...prev, v.id])}
+                        className={`px-4 py-3.5 rounded-[10px] border-2 cursor-pointer flex justify-between items-center
+                          ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]" : "border-[#1e2230] bg-[#0f1117]"}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${isSel ? "bg-[#f97316] text-white" : "bg-[#1a1d28] text-[#4b5563]"}`}>
+                            {v.type === "motor" ? <Bike size={16} /> : <Car size={16} />}
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-white uppercase m-0">
+                              {v.brand} {v.model}{v.year ? ` (${v.year})` : ""}
+                            </p>
+                            <p className="text-[10px] text-[#4b5563] font-mono tracking-[1px] m-0">{v.plate}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[13px] font-bold text-white uppercase m-0">
-                            {v.brand} {v.model}{v.year ? ` (${v.year})` : ""}
-                          </p>
-                          <p className="text-[10px] text-[#4b5563] font-mono tracking-[1px] m-0">{v.plate}</p>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all
+                            ${isSel ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`}>
+                            {isSel && (
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); deleteVehicle(v.id); }}
+                            className="p-1.5 bg-transparent border-none cursor-pointer text-[#374151]">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); deleteVehicle(v.id); }}
-                        className="p-1.5 bg-transparent border-none cursor-pointer text-[#374151]">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -293,27 +337,36 @@ export default function BookingServicePage() {
             <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6 flex flex-col">
               <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold mb-5">PILIH LAYANAN</div>
               <div className="flex flex-col gap-2.5 flex-1">
-                {serviceOptions.map((s) => (
-                  <div key={s.id} onClick={() => setSelectedService(s.id)}
-                    className={`px-4 py-3.5 rounded-[10px] border-2 cursor-pointer flex items-center justify-between
-                      ${selectedService === s.id ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]" : "border-[#1e2230] bg-[#0f1117]"}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${selectedService === s.id ? "bg-[#f97316]" : "bg-[#1a1d28]"}`}>
-                        <Wrench size={15} color={selectedService === s.id ? "#fff" : "#4b5563"} />
+                {serviceOptions.map((s) => {
+                  const isSel = selectedServices.includes(s.id);
+                  return (
+                    <div key={s.id} onClick={() => setSelectedServices((prev) => isSel ? prev.filter((id) => id !== s.id) : [...prev, s.id])}
+                      className={`px-4 py-3.5 rounded-[10px] border-2 cursor-pointer flex items-center justify-between
+                        ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]" : "border-[#1e2230] bg-[#0f1117]"}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isSel ? "bg-[#f97316]" : "bg-[#1a1d28]"}`}>
+                          <Wrench size={15} color={isSel ? "#fff" : "#4b5563"} />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-white m-0">{s.label}</p>
+                          <p className="text-[11px] text-[#6b7280] mt-0.5 m-0">{s.desc}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[13px] font-bold text-white m-0">{s.label}</p>
-                        <p className="text-[11px] text-[#6b7280] mt-0.5 m-0">{s.desc}</p>
+                      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all
+                        ${isSel ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`}>
+                        {isSel && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
                       </div>
                     </div>
-                    <div className={`w-2.5 h-2.5 rounded-full border-2
-                      ${selectedService === s.id ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`} />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <button
-                onClick={() => { if (!selectedVehicleId) { alert("Pilih kendaraan terlebih dahulu"); return; } setStep(2); }}
+                onClick={() => { if (selectedVehicleIds.length === 0) { alert("Pilih kendaraan terlebih dahulu"); return; } if (selectedServices.length === 0) { alert("Pilih minimal satu layanan"); return; } setStep(2); }}
                 className="mt-5 w-full py-3 bg-[#f97316] border-none rounded-lg text-[12px] font-bold text-white cursor-pointer tracking-[1.5px] uppercase">
                 Lanjut: Pilih Jadwal →
               </button>
@@ -404,6 +457,9 @@ export default function BookingServicePage() {
               <div className="flex flex-col gap-px">
                 {bengkelOptions.map((b, i) => {
                   const isSel = selectedBengkel === b.id;
+                  const dist = userLocation
+                    ? calcDistance(userLocation.lat, userLocation.lng, b.lat, b.lng)
+                    : null;
                   return (
                     <div key={b.id}
                       onClick={() => setSelectedBengkel(b.id)}
@@ -411,9 +467,23 @@ export default function BookingServicePage() {
                         ${i < bengkelOptions.length - 1 ? "border-b border-[#1e2230]" : ""}
                         ${isSel ? "bg-[rgba(249,115,22,0.05)]" : "hover:bg-[#1a1d28]"}`}>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-[13px] font-bold m-0 ${isSel ? "text-white" : "text-[#9ca3af]"}`}>
-                          {b.name}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`text-[13px] font-bold m-0 ${isSel ? "text-white" : "text-[#9ca3af]"}`}>
+                            {b.name}
+                          </p>
+                          {dist && (
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-wide
+                              ${isSel
+                                ? "bg-[rgba(249,115,22,0.15)] text-[#f97316] border border-[rgba(249,115,22,0.3)]"
+                                : "bg-[#1a1d28] text-[#6b7280] border border-[#2a2f3e]"}`}>
+                              <svg width="8" height="8" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"
+                                  fill={isSel ? "#f97316" : "#6b7280"}/>
+                              </svg>
+                              {dist}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-[#4b5563] mt-1 m-0 leading-snug">{b.addr}</p>
                       </div>
                       <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 border transition-all
@@ -445,31 +515,46 @@ export default function BookingServicePage() {
                 <p className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold uppercase mb-4">RINGKASAN BOOKING</p>
 
                 {/* Kendaraan row */}
-                <div className="flex items-center gap-4 pb-[18px] border-b border-[#1e2230] mb-[18px]">
+                <div className="flex items-start gap-4 pb-[18px] border-b border-[#1e2230] mb-[18px]">
                   <div className="w-12 h-12 rounded-[10px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.2)] flex items-center justify-center shrink-0">
-                    {selectedVehicle?.type === "motor" ? <Bike size={22} color="#f97316" /> : <Car size={22} color="#f97316" />}
+                    {selectedVehicleList[0]?.type === "motor" ? <Bike size={22} color="#f97316" /> : <Car size={22} color="#f97316" />}
                   </div>
                   <div className="flex-1">
                     <p className="text-[9px] text-[#4b5563] tracking-[1.2px] font-bold uppercase mb-1">Kendaraan</p>
-                    <p className="text-[16px] font-bold text-white uppercase m-0">
-                      {selectedVehicle?.brand} {selectedVehicle?.model}{selectedVehicle?.year ? ` (${selectedVehicle.year})` : ""}
-                    </p>
-                    <p className="text-[11px] text-[#4b5563] font-mono tracking-[2px] mt-0.5 m-0">{selectedVehicle?.plate}</p>
+                    {selectedVehicleList.map((v) => (
+                      <div key={v.id} className="mb-1">
+                        <p className="text-[14px] font-bold text-white uppercase m-0">
+                          {v.brand} {v.model}{v.year ? ` (${v.year})` : ""}
+                        </p>
+                        <p className="text-[11px] text-[#4b5563] font-mono tracking-[2px] m-0">{v.plate}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* Info grid */}
                 <div className="grid grid-cols-2 gap-0">
                   {[
-                    { label: "Jenis Layanan", value: serviceOptions.find((s) => s.id === selectedService)?.label ?? "-", accent: true },
-                    { label: "Bengkel",        value: bengkelOptions.find((b) => b.id === selectedBengkel)?.name ?? "-" },
+                    { label: "Jenis Layanan", value: selectedServices.map((sid) => serviceOptions.find((s) => s.id === sid)?.label ?? "").filter(Boolean).join(", "), accent: true },
+                    { label: "Bengkel",        value: bengkelOptions.find((b) => b.id === selectedBengkel)?.name ?? "-",
+                      sub: userLocation && selectedBengkel
+                        ? (() => { const b = bengkelOptions.find((x) => x.id === selectedBengkel); return b ? calcDistance(userLocation.lat, userLocation.lng, b.lat, b.lng) : null; })()
+                        : null },
                     { label: "Tanggal",        value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
                     { label: "Sesi Waktu",     value: `${selectedTime} WIB` },
                   ].map((item, i) => (
                     <div key={item.label}
                       className={`py-3.5 ${i % 2 !== 0 ? "pl-5 border-l border-[#1e2230]" : ""} ${i >= 2 ? "border-t border-[#1e2230]" : ""}`}>
                       <p className="text-[9px] text-[#4b5563] tracking-[1.2px] font-bold uppercase mb-1.5">{item.label}</p>
-                      <p className={`text-[14px] font-bold m-0 ${item.accent ? "text-[#f97316]" : "text-[#e2e8f0]"}`}>{item.value}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className={`text-[14px] font-bold m-0 ${item.accent ? "text-[#f97316]" : "text-[#e2e8f0]"}`}>{item.value}</p>
+                        {"sub" in item && item.sub && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[rgba(249,115,22,0.1)] text-[#f97316] border border-[rgba(249,115,22,0.2)]">
+                            <svg width="7" height="9" viewBox="0 0 10 14" fill="none"><path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="#f97316"/></svg>
+                            {item.sub}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

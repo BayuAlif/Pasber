@@ -286,7 +286,23 @@ function PaymentDetail({
 export default function TagihanPage() {
   const [tab, setTab] = useState<"belum" | "sudah">("belum");
   const [selectedBill, setSelectedBill] = useState<(typeof unpaidBills)[0] | null>(null);
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const [bulkMethod, setBulkMethod] = useState<"tunai" | "transfer" | "qris">("tunai");
+  const [showBulkPanel, setShowBulkPanel] = useState(false);
   const [user, setUser] = useState<{ name: string; fotoProfile?: string } | null>(null);
+
+  const allChecked = checkedIds.length === unpaidBills.length;
+  const toggleAll = () => setCheckedIds(allChecked ? [] : unpaidBills.map((b) => b.id));
+  const toggleOne = (id: string) =>
+    setCheckedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const totalChecked = unpaidBills.filter((b) => checkedIds.includes(b.id)).reduce((s, b) => s + b.total, 0);
+  const checkedCount = checkedIds.length;
+
+  const bulkMethods = [
+    { id: "tunai" as const, icon: Banknote, label: "Tunai (Cash)", sub: "BAYAR DI KASIR BENGKEL" },
+    { id: "transfer" as const, icon: Building2, label: "Transfer Bank", sub: "BCA / MANDIRI / BNI" },
+    { id: "qris" as const, icon: QrCode, label: "QRIS", sub: "GOPAY / OVO / KASIR BENGKEL" },
+  ];
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -357,58 +373,163 @@ export default function TagihanPage() {
               <p className="text-sm text-gray-300 m-0">
                 Kamu memiliki{" "}
                 <span className="text-orange-500 font-bold">{unpaidBills.length} tagihan aktif</span>{" "}
-                yang belum dibayar. Klik{" "}
-                <span className="text-orange-500 font-semibold">Bayar Sekarang</span>{" "}
-                untuk memproses masing-masing tagihan.
+                yang belum dibayar. Pilih satu atau beberapa tagihan untuk dibayar sekaligus.
               </p>
             </div>
 
-            {unpaidBills.map((bill) => (
-              <div
-                key={bill.id}
-                className="bg-[#13161e] border border-[#1e2230] rounded-xl flex items-center gap-5 px-6 py-5"
-              >
-                <div className="w-11 h-11 rounded-lg bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.2)] flex items-center justify-center flex-shrink-0">
-                  <Bike size={20} color="#f97316" />
+            {/* Select all bar */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-[#13161e] border border-[#1e2230] rounded-lg">
+              <button onClick={toggleAll} className="flex items-center gap-2.5 cursor-pointer bg-transparent border-none p-0">
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0
+                  ${allChecked ? "bg-orange-500 border-orange-500" : checkedIds.length > 0 ? "border-orange-500 bg-transparent" : "border-[#3a3f50] bg-transparent"}`}>
+                  {allChecked && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                  {!allChecked && checkedIds.length > 0 && (
+                    <div className="w-2.5 h-0.5 bg-orange-500 rounded" />
+                  )}
                 </div>
+                <span className="text-xs font-semibold text-gray-400">Pilih Semua</span>
+              </button>
+              {checkedCount > 0 && (
+                <span className="text-xs text-orange-500 font-semibold">{checkedCount} dipilih</span>
+              )}
+            </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-white">{bill.vehicle}</div>
-                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="text-xs text-orange-500 font-medium">{bill.plate}</span>
-                    <span className="text-gray-600 text-xs">•</span>
-                    <span className="text-xs text-gray-600">{bill.wo}</span>
-                    <span className="text-gray-600 text-xs">•</span>
-                    <span className="text-xs text-gray-600">{bill.selesai}</span>
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">{bill.services}</div>
-                </div>
-
-                <div className="flex items-center gap-6 flex-shrink-0">
-                  {[
-                    { label: "JASA", value: bill.jasa },
-                    { label: "SPAREPART", value: bill.sparepart },
-                    { label: "MATERIAL", value: bill.material },
-                  ].map((item) => (
-                    <div key={item.label} className="text-center">
-                      <div className="text-[10px] text-gray-600 tracking-wide mb-1">{item.label}</div>
-                      <div className="text-xs font-semibold text-gray-400">{fmt(item.value)}</div>
-                    </div>
-                  ))}
-                  <div className="text-center">
-                    <div className="text-[10px] text-gray-600 tracking-wide mb-1">TOTAL</div>
-                    <div className="text-base font-bold text-orange-500">{fmt(bill.total)}</div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setSelectedBill(bill)}
-                  className="flex-shrink-0 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 transition-colors text-white text-sm font-bold rounded-lg"
+            {unpaidBills.map((bill) => {
+              const isChecked = checkedIds.includes(bill.id);
+              return (
+                <div
+                  key={bill.id}
+                  onClick={() => toggleOne(bill.id)}
+                  className={`bg-[#13161e] border rounded-xl flex items-center gap-5 px-6 py-5 cursor-pointer transition-all
+                    ${isChecked ? "border-orange-500/50 bg-[rgba(249,115,22,0.04)]" : "border-[#1e2230] hover:border-[#2a2f3e]"}`}
                 >
-                  BAYAR
-                </button>
+                  {/* Checkbox */}
+                  <div
+                    onClick={(e) => { e.stopPropagation(); toggleOne(bill.id); }}
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0
+                      ${isChecked ? "bg-orange-500 border-orange-500" : "border-[#3a3f50] bg-transparent"}`}
+                  >
+                    {isChecked && (
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+
+                  <div className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-all
+                    ${isChecked ? "bg-[rgba(249,115,22,0.2)] border border-orange-500/40" : "bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.2)]"}`}>
+                    <Bike size={20} color="#f97316" />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-white">{bill.vehicle}</div>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-xs text-orange-500 font-medium">{bill.plate}</span>
+                      <span className="text-gray-600 text-xs">•</span>
+                      <span className="text-xs text-gray-600">{bill.wo}</span>
+                      <span className="text-gray-600 text-xs">•</span>
+                      <span className="text-xs text-gray-600">{bill.selesai}</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">{bill.services}</div>
+                  </div>
+
+                  <div className="flex items-center gap-6 flex-shrink-0">
+                    {[
+                      { label: "JASA", value: bill.jasa },
+                      { label: "SPAREPART", value: bill.sparepart },
+                      { label: "MATERIAL", value: bill.material },
+                    ].map((item) => (
+                      <div key={item.label} className="text-center">
+                        <div className="text-[10px] text-gray-600 tracking-wide mb-1">{item.label}</div>
+                        <div className="text-xs font-semibold text-gray-400">{fmt(item.value)}</div>
+                      </div>
+                    ))}
+                    <div className="text-center">
+                      <div className="text-[10px] text-gray-600 tracking-wide mb-1">TOTAL</div>
+                      <div className={`text-base font-bold transition-colors ${isChecked ? "text-orange-400" : "text-orange-500"}`}>{fmt(bill.total)}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSelectedBill(bill); }}
+                    className="flex-shrink-0 px-4 py-2 bg-transparent border border-[#2a2f3e] hover:border-[#3a3f50] text-gray-400 hover:text-gray-200 text-xs font-semibold rounded-lg transition-all"
+                  >
+                    DETAIL
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* ── Sticky bulk payment bar ── */}
+            {checkedCount > 0 && (
+              <div className="sticky bottom-0 mt-2 bg-[#13161e] border border-orange-500/30 rounded-xl overflow-hidden shadow-2xl shadow-black/40">
+                <div className="px-6 py-4 border-b border-[#1e2230]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-[10px] text-gray-500 tracking-widest font-bold mb-0.5">BAYAR SEKALIGUS</div>
+                      <div className="text-xs text-gray-400">
+                        {checkedCount} tagihan dipilih •{" "}
+                        <span className="text-orange-500 font-bold">{fmt(totalChecked)}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowBulkPanel((v) => !v)}
+                      className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2"
+                    >
+                      {showBulkPanel ? "Sembunyikan" : "Pilih Metode Bayar"}
+                    </button>
+                  </div>
+
+                  {showBulkPanel && (
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      {bulkMethods.map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={() => setBulkMethod(m.id)}
+                          className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all
+                            ${bulkMethod === m.id
+                              ? "border-orange-500/50 bg-[rgba(249,115,22,0.08)]"
+                              : "border-[#2a2f3e] bg-[#0f1117] hover:border-[#3a3f50]"}`}
+                        >
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0
+                            ${bulkMethod === m.id ? "bg-orange-500/15" : "bg-[#1a1d28]"}`}>
+                            <m.icon size={14} color={bulkMethod === m.id ? "#f97316" : "#6b7280"} />
+                          </div>
+                          <div>
+                            <div className={`text-[11px] font-semibold ${bulkMethod === m.id ? "text-slate-200" : "text-gray-400"}`}>{m.label}</div>
+                            <div className="text-[9px] text-gray-600 tracking-wide leading-tight">{m.sub}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] text-gray-600 tracking-widest">TOTAL PEMBAYARAN</div>
+                    <div className="text-xl font-bold text-orange-500">{fmt(totalChecked)}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <ShieldCheck size={12} color="#6b7280" />
+                      <span className="text-[10px] text-gray-600">Transaksi aman &amp; terenkripsi</span>
+                    </div>
+                    <button
+                      onClick={() => { if (!showBulkPanel) { setShowBulkPanel(true); } else { alert(`Pembayaran ${checkedCount} tagihan via ${bulkMethods.find(m=>m.id===bulkMethod)?.label} berhasil dikonfirmasi!`); } }}
+                      className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 transition-colors text-white font-bold text-sm rounded-lg flex-shrink-0"
+                    >
+                      <ShieldCheck size={15} />
+                      BAYAR SEKARANG →
+                    </button>
+                  </div>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         )}
 
