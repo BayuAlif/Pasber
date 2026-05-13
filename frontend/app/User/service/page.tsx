@@ -35,83 +35,129 @@ type Vehicle = {
 
 // ─── Service options ───────────────────────────────────────────────────────
 const serviceOptions = [
-  { id: "oli",    label: "Ganti Oli",      desc: "Penggantian oli mesin standar" },
-  { id: "tuneup", label: "Tune Up",        desc: "Perawatan mesin menyeluruh" },
-  { id: "ban",    label: "Ganti Ban",      desc: "Penggantian ban baru" },
-  { id: "umum",   label: "Perbaikan Umum", desc: "Perbaikan komponen umum" },
+  { id: "oli", label: "Ganti Oli", desc: "Penggantian oli mesin standar" },
+  { id: "tuneup", label: "Tune Up", desc: "Perawatan mesin menyeluruh" },
+  { id: "ban", label: "Ganti Ban", desc: "Penggantian ban baru" },
+  { id: "umum", label: "Perbaikan Umum", desc: "Perbaikan komponen umum" },
 ];
 
 const months = [
-  "Januari","Februari","Maret","April","Mei","Juni",
-  "Juli","Agustus","September","Oktober","November","Desember",
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
 
 const sessions = [
-  "08:00","09:00","10:00","11:00",
-  "13:00","14:00","15:00","16:00",
+  "08:00", "09:00", "10:00", "11:00",
+  "13:00", "14:00", "15:00", "16:00",
 ];
 
 const YEAR = 2026;
 
-const bengkelOptions = [
-  { id: "farhan",    name: "Farhan Mekanik",           addr: "Jl. Melati No. 42, RT 005/RW 012, Kel. Menteng, Kec. Menteng",         lat: -6.1944,  lng: 106.8229 },
-  { id: "gigi",      name: "Gigi Mundur",               addr: "Komplek Ruko Permata Blok C-08, Jl. Raya Pajajaran",                   lat: -6.9175,  lng: 107.6191 },
-  { id: "salah",     name: "Salah Sambung",             addr: "Perumahan Graha Kartika Blok D3/14, Jl. Sunset Road",                  lat: -6.2297,  lng: 106.7532 },
-  { id: "spesialis", name: "Spesialis Penyakit Dalam",  addr: "Kawasan Industri Jababeka Kav. 12-14, Jl. Jababeka Raya",              lat: -6.3264,  lng: 107.1455 },
-];
 
+
+type Bengkel = {
+  id: number;
+  nama: string;
+  alamat: string;
+  lat: number;
+  lng: number;
+};
 
 
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function BookingServicePage() {
 
   const [step, setStep] = useState(1);
+  //search
+  const [searchBengkel, setSearchBengkel] = useState("");
+
+  //Bengkel
+  const [bengkels, setBengkels] = useState<Bengkel[]>([]);
+  type UserLocation = {
+    lat: number;
+    lng: number;
+  }
+  const [selectedBengkelId, setSelectedBengkelId] =
+    useState<number | null>(null);
 
   // vehicles
-  const [vehicles, setVehicles]               = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>(["oli"]);
 
   // modal
-  const [showModal, setShowModal]   = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [vehicleType, setVehicleType] = useState<"motor" | "mobil">("motor");
-  const [vBrand, setVBrand]         = useState("");
-  const [vModel, setVModel]         = useState("");
-  const [vPlate, setVPlate]         = useState("");
-  const [vYear,  setVYear]          = useState("");
-  const [formError, setFormError]   = useState("");
+  const [vBrand, setVBrand] = useState("");
+  const [vModel, setVModel] = useState("");
+  const [vPlate, setVPlate] = useState("");
+  const [vYear, setVYear] = useState("");
+  const [formError, setFormError] = useState("");
 
   // schedule
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
-  const [selectedDate,  setSelectedDate]  = useState(today.getDate());
-  const [selectedTime,  setSelectedTime]  = useState("09:00");
-  const [selectedBengkel, setSelectedBengkel] = useState<string | null>("farhan");
+  const [selectedDate, setSelectedDate] = useState(today.getDate());
+  const [selectedTime, setSelectedTime] = useState("09:00");
+  const [selectedBengkel, setSelectedBengkel] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // ─── Haversine Distance ─────────────────────────────────────────────────
-  const calcDistance = (lat1: number, lng1: number, lat2: number, lng2: number): string => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLng = ((lng2 - lng1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const dist = R * c;
-    return dist < 1 ? `${(dist * 1000).toFixed(0)} m` : `${dist.toFixed(1)} km`;
-  };
-
-  // ─── Get User Location ──────────────────────────────────────────────────
+  // ─── Get User Location API Browser Geolocation API. ──────────────────────────────────────────────────
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => setUserLocation({ lat: -6.9147, lng: 107.6098 }) // fallback: Bandung
-      );
-    }
+
+    navigator.geolocation.getCurrentPosition(
+
+      (position) => {
+
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+
+
+      },
+
+      (error) => {
+        console.error(error);
+      }
+
+    );
+
   }, []);
+
+  //Hitung jarak
+  const calcDistance = (
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ) => {
+
+    const toRad = (value: number) =>
+      (value * Math.PI) / 180;
+
+    const R = 6371;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+
+    const a =
+      Math.sin(dLat / 2) *
+      Math.sin(dLat / 2) +
+
+      Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+    return (R * c).toFixed(1);
+  };
 
   const fetchVehicles = async () => {
     try {
@@ -125,22 +171,63 @@ export default function BookingServicePage() {
         kendaraanID: number; merek: string; model: string;
         nomorPolisi: string; tahun: string; jenisKendaraan: "motor" | "mobil";
       }) => ({
-        id:    v.kendaraanID.toString(),
-        type:  v.jenisKendaraan,
+        id: v.kendaraanID.toString(),
+        type: v.jenisKendaraan,
         brand: v.merek,
         model: v.model,
         plate: v.nomorPolisi,
-        year:  v.tahun,
+        year: v.tahun,
       }));
       setVehicles(formattedVehicles);
     } catch (error) { console.error(error); }
   };
 
+  const fetchBengkels = async () => {
+
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `${API_URL}/bengkel`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      console.log(result);
+
+      setBengkels(result.data || []);
+
+    } catch (error) {
+
+      console.error(error);
+    }
+  };
+
+
+
   // ─── Fetch Vehicles ─────────────────────────────────────────────────────
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => {
+
+    const loadVehicles = async () => {
+      await fetchVehicles();
+      await fetchBengkels();
+    };
+
+    loadVehicles();
+
+  }, []);
+
+  console.log(bengkels);
 
   // ─── Helpers ────────────────────────────────────────────────────────────
-  const getDays     = (m: number) => new Date(YEAR, m + 1, 0).getDate();
+  const getDays = (m: number) => new Date(YEAR, m + 1, 0).getDate();
   const getFirstDay = (m: number) => { const d = new Date(YEAR, m, 1).getDay(); return d === 0 ? 6 : d - 1; };
 
   // ─── Modal ──────────────────────────────────────────────────────────────
@@ -168,12 +255,12 @@ export default function BookingServicePage() {
       console.log(result);
       if (!response.ok) { setFormError(result.message || "Gagal menyimpan kendaraan"); return; }
       const newVehicle: Vehicle = {
-        id:    result.data.kendaraanID.toString(),
-        type:  vehicleType,
+        id: result.data.kendaraanID.toString(),
+        type: vehicleType,
         brand: result.data.merek,
         model: result.data.model,
         plate: result.data.nomorPolisi,
-        year:  result.data.tahun,
+        year: result.data.tahun,
       };
       setVehicles((prev) => [...prev, newVehicle]);
       setSelectedVehicleIds((prev) => [...prev, newVehicle.id]);
@@ -199,7 +286,7 @@ export default function BookingServicePage() {
   const handleBooking = async () => {
     try {
       const token = localStorage.getItem("token");
-      const bookingDate  = new Date(YEAR, selectedMonth, selectedDate);
+      const bookingDate = new Date(YEAR, selectedMonth, selectedDate);
       const formattedDate =
         `${bookingDate.getFullYear()}-` +
         `${String(bookingDate.getMonth() + 1).padStart(2, "0")}-` +
@@ -215,8 +302,8 @@ export default function BookingServicePage() {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, Accept: "application/json" },
           body: JSON.stringify({
             kendaraanID,
-            bengkel_id:  1,
-            Keluhan:     keluhanLabel,
+            bengkel_id: selectedBengkel,
+            Keluhan: keluhanLabel,
             jadwalService: formattedDate,
           }),
         });
@@ -226,6 +313,42 @@ export default function BookingServicePage() {
       alert("Booking berhasil dibuat!");
     } catch (error) { console.error(error); alert("Booking gagal"); }
   };
+
+  const filteredBengkels = bengkels.filter((b) =>
+
+    b.nama.toLowerCase().includes(
+      searchBengkel.toLowerCase()
+    ) ||
+
+    b.alamat.toLowerCase().includes(
+      searchBengkel.toLowerCase()
+    )
+  );
+
+  const sortedBengkels = [...filteredBengkels].sort((a, b) => {
+
+    if (!userLocation) return 0;
+
+    const distA = Number(
+      calcDistance(
+        userLocation.lat,
+        userLocation.lng,
+        a.lat,
+        a.lng
+      ).replace(" km", "").replace(" m", "")
+    );
+
+    const distB = Number(
+      calcDistance(
+        userLocation.lat,
+        userLocation.lng,
+        b.lat,
+        b.lng
+      ).replace(" km", "").replace(" m", "")
+    );
+
+    return distA - distB;
+  });
 
   // ─── render ─────────────────────────────────────────────────────────────
   return (
@@ -317,7 +440,7 @@ export default function BookingServicePage() {
                             ${isSel ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`}>
                             {isSel && (
                               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             )}
                           </div>
@@ -356,7 +479,7 @@ export default function BookingServicePage() {
                         ${isSel ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`}>
                         {isSel && (
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </div>
@@ -400,7 +523,7 @@ export default function BookingServicePage() {
 
               {/* Day headers */}
               <div className="grid grid-cols-7 gap-1.5 mb-1.5">
-                {["SN","SL","RB","KM","JM","SB","MN"].map((d) => (
+                {["SN", "SL", "RB", "KM", "JM", "SB", "MN"].map((d) => (
                   <div key={d} className="text-center text-[10px] font-bold text-[#4b5563] tracking-[1px] py-1">{d}</div>
                 ))}
               </div>
@@ -454,48 +577,144 @@ export default function BookingServicePage() {
             {/* RIGHT — Pilih Bengkel */}
             <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6">
               <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold mb-5">PILIH BENGKEL</div>
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Cari bengkel..."
+                  value={searchBengkel}
+                  onChange={(e) =>
+                    setSearchBengkel(e.target.value)
+                  }
+                  className="w-full bg-[#0f1117]
+      border border-[#2a2f3e]
+      rounded-lg px-3 py-2.5
+      text-[12px] text-[#e2e8f0]
+      outline-none
+      placeholder:text-[#4b5563]"
+                />
+              </div>
               <div className="flex flex-col gap-px">
-                {bengkelOptions.map((b, i) => {
+                {sortedBengkels.map((b, i) => {
+
                   const isSel = selectedBengkel === b.id;
+
                   const dist = userLocation
-                    ? calcDistance(userLocation.lat, userLocation.lng, b.lat, b.lng)
+                    ? calcDistance(
+                      userLocation.lat,
+                      userLocation.lng,
+                      b.lat,
+                      b.lng
+                    )
                     : null;
+                  {
+                    dist && (
+                      <span>{dist} km</span>
+                    )
+                  }
+                  console.log("Bengkel:", b);
                   return (
-                    <div key={b.id}
+
+                    <div
+                      key={b.id}
+
                       onClick={() => setSelectedBengkel(b.id)}
+
                       className={`flex items-start justify-between gap-3 px-4 py-4 cursor-pointer transition-all
-                        ${i < bengkelOptions.length - 1 ? "border-b border-[#1e2230]" : ""}
-                        ${isSel ? "bg-[rgba(249,115,22,0.05)]" : "hover:bg-[#1a1d28]"}`}>
+        ${i < bengkels.length - 1
+                          ? "border-b border-[#1e2230]"
+                          : ""}
+
+        ${isSel
+                          ? "bg-[rgba(249,115,22,0.05)]"
+                          : "hover:bg-[#1a1d28]"
+                        }`}
+                    >
+
                       <div className="flex-1 min-w-0">
+
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className={`text-[13px] font-bold m-0 ${isSel ? "text-white" : "text-[#9ca3af]"}`}>
-                            {b.name}
+
+                          <p
+                            className={`text-[13px] font-bold m-0
+              ${isSel
+                                ? "text-white"
+                                : "text-[#9ca3af]"
+                              }`}
+                          >
+                            {b.nama}
                           </p>
+
                           {dist && (
-                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-wide
-                              ${isSel
-                                ? "bg-[rgba(249,115,22,0.15)] text-[#f97316] border border-[rgba(249,115,22,0.3)]"
-                                : "bg-[#1a1d28] text-[#6b7280] border border-[#2a2f3e]"}`}>
-                              <svg width="8" height="8" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"
-                                  fill={isSel ? "#f97316" : "#6b7280"}/>
+
+                            <span
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-wide
+
+              ${isSel
+                                  ? "bg-[rgba(249,115,22,0.15)] text-[#f97316] border border-[rgba(249,115,22,0.3)]"
+
+                                  : "bg-[#1a1d28] text-[#6b7280] border border-[#2a2f3e]"
+                                }`}
+                            >
+
+                              <svg
+                                width="8"
+                                height="8"
+                                viewBox="0 0 10 14"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+
+                                <path
+                                  d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"
+                                  fill={isSel ? "#f97316" : "#6b7280"}
+                                />
+
                               </svg>
+
                               {dist}
+
                             </span>
                           )}
+
                         </div>
-                        <p className="text-[11px] text-[#4b5563] mt-1 m-0 leading-snug">{b.addr}</p>
+
+                        <p className="text-[11px] text-[#4b5563] mt-1 m-0 leading-snug">
+                          {b.alamat}
+                        </p>
+
                       </div>
-                      <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 border transition-all
-                        ${isSel
-                          ? "bg-[#f97316] border-[#f97316]"
-                          : "bg-transparent border-[#2a2f3e]"}`}>
+
+                      <div
+                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 border transition-all
+
+        ${isSel
+                            ? "bg-[#f97316] border-[#f97316]"
+                            : "bg-transparent border-[#2a2f3e]"
+                          }`}
+                      >
+
                         {isSel && (
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 10 10"
+                            fill="none"
+                          >
+
+                            <path
+                              d="M2 5l2.5 2.5L8 3"
+                              stroke="white"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
                           </svg>
                         )}
+
                       </div>
+
                     </div>
                   );
                 })}
@@ -536,12 +755,36 @@ export default function BookingServicePage() {
                 <div className="grid grid-cols-2 gap-0">
                   {[
                     { label: "Jenis Layanan", value: selectedServices.map((sid) => serviceOptions.find((s) => s.id === sid)?.label ?? "").filter(Boolean).join(", "), accent: true },
-                    { label: "Bengkel",        value: bengkelOptions.find((b) => b.id === selectedBengkel)?.name ?? "-",
-                      sub: userLocation && selectedBengkel
-                        ? (() => { const b = bengkelOptions.find((x) => x.id === selectedBengkel); return b ? calcDistance(userLocation.lat, userLocation.lng, b.lat, b.lng) : null; })()
-                        : null },
-                    { label: "Tanggal",        value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
-                    { label: "Sesi Waktu",     value: `${selectedTime} WIB` },
+                    {
+                      label: "Bengkel",
+
+                      value:
+                        bengkels.find(
+                          (b) => b.id === selectedBengkel
+                        )?.nama ?? "-",
+
+                      sub:
+                        userLocation && selectedBengkel
+                          ? (() => {
+
+                            const b = bengkels.find(
+                              (x) => x.id === selectedBengkel
+                            );
+
+                            return b
+                              ? calcDistance(
+                                userLocation.lat,
+                                userLocation.lng,
+                                b.lat,
+                                b.lng
+                              )
+                              : null;
+
+                          })()
+                          : null
+                    },
+                    { label: "Tanggal", value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
+                    { label: "Sesi Waktu", value: `${selectedTime} WIB` },
                   ].map((item, i) => (
                     <div key={item.label}
                       className={`py-3.5 ${i % 2 !== 0 ? "pl-5 border-l border-[#1e2230]" : ""} ${i >= 2 ? "border-t border-[#1e2230]" : ""}`}>
@@ -550,7 +793,7 @@ export default function BookingServicePage() {
                         <p className={`text-[14px] font-bold m-0 ${item.accent ? "text-[#f97316]" : "text-[#e2e8f0]"}`}>{item.value}</p>
                         {"sub" in item && item.sub && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[rgba(249,115,22,0.1)] text-[#f97316] border border-[rgba(249,115,22,0.2)]">
-                            <svg width="7" height="9" viewBox="0 0 10 14" fill="none"><path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="#f97316"/></svg>
+                            <svg width="7" height="9" viewBox="0 0 10 14" fill="none"><path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="#f97316" /></svg>
                             {item.sub}
                           </span>
                         )}
@@ -567,7 +810,7 @@ export default function BookingServicePage() {
               <div className="bg-[#13161e] border border-[#1e2230] rounded-xl px-6 py-[22px]">
                 <p className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold uppercase mb-4">KONFIRMASI DATA</p>
                 <div className="flex flex-col gap-3">
-                  {["Kendaraan sudah sesuai","Jenis servis sudah benar","Tanggal & waktu sudah tepat","Siap hadir sesuai jadwal"].map((item, i) => (
+                  {["Kendaraan sudah sesuai", "Jenis servis sudah benar", "Tanggal & waktu sudah tepat", "Siap hadir sesuai jadwal"].map((item, i) => (
                     <div key={i} className="flex items-center gap-2.5">
                       <div className="w-[18px] h-[18px] rounded-[5px] bg-[rgba(249,115,22,0.12)] border border-[rgba(249,115,22,0.3)] flex items-center justify-center shrink-0">
                         <CheckCircle2 size={11} color="#f97316" />
@@ -622,10 +865,10 @@ export default function BookingServicePage() {
 
             {/* Fields */}
             {[
-              { label: "Merek *",      val: vBrand, set: setVBrand, ph: "Honda, Yamaha, Toyota..." },
-              { label: "Model *",      val: vModel, set: setVModel, ph: "Beat, Vario, Avanza..." },
+              { label: "Merek *", val: vBrand, set: setVBrand, ph: "Honda, Yamaha, Toyota..." },
+              { label: "Model *", val: vModel, set: setVModel, ph: "Beat, Vario, Avanza..." },
               { label: "No. Polisi *", val: vPlate, set: setVPlate, ph: "D 4621 XY" },
-              { label: "Tahun",        val: vYear,  set: setVYear,  ph: "2022" },
+              { label: "Tahun", val: vYear, set: setVYear, ph: "2022" },
             ].map((f) => (
               <div key={f.label} className="mb-3.5">
                 <label className="text-[10px] text-[#4b5563] tracking-[1px] font-bold uppercase block mb-1.5">{f.label}</label>
