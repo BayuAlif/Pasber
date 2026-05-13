@@ -12,9 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bengkel', function (Blueprint $table) {
+
             $table->id();
+
             $table->string('nama');
+
             $table->text('alamat');
+
+            $table->decimal('lat', 10, 7);
+
+            $table->decimal('lng', 10, 7);
+
             $table->timestamps();
         });
     }

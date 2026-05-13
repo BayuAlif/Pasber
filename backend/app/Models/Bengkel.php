@@ -9,9 +9,12 @@ class Bengkel extends Model
 {
      use HasFactory;
 
-      protected $fillable = [
+     protected $table = 'bengkel';
+    protected $fillable = [
         'nama',
-        'alamat'
+        'alamat',
+        'lat',
+        'lng',
     ];
 
     public function users()

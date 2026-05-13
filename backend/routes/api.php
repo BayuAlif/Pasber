@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\KendaraanController;
+use App\Http\Controllers\BengkelController;
 
 
 
@@ -22,6 +23,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::apiResource('kendaraan', KendaraanController::class);
 
     Route::apiResource('booking', BookingController::class);
+    Route::get('/bengkel', [BengkelController::class, 'index']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();
