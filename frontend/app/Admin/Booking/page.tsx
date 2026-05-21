@@ -424,101 +424,186 @@ function KelolaBookingView({
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// VIEW 2 — Kelola Jadwal & Work Order
+// VIEW 2 — Kelola Jadwal & Work Order (Detail)
 // ══════════════════════════════════════════════════════════════════════════
-function KelolaJadwalView({ booking }: { booking: Booking }) {
+function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () => void }) {
   const [catatan, setCatatan] = useState('');
 
   return (
-    <div className="px-8 py-6 flex gap-5">
+    <div className="px-8 py-6 flex flex-col gap-5 h-full">
 
-      {/* ── Left: WO Card ── */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0">
-
-        {/* Main WO Card */}
-        <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6 flex flex-col gap-5">
-
-          {/* Section title */}
-          <div className="flex items-center gap-2">
-            <Info size={13} className="text-[#4b5563]" />
-            <span className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Informasi Umum WO</span>
-          </div>
-
-          {/* Customer + Vehicle — orange bordered card */}
-          <div className="border border-orange-500/50 rounded-xl p-5 flex gap-0">
-            {/* Customer */}
-            <div className="flex-1 flex flex-col gap-1 pr-6">
-              <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Customer Name</p>
-              <p className="text-[26px] font-black text-white leading-tight mt-1">{booking.customer}</p>
-              <p className="text-[13px] text-orange-400 font-semibold mt-1">{booking.phone ?? '-'}</p>
-            </div>
-
-            {/* Divider */}
-            <div className="w-px bg-[#1e2230] mx-1" />
-
-            {/* Vehicle */}
-            <div className="flex-1 flex flex-col gap-1 pl-6">
-              <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Vehicle Identity</p>
-              <p className="text-[26px] font-black text-white leading-tight mt-1">
-                {booking.vehicle.replace(' GR', '')}
-              </p>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="px-2 py-0.5 bg-[#1a1d28] border border-[#2a2f3e] rounded text-[11px] font-mono text-[#e2e8f0] font-bold">
-                  {booking.plateNumber}
-                </span>
-                <span className="text-[12px] text-[#9ca3af]">
-                  {booking.vehicleYear} · {booking.vehicleColor}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Primary Complaint */}
-          <div className="border border-[#1e2230] rounded-xl p-5 flex flex-col gap-2 bg-[#0f1117]">
-            <p className="text-[13px] text-[#d1d5db] leading-relaxed">
-              &ldquo;{booking.complaint}&rdquo;
-            </p>
-          </div>
-
-          {/* Entry Date */}
-          <div className="border border-[#1e2230] rounded-xl p-5 flex flex-col gap-1.5">
-            <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Entry Date</p>
-            <p className="text-[14px] font-bold text-white">
-              {booking.scheduleDate}, {booking.scheduleTime}
-            </p>
-          </div>
-        </div>
-
-        {/* Customer Reference Row */}
-        <div className="bg-[#13161e] border border-[#1e2230] rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
-            <User size={14} className="text-[#6b7280]" />
-          </div>
-          <div>
-            <p className="text-[13px] font-bold text-white">{booking.customer}</p>
-            <p className="text-[11px] text-[#4b5563] mt-0.5 flex items-center gap-1">
-              <span className="font-mono text-orange-400">{booking.id}</span>
-              <span className="text-[#2a2f3e] mx-0.5">•</span>
-              <span>{booking.vehicle}</span>
-              <span className="text-[#2a2f3e] mx-0.5">•</span>
-            </p>
-          </div>
-        </div>
+      {/* ── Breadcrumb / Back ── */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-[11px] text-[#4b5563] hover:text-orange-400 transition-colors group"
+        >
+          <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          Kembali ke Kelola Booking
+        </button>
+        <span className="text-[#2a2f3e]">/</span>
+        <span className="text-[11px] text-[#6b7280]">Jadwal & Work Order</span>
+        <span className="text-[#2a2f3e]">/</span>
+        <span className="text-[11px] font-mono text-orange-400">{booking.id}</span>
       </div>
 
-      {/* ── Right: Catatan Pengerjaan ── */}
-      <div className="w-[330px] flex-shrink-0">
-        <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5 flex flex-col gap-3 h-full">
-          <div className="flex items-center gap-2">
-            <ClipboardList size={13} className="text-[#4b5563]" />
-            <span className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Catatan Pengerjaan</span>
+      {/* ── Main Content ── */}
+      <div className="flex gap-5 flex-1 min-h-0">
+
+        {/* ── Left: WO Info Card ── */}
+        <div className="flex-1 flex flex-col gap-4 min-w-0">
+
+          {/* Main Card */}
+          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden">
+
+            {/* Card Header */}
+            <div className="px-6 py-4 border-b border-[#1e2230] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-md bg-orange-500/10 flex items-center justify-center">
+                  <Info size={12} color="#f97316" />
+                </div>
+                <span className="text-[11px] font-bold text-[#6b7280] uppercase tracking-widest">Informasi Umum WO</span>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status]}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status]}`} />
+                {booking.status}
+              </span>
+            </div>
+
+            <div className="p-6 flex flex-col gap-4">
+
+              {/* Customer + Vehicle — orange bordered */}
+              <div className="border border-orange-500/40 rounded-xl overflow-hidden">
+                <div className="grid grid-cols-2 divide-x divide-[#1e2230]">
+                  {/* Customer */}
+                  <div className="p-5 flex flex-col gap-1">
+                    <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-[2px]">Customer Name</p>
+                    <p className="text-[24px] font-black text-white leading-tight mt-1">{booking.customer}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.83 12 19.79 19.79 0 0 1 1.85 3.58a2 2 0 0 1 1.99-2.18H6a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16z"/></svg>
+                      </div>
+                      <p className="text-[12px] text-orange-400 font-semibold">{booking.phone ?? '-'}</p>
+                    </div>
+                    <div className="mt-1">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                        ${booking.customerType === 'VIP CLIENT' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                          booking.customerType === 'REGULAR CLIENT' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                          'bg-[#1a1d28] text-[#6b7280] border border-[#2a2f3e]'}`}>
+                        {booking.customerType}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Vehicle */}
+                  <div className="p-5 flex flex-col gap-1">
+                    <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-[2px]">Vehicle Identity</p>
+                    <p className="text-[24px] font-black text-white leading-tight mt-1">{booking.vehicle}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="px-2 py-1 bg-[#0f1117] border border-[#2a2f3e] rounded-md text-[11px] font-mono text-[#e2e8f0] font-bold tracking-wider">
+                        {booking.plateNumber}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#6b7280] mt-1">
+                      {booking.vehicleYear} · {booking.vehicleColor}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Primary Complaint */}
+              <div className="bg-[#0c0e14] border border-[#1e2230] rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Wrench size={11} className="text-[#4b5563]" />
+                  <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-[2px]">Primary Complaint</p>
+                </div>
+                <p className="text-[13px] text-[#c9d1db] leading-relaxed italic">
+                  &ldquo;{booking.complaint}&rdquo;
+                </p>
+              </div>
+
+              {/* Entry Date */}
+              <div className="border border-[#1e2230] rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarDays size={11} className="text-[#4b5563]" />
+                  <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-[2px]">Entry Date</p>
+                </div>
+                <p className="text-[15px] font-bold text-white">
+                  {booking.scheduleDate}, {booking.scheduleTime}
+                </p>
+              </div>
+
+            </div>
           </div>
-          <textarea
-            value={catatan}
-            onChange={e => setCatatan(e.target.value)}
-            placeholder="Tuliskan detail temuan teknis atau catatan khusus di sini..."
-            className="flex-1 min-h-[440px] bg-[#0f1117] border border-[#1e2230] rounded-lg p-4 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/40 resize-none leading-relaxed"
-          />
+
+          {/* Customer Reference Row */}
+          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl px-4 py-3.5 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
+              <User size={14} className="text-[#4b5563]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold text-white">{booking.customer}</p>
+              <p className="text-[10px] text-[#4b5563] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <span className="font-mono text-orange-400">{booking.id}</span>
+                <span className="text-[#2a2f3e]">•</span>
+                <span className="text-[#6b7280]">{booking.vehicle}</span>
+                <span className="text-[#2a2f3e]">•</span>
+                <span className={`font-bold ${booking.customerType === 'VIP CLIENT' ? 'text-orange-400' : booking.customerType === 'REGULAR CLIENT' ? 'text-blue-400' : 'text-[#6b7280]'}`}>
+                  {booking.customerType}
+                </span>
+              </p>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status]}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status]}`} />
+              {booking.status}
+            </span>
+          </div>
+        </div>
+
+        {/* ── Right: Catatan Pengerjaan ── */}
+        <div className="w-[340px] flex-shrink-0 flex flex-col gap-4">
+
+          {/* Catatan Card */}
+          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden flex flex-col flex-1">
+            <div className="px-5 py-4 border-b border-[#1e2230] flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-orange-500/10 flex items-center justify-center">
+                <ClipboardList size={12} color="#f97316" />
+              </div>
+              <span className="text-[11px] font-bold text-[#6b7280] uppercase tracking-widest">Catatan Pengerjaan</span>
+            </div>
+            <div className="p-5 flex flex-col flex-1 gap-3">
+              <textarea
+                value={catatan}
+                onChange={e => setCatatan(e.target.value)}
+                placeholder="Tuliskan detail temuan teknis atau catatan khusus di sini..."
+                className="flex-1 min-h-[320px] bg-[#0c0e14] border border-[#1e2230] rounded-lg p-4 text-[12px] text-[#e2e8f0] placeholder:text-[#2d3340] outline-none focus:border-orange-500/40 resize-none leading-relaxed transition-colors"
+              />
+              <button
+                onClick={() => {}}
+                className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all"
+              >
+                Simpan Catatan
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Info Card */}
+          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5 flex flex-col gap-3">
+            <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-[2px]">Ringkasan Booking</p>
+            {[
+              { label: 'Booking ID',  value: booking.id,           mono: true  },
+              { label: 'Schedule',    value: `${booking.scheduleDate} · ${booking.scheduleTime}`, mono: false },
+              { label: 'Plate No.',   value: booking.plateNumber,  mono: true  },
+              { label: 'Year',        value: booking.vehicleYear ?? '-', mono: false },
+              { label: 'Color',       value: booking.vehicleColor ?? '-', mono: false },
+            ].map(({ label, value, mono }) => (
+              <div key={label} className="flex items-center justify-between gap-2">
+                <span className="text-[10px] text-[#4b5563]">{label}</span>
+                <span className={`text-[11px] font-semibold text-right ${mono ? 'font-mono text-orange-400' : 'text-[#e2e8f0]'}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+
         </div>
       </div>
     </div>
@@ -576,18 +661,8 @@ export default function KelolaBookingPage() {
             />
           )}
           {isWorkorder && (
-            <KelolaJadwalView booking={activeWO} />
+            <KelolaJadwalView booking={activeWO} onBack={() => setView('booking')} />
           )}
-        </div>
-
-        {/* ── Footer ── */}
-        <div className="px-8 py-4 border-t border-[#1e2230] flex items-center justify-between flex-shrink-0">
-          <p className="text-[10px] text-[#374151]">© 2024 PRECISION AUTOMOTIVE ENGINEERING | TECHNICAL MASTERY</p>
-          <div className="flex items-center gap-5">
-            {['SYSTEM STATUS', 'API DOCUMENTATION', 'COMPLIANCE'].map(link => (
-              <button key={link} className="text-[10px] text-[#374151] hover:text-[#6b7280] font-bold tracking-widest uppercase transition-colors">{link}</button>
-            ))}
-          </div>
         </div>
 
       </main>
