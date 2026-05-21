@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Activity,
-  CalendarPlus,
   Bell,
   Clock,
   CheckCircle2,
@@ -17,8 +15,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
+import BookingSuccessPopup, { BookingSuccessData } from "@/app/components/popUp/BookingSuccessPopup";
+import BookingFailedPopup from "@/app/components/popUp/BookingFailedPopup";
 
 // ─── API URL ────────────────────────────────────────────────────────────────
 const API_URL = "http://127.0.0.1:8000/api";
@@ -73,17 +72,17 @@ export default function BookingServicePage() {
 
   //Bengkel
   const [bengkels, setBengkels] = useState<Bengkel[]>([]);
-  type UserLocation = {
-    lat: number;
-    lng: number;
-  }
-  const [selectedBengkelId, setSelectedBengkelId] =
-    useState<number | null>(null);
 
   // vehicles
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>(["oli"]);
+
+  // popup
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showFailed, setShowFailed] = useState(false);
+  const [failedMessage, setFailedMessage] = useState("");
+  const [successData, setSuccessData] = useState<BookingSuccessData | undefined>(undefined);
 
   // modal
   const [showModal, setShowModal] = useState(false);
@@ -309,11 +308,44 @@ export default function BookingServicePage() {
         });
         const result = await response.json();
         console.log(result);
+        if (!response.ok) {
+          setFailedMessage(result.message || "Booking gagal diproses.");
+          setShowFailed(true);
+          return;
+        }
       }
-      alert("Booking berhasil dibuat!");
-    } catch (error) { console.error(error); alert("Booking gagal"); }
+      const bengkelNama = bengkels.find((b) => b.id === selectedBengkel)?.nama ?? "-";
+      const kendaraanLabel = selectedVehicleList.map((v) => `${v.brand} ${v.model}`).join(", ");
+      const tanggalLabel = `${selectedDate} ${months[selectedMonth]} ${YEAR}`;
+      setSuccessData({
+        bengkel: bengkelNama,
+        tanggal: tanggalLabel,
+        waktu: selectedTime,
+        kendaraan: kendaraanLabel,
+        layanan: keluhanLabel,
+      });
+      setShowSuccess(true);
+    } catch (error) {
+      console.error(error);
+      setFailedMessage("Terjadi kesalahan koneksi. Periksa internet kamu.");
+      setShowFailed(true);
+    }
+  };
+  const testPopupSuccess = () => {
+    setSuccessData({
+      bengkel: "Bengkel Teladan",
+      tanggal: "25 Mei 2026",
+      waktu: "10:00",
+      kendaraan: "Honda Vario 125",
+      layanan: "Ganti Oli",
+    });
+    setShowSuccess(true);
   };
 
+  const testPopupFailed = () => {
+    setFailedMessage("Gagal memproses booking. Coba lagi nanti.");
+    setShowFailed(true);
+  };
   const filteredBengkels = bengkels.filter((b) =>
 
     b.nama.toLowerCase().includes(
@@ -373,6 +405,22 @@ export default function BookingServicePage() {
           <div className="w-9 h-9 bg-[#1e2230] rounded-lg flex items-center justify-center cursor-pointer border border-[#2a2f3e] relative">
             <Bell size={16} color="#9ca3af" />
           </div>
+        </div>
+
+        {/* Test popup buttons */}
+        <div className="flex gap-3 mb-8">
+          <button
+            onClick={testPopupSuccess}
+            className="py-2 px-4 bg-[#10b981] hover:bg-[#059669] rounded-lg text-[12px] font-bold text-white transition"
+          >
+            Test Popup Success
+          </button>
+          <button
+            onClick={testPopupFailed}
+            className="py-2 px-4 bg-[#ef4444] hover:bg-[#dc2626] rounded-lg text-[12px] font-bold text-white transition"
+          >
+            Test Popup Failed
+          </button>
         </div>
 
         {/* Stepper */}
@@ -489,7 +537,7 @@ export default function BookingServicePage() {
               </div>
 
               <button
-                onClick={() => { if (selectedVehicleIds.length === 0) { alert("Pilih kendaraan terlebih dahulu"); return; } if (selectedServices.length === 0) { alert("Pilih minimal satu layanan"); return; } setStep(2); }}
+                onClick={() => { if (selectedVehicleIds.length === 0) { setFailedMessage("Pilih kendaraan terlebih dahulu."); setShowFailed(true); return; } if (selectedServices.length === 0) { setFailedMessage("Pilih minimal satu layanan."); setShowFailed(true); return; } setStep(2); }}
                 className="mt-5 w-full py-3 bg-[#f97316] border-none rounded-lg text-[12px] font-bold text-white cursor-pointer tracking-[1.5px] uppercase">
                 Lanjut: Pilih Jadwal →
               </button>
@@ -567,7 +615,7 @@ export default function BookingServicePage() {
                   className="flex-1 py-3 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[12px] font-bold text-[#6b7280] cursor-pointer tracking-[1px] uppercase">
                   ← Kembali
                 </button>
-                <button onClick={() => { if (!selectedBengkel) { alert("Pilih bengkel terlebih dahulu"); return; } setStep(3); }}
+                <button onClick={() => { if (!selectedBengkel) { setFailedMessage("Pilih bengkel terlebih dahulu."); setShowFailed(true); return; } setStep(3); }}
                   className="flex-[2] py-3 bg-[#f97316] border-none rounded-lg text-[12px] font-bold text-white cursor-pointer tracking-[1.5px] uppercase">
                   Lanjut: Konfirmasi →
                 </button>
@@ -841,6 +889,22 @@ export default function BookingServicePage() {
       </main>
 
       {/* ── MODAL TAMBAH KENDARAAN ── */}
+      {showSuccess && (
+        <BookingSuccessPopup
+          show={showSuccess}
+          data={successData}
+          onClose={() => setShowSuccess(false)}
+          onViewBooking={() => setShowSuccess(false)}
+        />
+      )}
+      {showFailed && (
+        <BookingFailedPopup
+          show={showFailed}
+          message={failedMessage}
+          onClose={() => setShowFailed(false)}
+          onRetry={() => setShowFailed(false)}
+        />
+      )}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-[#13161e] border border-[#1e2230] rounded-[14px] p-7 w-full max-w-[420px]">

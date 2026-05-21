@@ -398,13 +398,6 @@ export default function KelolaJadwalPage() {
               </div>
             </div>
 
-            {/* FAB */}
-            <div className="flex justify-end">
-              <button onClick={() => setView('create')}
-                className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/20">
-                <Plus size={15} /> Buat WO Baru
-              </button>
-            </div>
           </div>
         )}
 
@@ -743,15 +736,7 @@ export default function KelolaJadwalPage() {
           </div>
         )}
 
-        {/* FAB — Buat WO Baru (always visible except on create view) */}
-        {view !== 'create' && (
-          <div className="fixed bottom-8 right-8 z-20">
-            <button onClick={() => setView('create')}
-              className="flex items-center gap-2 px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-orange-500/30">
-              <Plus size={15} /> Buat WO Baru
-            </button>
-          </div>
-        )}
+
 
       </main>
     </div>
