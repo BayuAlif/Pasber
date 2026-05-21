@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\BengkelController;
+use App\Http\Controllers\WorkOrderController;
 
 
 
@@ -24,6 +25,8 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
 
     Route::apiResource('booking', BookingController::class);
     Route::get('/bengkel', [BengkelController::class, 'index']);
+
+    Route::apiResource('work-order', WorkOrderController::class);
 
     Route::get('/user', function (Request $request) {
         return $request->user();

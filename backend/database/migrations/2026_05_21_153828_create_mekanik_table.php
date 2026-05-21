@@ -11,29 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('booking', function (Blueprint $table) {
-
+        Schema::create('mekanik', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->onDelete('cascade');
-
-            $table->foreignId('kendaraan_id')
-                ->constrained('kendaraan')
-                ->onDelete('cascade');
 
             $table->foreignId('bengkel_id')
                 ->constrained('bengkel')
                 ->onDelete('cascade');
 
-            $table->date('tanggalBooking');
+            $table->string('nama');
+            $table->string('email')->unique();
 
-            $table->text('Keluhan');
-
-            $table->string('status');
-
-            $table->dateTime('jadwalService');
+            $table->enum('status', [
+                'available',
+                'not available',
+            ])->default('available');
 
             $table->timestamps();
         });
@@ -44,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('booking');
+        Schema::dropIfExists('mekanik');
     }
 };
