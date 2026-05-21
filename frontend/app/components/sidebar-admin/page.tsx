@@ -20,7 +20,7 @@ import {
 // ── Nav items ──────────────────────────────────────────────────────────────
 const navItems = [
   { label: 'Dashboard',                  href: '/Admin/admin-dashboard', icon: LayoutDashboard },
-  { label: 'Kelola Booking',             href: '/Admin/booking',         icon: CalendarCheck   },
+  { label: 'Kelola Booking',             href: '/Admin/Booking',         icon: CalendarCheck   },
   { label: 'Kelola Jadwal & Work Order', href: '/Admin/jadwal',          icon: CalendarClock   },
   { label: 'Kelola Mekanik',             href: '/Admin/mekanik',         icon: Users           },
   { label: 'Kelola Customer',            href: '/Admin/customer',        icon: UserCircle      },
