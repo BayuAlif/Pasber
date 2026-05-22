@@ -3,16 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Kendaraan;
+use App\Models\work_order;
+use App\Models\User;
 
 class Booking extends Model
 {
      protected $table = 'booking';
 
-    protected $primaryKey = 'BookingID';
 
     protected $fillable = [
         'user_id',
-        'kendaraanID',
+        'kendaraan_id',
         'bengkel_id',
         'tanggalBooking',
         'Keluhan',
@@ -25,11 +27,13 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-public function kendaraan()
-{
-    return $this->belongsTo(
-        Kendaraan::class,
-        'kendaraanID'
-    );
-}
+    public function kendaraan()
+    {
+        return $this->belongsTo(Kendaraan::class);
+    }
+
+    public function workOrder()
+    {
+        return $this->hasOne(work_order::class);
+    }
 }

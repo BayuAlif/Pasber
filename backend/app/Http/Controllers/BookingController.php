@@ -32,8 +32,8 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kendaraanID'   => 'required',
-            'bengkel_id'     => 'required',
+            'kendaraan_id' => 'required|exists:kendaraan,id',
+            'bengkel_id' => 'required|exists:bengkel,id',
             'Keluhan'       => 'required',
             'jadwalService' => 'required',
         ]);
@@ -42,7 +42,7 @@ class BookingController extends Controller
 
         'user_id' => Auth::id(),
 
-        'kendaraanID' => $request->kendaraanID,
+        'kendaraan_id' => $request->kendaraan_id,
 
         'bengkel_id' => $request->bengkel_id,
 

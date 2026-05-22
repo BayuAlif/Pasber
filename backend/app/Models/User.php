@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\bengkel;
+use App\Models\booking;
+use App\Models\kendaraan;
+
 
 class User extends Authenticatable
 {
@@ -42,25 +46,16 @@ class User extends Authenticatable
 
     public function bengkel()
     {
-        return $this->belongsTo(
-            Bengkel::class,
-            'bengkelID'
-        );
+        return $this->belongsTo(Bengkel::class);
     }
 
-    public function kendaraans()
+    public function kendaraan()
     {
-        return $this->hasMany(
-            Kendaraan::class,
-            'userID'
-        );
+        return $this->hasMany(Kendaraan::class);
     }
 
-    public function bookings()
+    public function booking()
     {
-        return $this->hasMany(
-            Booking::class,
-            'userID'
-        );
+        return $this->hasMany(Booking::class);
     }
 }

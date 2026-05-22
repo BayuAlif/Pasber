@@ -15,6 +15,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { useRouter } from 'next/navigation'
+import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
 import BookingSuccessPopup, { BookingSuccessData } from "@/app/components/popUp/BookingSuccessPopup";
 import BookingFailedPopup from "@/app/components/popUp/BookingFailedPopup";
@@ -63,8 +65,12 @@ type Bengkel = {
 };
 
 
+
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function BookingServicePage() {
+
+  const router = useRouter();
 
   const [step, setStep] = useState(1);
   //search
@@ -167,10 +173,10 @@ export default function BookingServicePage() {
       const result = await response.json();
       console.log(result);
       const formattedVehicles: Vehicle[] = (result.data || []).map((v: {
-        kendaraanID: number; merek: string; model: string;
+        id: number; merek: string; model: string;
         nomorPolisi: string; tahun: string; jenisKendaraan: "motor" | "mobil";
       }) => ({
-        id: v.kendaraanID.toString(),
+        id: v.id.toString(),
         type: v.jenisKendaraan,
         brand: v.merek,
         model: v.model,
@@ -254,7 +260,7 @@ export default function BookingServicePage() {
       console.log(result);
       if (!response.ok) { setFormError(result.message || "Gagal menyimpan kendaraan"); return; }
       const newVehicle: Vehicle = {
-        id: result.data.kendaraanID.toString(),
+        id: result.data.id.toString(),
         type: vehicleType,
         brand: result.data.merek,
         model: result.data.model,
@@ -295,12 +301,12 @@ export default function BookingServicePage() {
         .map((sid) => serviceOptions.find((s) => s.id === sid)?.label || "")
         .filter(Boolean)
         .join(", ");
-      for (const kendaraanID of selectedVehicleIds) {
+      for (const kendaraan_id of selectedVehicleIds) {
         const response = await fetch(`${API_URL}/booking`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, Accept: "application/json" },
           body: JSON.stringify({
-            kendaraanID,
+            kendaraan_id,
             bengkel_id: selectedBengkel,
             Keluhan: keluhanLabel,
             jadwalService: formattedDate,

@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
        $this->call([
             BengkelSeeder::class,
+            MekanikSeeder::class,
         ]);
     }
 }

@@ -8,8 +8,6 @@ class Kendaraan extends Model
 {
     protected $table = 'kendaraan';
 
-    protected $primaryKey = 'kendaraanID';
-
     protected $fillable = [
         'user_id',
         'nomorPolisi',
