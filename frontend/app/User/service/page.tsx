@@ -384,7 +384,7 @@ export default function BookingServicePage() {
         </div>
 
         {/* Test popup buttons */}
-        <div className="flex gap-3 mb-8">
+        {/* <div className="flex gap-3 mb-8">
           <button
             onClick={testPopupSuccess}
             className="py-2 px-4 bg-[#10b981] hover:bg-[#059669] rounded-lg text-[12px] font-bold text-white transition"
@@ -397,7 +397,7 @@ export default function BookingServicePage() {
           >
             Test Popup Failed
           </button>
-        </div>
+        </div> */}
 
         {/* Stepper */}
         <div className="flex items-center mb-8 max-w-[520px]">

@@ -10,7 +10,7 @@ import {
 import SidebarAdmin from '../../components/sidebar-admin/page';
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type WOStatus   = 'PENDING' | 'RUNNING' | 'FINISHED';
+type WOStatus = 'PENDING' | 'RUNNING' | 'FINISHED';
 type MechStatus = 'READY' | 'BUSY';
 
 type Mekanik = {
@@ -52,11 +52,11 @@ type WorkOrder = {
 
 // ── Dummy Data ─────────────────────────────────────────────────────────────
 const DUMMY_MECHANICS: Mekanik[] = [
-  { id: 'M001', name: 'Eko Prasetyo',   specialization: 'ELECTRICAL', status: 'READY' },
-  { id: 'M002', name: 'Eko Prasatwa',   specialization: 'ELECTRICAL', status: 'READY' },
+  { id: 'M001', name: 'Eko Prasetyo', specialization: 'ELECTRICAL', status: 'READY' },
+  { id: 'M002', name: 'Eko Prasatwa', specialization: 'ELECTRICAL', status: 'READY' },
   { id: 'M003', name: 'Eko Prasejarah', specialization: 'ELECTRICAL', status: 'READY' },
-  { id: 'M004', name: 'Budi Santoso',   specialization: 'ENGINE',     status: 'BUSY'  },
-  { id: 'M005', name: 'Reza Firmansyah',specialization: 'BODY & PAINT',status: 'READY'},
+  { id: 'M004', name: 'Budi Santoso', specialization: 'ENGINE', status: 'BUSY' },
+  { id: 'M005', name: 'Reza Firmansyah', specialization: 'BODY & PAINT', status: 'READY' },
 ];
 
 const DUMMY_WO: WorkOrder[] = [
@@ -78,7 +78,7 @@ const DUMMY_WO: WorkOrder[] = [
     status: 'FINISHED', assignedMechanic: 'Eko Prasetyo', notes: 'Oil pan gasket replaced. Test drive completed.',
     progress: [
       { id: 'p1', title: 'Initial Diagnostics', description: 'Perform full OBD-II scan, checking error logs and fuel pressure values.', time: '09:15', active: false, done: true },
-      { id: 'p2', title: 'Oil Pan Inspection',  description: 'Identified crack on oil pan gasket. Ordered replacement part.', time: '10:00', active: false, done: true },
+      { id: 'p2', title: 'Oil Pan Inspection', description: 'Identified crack on oil pan gasket. Ordered replacement part.', time: '10:00', active: false, done: true },
     ],
   },
   {
@@ -89,20 +89,20 @@ const DUMMY_WO: WorkOrder[] = [
     entryDate: '26 Oct 2024', entryTime: '10:00 WIB', estCompletion: '26 Oct 2024, 14:00 WIB',
     status: 'RUNNING', assignedMechanic: 'Eko Prasetyo', notes: '',
     progress: [
-      { id: 'p1', title: 'Initial Diagnostics',          description: 'Perform full OBD-II scan, checking error logs and fuel pressure values.', time: '09:15', active: false, done: true },
+      { id: 'p1', title: 'Initial Diagnostics', description: 'Perform full OBD-II scan, checking error logs and fuel pressure values.', time: '09:15', active: false, done: true },
       { id: 'p2', title: 'Spark Plug & Coil Replacement', description: 'Replacing faulty spark plugs on cylinders 2 & 4. Checking wiring harness integrity.', time: '10:45', active: true, done: false },
     ],
   },
 ];
 
 const DUMMY_BOOKINGS = [
-  { id: '#BK-2024-004', customer: 'Rina Melati',    vehicle: 'Porsche 911 Carrera', plate: 'B 911 RIN', phone: '+62 877-5544-3322', complaint: 'Brake pedal feels spongy and requires more force.', entry: '27 Oct 2024, 09:00 WIB', est: '27 Oct 2024, 12:00 WIB', year: '2022', color: 'GT Silver' },
-  { id: '#BK-2024-005', customer: 'Doni Saputra',   vehicle: 'Toyota GR86',         plate: 'B 8600 GR',  phone: '+62 812-7788-9900', complaint: 'Check engine light on since last week.',           entry: '28 Oct 2024, 11:00 WIB', est: '28 Oct 2024, 14:00 WIB', year: '2023', color: 'Halo White'  },
+  { id: '#BK-2024-004', customer: 'Rina Melati', vehicle: 'Porsche 911 Carrera', plate: 'B 911 RIN', phone: '+62 877-5544-3322', complaint: 'Brake pedal feels spongy and requires more force.', entry: '27 Oct 2024, 09:00 WIB', est: '27 Oct 2024, 12:00 WIB', year: '2022', color: 'GT Silver' },
+  { id: '#BK-2024-005', customer: 'Doni Saputra', vehicle: 'Toyota GR86', plate: 'B 8600 GR', phone: '+62 812-7788-9900', complaint: 'Check engine light on since last week.', entry: '28 Oct 2024, 11:00 WIB', est: '28 Oct 2024, 14:00 WIB', year: '2023', color: 'Halo White' },
 ];
 
 const STATUS_STYLE: Record<WOStatus, string> = {
-  PENDING:  'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
-  RUNNING:  'bg-orange-500/10 text-orange-400 border border-orange-500/20',
+  PENDING: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+  RUNNING: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
   FINISHED: 'bg-green-500/10  text-green-400  border border-green-500/20',
 };
 
@@ -111,74 +111,74 @@ const PAGE_SIZE = 5;
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function KelolaJadwalPage() {
   // view: 'list' | 'create' | 'detail'
-  const [view, setView]           = useState<'list' | 'create' | 'detail'>('list');
+  const [view, setView] = useState<'list' | 'create' | 'detail'>('list');
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>(DUMMY_WO);
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
 
   // list state
-  const [search, setSearch]             = useState('');
+  const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'All Status' | WOStatus>('All Status');
-  const [page, setPage]                 = useState(1);
+  const [page, setPage] = useState(1);
 
   // create state
   const [bookingSearch, setBookingSearch] = useState('');
-  const [foundBooking, setFoundBooking]   = useState<typeof DUMMY_BOOKINGS[0] | null>(null);
+  const [foundBooking, setFoundBooking] = useState<typeof DUMMY_BOOKINGS[0] | null>(null);
   const [bookingNotFound, setBookingNotFound] = useState(false);
   const [selectedMechanic, setSelectedMechanic] = useState<string>('');
-  const [mechSearch, setMechSearch]       = useState('');
-  const [notes, setNotes]                 = useState('');
+  const [mechSearch, setMechSearch] = useState('');
+  const [notes, setNotes] = useState('');
 
   // detail state
-  const [newStepTitle, setNewStepTitle]   = useState('');
-  const [newStepDesc, setNewStepDesc]     = useState('');
+  const [newStepTitle, setNewStepTitle] = useState('');
+  const [newStepDesc, setNewStepDesc] = useState('');
   const [detailMechSearch, setDetailMechSearch] = useState('');
-  const [detailNotes, setDetailNotes]     = useState('');
+  const [detailNotes, setDetailNotes] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // ── Stats ─────────────────────────────────────────────────────────────
-  const total    = workOrders.length;
-  const pending  = workOrders.filter(w => w.status === 'PENDING').length;
+  const total = workOrders.length;
+  const pending = workOrders.filter(w => w.status === 'PENDING').length;
   const approved = workOrders.filter(w => w.status === 'FINISHED').length;
-  const running  = workOrders.filter(w => w.status === 'RUNNING').length;
+  const running = workOrders.filter(w => w.status === 'RUNNING').length;
 
   // ── Filter ─────────────────────────────────────────────────────────────
   const filtered = workOrders.filter(w => {
     const matchSearch = w.customer.toLowerCase().includes(search.toLowerCase()) ||
-                        w.plateNumber.toLowerCase().includes(search.toLowerCase()) ||
-                        w.id.toLowerCase().includes(search.toLowerCase());
+      w.plateNumber.toLowerCase().includes(search.toLowerCase()) ||
+      w.id.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'All Status' || w.status === filterStatus;
     return matchSearch && matchStatus;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // ── Handlers ───────────────────────────────────────────────────────────
   const handleSearchBooking = () => {
     const found = DUMMY_BOOKINGS.find(b => b.id.toLowerCase() === bookingSearch.toLowerCase());
     if (found) { setFoundBooking(found); setBookingNotFound(false); }
-    else        { setFoundBooking(null); setBookingNotFound(true);  }
+    else { setFoundBooking(null); setBookingNotFound(true); }
   };
 
   const handleCreateWO = () => {
     if (!foundBooking) return;
     const newWO: WorkOrder = {
-      id:             `#WO-2024-${String(workOrders.length + 1).padStart(3, '0')}`,
-      bookingId:      foundBooking.id,
-      customer:       foundBooking.customer,
-      customerType:   'NEW CLIENT',
-      phone:          foundBooking.phone,
-      vehicle:        foundBooking.vehicle,
-      plateNumber:    foundBooking.plate,
-      year:           foundBooking.year,
-      color:          foundBooking.color,
-      complaint:      foundBooking.complaint,
-      entryDate:      foundBooking.entry.split(',')[0],
-      entryTime:      foundBooking.entry.split(',')[1]?.trim() || '',
-      estCompletion:  foundBooking.est,
-      status:         'PENDING',
+      id: `#WO-2024-${String(workOrders.length + 1).padStart(3, '0')}`,
+      bookingId: foundBooking.id,
+      customer: foundBooking.customer,
+      customerType: 'NEW CLIENT',
+      phone: foundBooking.phone,
+      vehicle: foundBooking.vehicle,
+      plateNumber: foundBooking.plate,
+      year: foundBooking.year,
+      color: foundBooking.color,
+      complaint: foundBooking.complaint,
+      entryDate: foundBooking.entry.split(',')[0],
+      entryTime: foundBooking.entry.split(',')[1]?.trim() || '',
+      estCompletion: foundBooking.est,
+      status: 'PENDING',
       assignedMechanic: selectedMechanic || undefined,
       notes,
-      progress:       [],
+      progress: [],
     };
     setWorkOrders(prev => [...prev, newWO]);
     setSelectedWO(newWO);
@@ -258,10 +258,10 @@ export default function KelolaJadwalPage() {
             {/* Stat Cards */}
             <div className="grid grid-cols-4 gap-3.5">
               {[
-                { label: 'Total Work Order', value: total,    color: 'border-l-orange-500', icon: <ClipboardList size={20} className="text-orange-400 opacity-50" /> },
-                { label: 'Pending',          value: pending,  color: 'border-l-yellow-500', icon: <Clock size={20} className="text-yellow-400 opacity-50" /> },
-                { label: 'Approved',         value: approved, color: 'border-l-green-500',  icon: <CheckCircle size={20} className="text-green-400 opacity-50" /> },
-                { label: 'Running',          value: running,  color: 'border-l-yellow-400', icon: <RefreshCw size={20} className="text-yellow-300 opacity-50" /> },
+                { label: 'Total Work Order', value: total, color: 'border-l-orange-500', icon: <ClipboardList size={20} className="text-orange-400 opacity-50" /> },
+                { label: 'Pending', value: pending, color: 'border-l-yellow-500', icon: <Clock size={20} className="text-yellow-400 opacity-50" /> },
+                { label: 'Approved', value: approved, color: 'border-l-green-500', icon: <CheckCircle size={20} className="text-green-400 opacity-50" /> },
+                { label: 'Running', value: running, color: 'border-l-yellow-400', icon: <RefreshCw size={20} className="text-yellow-300 opacity-50" /> },
               ].map(({ label, value, color, icon }) => (
                 <div key={label} className={`bg-[#13161e] border border-[#1e2230] border-l-2 ${color} rounded-xl px-5 py-4 flex items-center justify-between`}>
                   <div>
@@ -288,7 +288,11 @@ export default function KelolaJadwalPage() {
                 </div>
                 <div>
                   <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Status Filter</p>
-                  <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value as any); setPage(1); }}
+                  <select value={filterStatus} onChange={e => {
+                    setFilterStatus(
+                      e.target.value as 'All Status' | 'PENDING' | 'RUNNING' | 'FINISHED'
+                    ); setPage(1);
+                  }}
                     className="bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer w-36">
                     {['All Status', 'PENDING', 'RUNNING', 'FINISHED'].map(s => <option key={s}>{s}</option>)}
                   </select>
@@ -371,8 +375,8 @@ export default function KelolaJadwalPage() {
                 </p>
                 <div className="flex items-center gap-1">
                   {[
-                    { icon: ChevronFirst, action: () => setPage(1),                            disabled: page === 1          },
-                    { icon: ChevronLeft,  action: () => setPage(p => Math.max(1, p - 1)),      disabled: page === 1          },
+                    { icon: ChevronFirst, action: () => setPage(1), disabled: page === 1 },
+                    { icon: ChevronLeft, action: () => setPage(p => Math.max(1, p - 1)), disabled: page === 1 },
                   ].map(({ icon: Icon, action, disabled }, i) => (
                     <button key={i} onClick={action} disabled={disabled}
                       className="w-8 h-8 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center text-[#6b7280] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -387,7 +391,7 @@ export default function KelolaJadwalPage() {
                   ))}
                   {[
                     { icon: ChevronRight, action: () => setPage(p => Math.min(totalPages, p + 1)), disabled: page === totalPages },
-                    { icon: ChevronLast,  action: () => setPage(totalPages),                        disabled: page === totalPages },
+                    { icon: ChevronLast, action: () => setPage(totalPages), disabled: page === totalPages },
                   ].map(({ icon: Icon, action, disabled }, i) => (
                     <button key={i} onClick={action} disabled={disabled}
                       className="w-8 h-8 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center text-[#6b7280] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -453,7 +457,7 @@ export default function KelolaJadwalPage() {
                       </div>
                       <div className="bg-[#0f1117] border border-[#1e2230] rounded-lg p-3.5 mb-4">
                         <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Primary Complaint</p>
-                        <p className="text-[12px] text-[#e2e8f0] italic">"{foundBooking.complaint}"</p>
+                        <p className="text-[12px] text-[#e2e8f0] italic">{foundBooking.complaint}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -592,7 +596,7 @@ export default function KelolaJadwalPage() {
                   </div>
                   <div className="bg-[#0f1117] border border-[#1e2230] rounded-lg p-3.5 mb-4">
                     <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Primary Complaint</p>
-                    <p className="text-[12px] text-[#e2e8f0] italic">"{selectedWO.complaint}"</p>
+                    <p className="text-[12px] text-[#e2e8f0] italic">{selectedWO.complaint}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -627,7 +631,7 @@ export default function KelolaJadwalPage() {
                       <RefreshCw size={13} className="text-orange-500" />
                       <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Progress Pengerjaan</p>
                     </div>
-                    <button onClick={() => {}}
+                    <button onClick={() => { }}
                       className="text-[10px] font-bold text-orange-400 hover:text-orange-300 transition-colors">
                       + Tambah Step Progress
                     </button>

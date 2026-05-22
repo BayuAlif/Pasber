@@ -1,31 +1,53 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  console.log("MIDDLEWARE HIT:", pathname);
+  const token = request.cookies.get("token")?.value;
+  const role = request.cookies.get("role")?.value;
 
-  const token = request.cookies.get('token')?.value;
+  console.log("ROLE:", role);
+  console.log("PATH:", pathname);
 
-  const isProtectedRoute =
-    pathname.startsWith('/onboarding') ||
-    pathname.startsWith('/Profile') ||
-    pathname.startsWith('/Admin')||
-    pathname.startsWith('/User')
+  // Kalau belum login
+  if (
+    (pathname.startsWith("/Admin") ||
+      pathname.startsWith("/User") ||
+      pathname.startsWith("/onboarding")) &&
+    !token
+  ) {
+    return NextResponse.redirect(
+      new URL("/auth/login", request.url)
+    );
+  }
 
-  if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+  // Proteksi admin
+  if (pathname.startsWith("/Admin")) {
+    if (role !== "admin") {
+      return NextResponse.redirect(
+        new URL("/User/dashboard", request.url)
+      );
+    }
+  }
+
+  // Proteksi user/customer
+  if (pathname.startsWith("/User")) {
+    if (role !== "customer") {
+      return NextResponse.redirect(
+        new URL("/Admin/admin-dashboard", request.url)
+      );
+    }
   }
 
   return NextResponse.next();
+
 }
 
 export const config = {
   matcher: [
-    '/onboarding/:path*',
-    '/Profile/:path*',
-    '/Admin/:path*',
-    '/User/:path*'
+    "/Admin/:path*",
+    "/User/:path*",
+    "/onboarding/:path*",
   ],
 };
