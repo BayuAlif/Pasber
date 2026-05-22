@@ -424,7 +424,7 @@ function KelolaBookingView({
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// VIEW 2 — Kelola Jadwal & Work Order (Detail)
+// VIEW 2 — Work Order (Detail)
 // ══════════════════════════════════════════════════════════════════════════
 function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () => void }) {
   const [catatan, setCatatan] = useState('');
