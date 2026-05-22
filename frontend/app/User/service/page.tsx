@@ -315,45 +315,11 @@ export default function BookingServicePage() {
         const result = await response.json();
         console.log(result);
       }
-<<<<<<< HEAD
-      const bengkelNama = bengkels.find((b) => b.id === selectedBengkel)?.nama ?? "-";
-      const kendaraanLabel = selectedVehicleList.map((v) => `${v.brand} ${v.model}`).join(", ");
-      const tanggalLabel = `${selectedDate} ${months[selectedMonth]} ${YEAR}`;
-      setSuccessData({
-        bengkel: bengkelNama,
-        tanggal: tanggalLabel,
-        waktu: selectedTime,
-        kendaraan: kendaraanLabel,
-        layanan: keluhanLabel,
-      });
-      setShowSuccess(true);
-    } catch (error) {
-      console.error(error);
-      setFailedMessage("Terjadi kesalahan koneksi. Periksa internet kamu.");
-      setShowFailed(true);
-    }
-  };
-  const testPopupSuccess = () => {
-    setSuccessData({
-      bengkel: "Bengkel Teladan",
-      tanggal: "25 Mei 2026",
-      waktu: "10:00",
-      kendaraan: "Honda Vario 125",
-      layanan: "Ganti Oli",
-    });
-    setShowSuccess(true);
-  };
-
-  const testPopupFailed = () => {
-    setFailedMessage("Gagal memproses booking. Coba lagi nanti.");
-    setShowFailed(true);
-=======
       alert("Booking berhasil dibuat!");
 
       setStep(1);
       router.refresh();
     } catch (error) { console.error(error); alert("Booking gagal"); }
->>>>>>> 699a8cbf68cd6e94f8a97391225fcd2919d517c4
   };
   const filteredBengkels = bengkels.filter((b) =>
 

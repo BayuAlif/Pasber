@@ -108,10 +108,6 @@ function DetailModal({ booking, onClose, onApprove, onReject }: {
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
             <p>{booking.status}</p>
-
-            <p>{STATUS_STYLE['pending']}</p>
-
-            <p>{JSON.stringify(STATUS_STYLE)}</p>
           </span>
           <div className="flex-1" />
           {booking.status === 'pending' && (
@@ -468,11 +464,7 @@ function KelolaBookingView({
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-<<<<<<< HEAD
-// VIEW 2 — Work Order (Detail)
-=======
 // VIEW 2 — Lihat Detail
->>>>>>> 699a8cbf68cd6e94f8a97391225fcd2919d517c4
 // ══════════════════════════════════════════════════════════════════════════
 function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () => void }) {
   const [catatan, setCatatan] = useState('');
@@ -515,10 +507,6 @@ function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () =>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
                 <p>{booking.status}</p>
-
-                <p>{STATUS_STYLE['pending']}</p>
-
-                <p>{JSON.stringify(STATUS_STYLE)}</p>
               </span>
             </div>
 
@@ -598,10 +586,6 @@ function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () =>
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
               <p>{booking.status}</p>
-
-              <p>{STATUS_STYLE['pending']}</p>
-
-              <p>{JSON.stringify(STATUS_STYLE)}</p>
             </span>
           </div>
         </div>
@@ -805,7 +789,7 @@ export default function KelolaBookingPage() {
             <h2 className="text-[20px] font-bold text-white leading-none">
               {isBooking
                 ? 'Kelola Booking'
-                : 'Kelola Jadwal & Work Order'}
+                : 'Work Order'}
             </h2>
 
             <p className="text-[11px] text-[#4b5563] mt-1">

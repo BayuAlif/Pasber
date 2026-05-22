@@ -6,6 +6,7 @@ import {
   CalendarDays, Car, User, Wrench, Clock, ChevronFirst,
   ChevronLast, ChevronLeft, ChevronRight, Upload, RefreshCw,
   AlertCircle, Info, ClipboardList, UserCheck, Camera,
+  Filter,
 } from 'lucide-react';
 import SidebarAdmin from '../../components/sidebar-admin/page';
 
@@ -50,55 +51,24 @@ type WorkOrder = {
   progress: ProgressStep[];
 };
 
-// ── Dummy Data ─────────────────────────────────────────────────────────────
-const DUMMY_MECHANICS: Mekanik[] = [
-  { id: 'M001', name: 'Eko Prasetyo', specialization: 'ELECTRICAL', status: 'READY' },
-  { id: 'M002', name: 'Eko Prasatwa', specialization: 'ELECTRICAL', status: 'READY' },
-  { id: 'M003', name: 'Eko Prasejarah', specialization: 'ELECTRICAL', status: 'READY' },
-  { id: 'M004', name: 'Budi Santoso', specialization: 'ENGINE', status: 'BUSY' },
-  { id: 'M005', name: 'Reza Firmansyah', specialization: 'BODY & PAINT', status: 'READY' },
-];
+// ── Booking type (sesuaikan dengan struktur data dari API/backend kamu) ───────
+type Booking = {
+  id: string;
+  customer: string;
+  phone: string;
+  vehicle: string;
+  plate: string;
+  year: string;
+  color: string;
+  complaint: string;
+  entry: string; // format: "DD MMM YYYY, HH:mm"
+  est: string;
+};
 
-const DUMMY_WO: WorkOrder[] = [
-  {
-    id: '#WO-2024-001', bookingId: '#BK-2024-001',
-    customer: 'Andi Wijaya', customerType: 'VIP CLIENT', phone: '+62 812-3456-7890',
-    vehicle: 'Toyota Fortuner GR', plateNumber: 'B 1234 XYZ', year: '2022', color: 'Black Metallic',
-    complaint: 'Engine misfiring at low RPM, especially when idling for more than 5 minutes. No Check Engine Light visible on dashboard yet.',
-    entryDate: '24 Oct 2024', entryTime: '09:00 WIB', estCompletion: '24 Oct 2024, 11:00 WIB',
-    status: 'PENDING', assignedMechanic: undefined, notes: '',
-    progress: [],
-  },
-  {
-    id: '#WO-2024-002', bookingId: '#BK-2024-002',
-    customer: 'Jessica Wijaya', customerType: 'VIP CLIENT', phone: '+62 813-9988-7766',
-    vehicle: 'BMW M3 Competition', plateNumber: 'D 4452 CC', year: '2023', color: 'Alpine White',
-    complaint: 'Oil leak detected from bottom of engine. Smell of burning oil after long drives.',
-    entryDate: '25 Oct 2024', entryTime: '14:30 WIB', estCompletion: '25 Oct 2024, 17:00 WIB',
-    status: 'FINISHED', assignedMechanic: 'Eko Prasetyo', notes: 'Oil pan gasket replaced. Test drive completed.',
-    progress: [
-      { id: 'p1', title: 'Initial Diagnostics', description: 'Perform full OBD-II scan, checking error logs and fuel pressure values.', time: '09:15', active: false, done: true },
-      { id: 'p2', title: 'Oil Pan Inspection', description: 'Identified crack on oil pan gasket. Ordered replacement part.', time: '10:00', active: false, done: true },
-    ],
-  },
-  {
-    id: '#WO-2024-003', bookingId: '#BK-2024-003',
-    customer: 'Budi Santoso', customerType: 'REGULAR CLIENT', phone: '+62 856-1122-3344',
-    vehicle: 'Honda Civic Type R', plateNumber: 'L 9901 AB', year: '2021', color: 'Championship White',
-    complaint: 'Suspension feels too stiff on bumps. Possible worn shock absorbers.',
-    entryDate: '26 Oct 2024', entryTime: '10:00 WIB', estCompletion: '26 Oct 2024, 14:00 WIB',
-    status: 'RUNNING', assignedMechanic: 'Eko Prasetyo', notes: '',
-    progress: [
-      { id: 'p1', title: 'Initial Diagnostics', description: 'Perform full OBD-II scan, checking error logs and fuel pressure values.', time: '09:15', active: false, done: true },
-      { id: 'p2', title: 'Spark Plug & Coil Replacement', description: 'Replacing faulty spark plugs on cylinders 2 & 4. Checking wiring harness integrity.', time: '10:45', active: true, done: false },
-    ],
-  },
-];
-
-const DUMMY_BOOKINGS = [
-  { id: '#BK-2024-004', customer: 'Rina Melati', vehicle: 'Porsche 911 Carrera', plate: 'B 911 RIN', phone: '+62 877-5544-3322', complaint: 'Brake pedal feels spongy and requires more force.', entry: '27 Oct 2024, 09:00 WIB', est: '27 Oct 2024, 12:00 WIB', year: '2022', color: 'GT Silver' },
-  { id: '#BK-2024-005', customer: 'Doni Saputra', vehicle: 'Toyota GR86', plate: 'B 8600 GR', phone: '+62 812-7788-9900', complaint: 'Check engine light on since last week.', entry: '28 Oct 2024, 11:00 WIB', est: '28 Oct 2024, 14:00 WIB', year: '2023', color: 'Halo White' },
-];
+// ── Initial data (kosong — isi dari API/props sesuai kebutuhan) ───────────────
+const INITIAL_MECHANICS: Mekanik[] = [];
+const INITIAL_WO: WorkOrder[] = [];
+const INITIAL_BOOKINGS: Booking[] = [];
 
 const STATUS_STYLE: Record<WOStatus, string> = {
   PENDING: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
@@ -106,100 +76,167 @@ const STATUS_STYLE: Record<WOStatus, string> = {
   FINISHED: 'bg-green-500/10  text-green-400  border border-green-500/20',
 };
 
+// Status label untuk action dropdown
+const NEXT_STATUS: Record<WOStatus, WOStatus | null> = {
+  PENDING:  'RUNNING',
+  RUNNING:  'FINISHED',
+  FINISHED: null,
+};
+
 const PAGE_SIZE = 5;
+
+// ── Input class helper ─────────────────────────────────────────────────────
+const inputCls = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function KelolaJadwalPage() {
   // view: 'list' | 'create' | 'detail'
-  const [view, setView] = useState<'list' | 'create' | 'detail'>('list');
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(DUMMY_WO);
+  const [view, setView]             = useState<'list' | 'create' | 'detail'>('list');
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(INITIAL_WO);
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
 
   // list state
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'All Status' | WOStatus>('All Status');
-  const [page, setPage] = useState(1);
+  const [search, setSearch]               = useState('');
+  const [filterStatus, setFilterStatus]   = useState<'All Status' | WOStatus>('All Status');
+  const [filterDate, setFilterDate]       = useState('');
+  const [page, setPage]                   = useState(1);
+  const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
 
   // create state
-  const [bookingSearch, setBookingSearch] = useState('');
-  const [foundBooking, setFoundBooking] = useState<typeof DUMMY_BOOKINGS[0] | null>(null);
+  const [bookingSearch, setBookingSearch]     = useState('');
+  const [foundBooking, setFoundBooking]       = useState<Booking | null>(null);
   const [bookingNotFound, setBookingNotFound] = useState(false);
   const [selectedMechanic, setSelectedMechanic] = useState<string>('');
-  const [mechSearch, setMechSearch] = useState('');
-  const [notes, setNotes] = useState('');
+  const [mechSearch, setMechSearch]           = useState('');
+  const [notes, setNotes]                     = useState('');
 
   // detail state
-  const [newStepTitle, setNewStepTitle] = useState('');
-  const [newStepDesc, setNewStepDesc] = useState('');
+  const [newStepTitle, setNewStepTitle]         = useState('');
+  const [newStepDesc, setNewStepDesc]           = useState('');
   const [detailMechSearch, setDetailMechSearch] = useState('');
-  const [detailNotes, setDetailNotes] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [detailNotes, setDetailNotes]           = useState('');
+  const [photoMap, setPhotoMap]                 = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeStepId, setActiveStepId]         = useState<string | null>(null);
 
   // ── Stats ─────────────────────────────────────────────────────────────
-  const total = workOrders.length;
-  const pending = workOrders.filter(w => w.status === 'PENDING').length;
-  const approved = workOrders.filter(w => w.status === 'FINISHED').length;
-  const running = workOrders.filter(w => w.status === 'RUNNING').length;
+  const total    = workOrders.length;
+  const pending  = workOrders.filter(w => w.status === 'PENDING').length;
+  const finished = workOrders.filter(w => w.status === 'FINISHED').length;
+  const running  = workOrders.filter(w => w.status === 'RUNNING').length;
 
   // ── Filter ─────────────────────────────────────────────────────────────
   const filtered = workOrders.filter(w => {
     const matchSearch = w.customer.toLowerCase().includes(search.toLowerCase()) ||
-      w.plateNumber.toLowerCase().includes(search.toLowerCase()) ||
-      w.id.toLowerCase().includes(search.toLowerCase());
+                        w.plateNumber.toLowerCase().includes(search.toLowerCase()) ||
+                        w.id.toLowerCase().includes(search.toLowerCase()) ||
+                        w.bookingId.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'All Status' || w.status === filterStatus;
-    return matchSearch && matchStatus;
+    const matchDate   = !filterDate || w.entryDate.includes(filterDate);
+    return matchSearch && matchStatus && matchDate;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // ── Handlers ───────────────────────────────────────────────────────────
+
+  /** Cari booking berdasarkan ID */
   const handleSearchBooking = () => {
-    const found = DUMMY_BOOKINGS.find(b => b.id.toLowerCase() === bookingSearch.toLowerCase());
+    const q = bookingSearch.trim().toUpperCase();
+    const found = INITIAL_BOOKINGS.find(b => b.id.toUpperCase() === q);
     if (found) { setFoundBooking(found); setBookingNotFound(false); }
     else { setFoundBooking(null); setBookingNotFound(true); }
   };
 
+  /** Buat WO baru dari booking yang ditemukan */
   const handleCreateWO = () => {
     if (!foundBooking) return;
     const newWO: WorkOrder = {
-      id: `#WO-2024-${String(workOrders.length + 1).padStart(3, '0')}`,
-      bookingId: foundBooking.id,
-      customer: foundBooking.customer,
-      customerType: 'NEW CLIENT',
-      phone: foundBooking.phone,
-      vehicle: foundBooking.vehicle,
-      plateNumber: foundBooking.plate,
-      year: foundBooking.year,
-      color: foundBooking.color,
-      complaint: foundBooking.complaint,
-      entryDate: foundBooking.entry.split(',')[0],
-      entryTime: foundBooking.entry.split(',')[1]?.trim() || '',
-      estCompletion: foundBooking.est,
-      status: 'PENDING',
+      id:               `#WO-2024-${String(workOrders.length + 1).padStart(3, '0')}`,
+      bookingId:        foundBooking.id,
+      customer:         foundBooking.customer,
+      customerType:     'NEW CLIENT',
+      phone:            foundBooking.phone,
+      vehicle:          foundBooking.vehicle,
+      plateNumber:      foundBooking.plate,
+      year:             foundBooking.year,
+      color:            foundBooking.color,
+      complaint:        foundBooking.complaint,
+      entryDate:        foundBooking.entry.split(',')[0],
+      entryTime:        foundBooking.entry.split(',')[1]?.trim() || '',
+      estCompletion:    foundBooking.est,
+      status:           'PENDING',
       assignedMechanic: selectedMechanic || undefined,
       notes,
-      progress: [],
+      progress:         [],
     };
     setWorkOrders(prev => [...prev, newWO]);
-    setSelectedWO(newWO);
-    setView('detail');
+    // Reset create state
     setFoundBooking(null); setBookingSearch(''); setSelectedMechanic(''); setNotes('');
+    setBookingNotFound(false);
+    // Buka detail WO yang baru dibuat
+    setSelectedWO(newWO);
+    setDetailNotes(newWO.notes);
+    setView('detail');
   };
 
-  const openDetail = (wo: WorkOrder) => { setSelectedWO(wo); setDetailNotes(wo.notes); setView('detail'); };
+  /** Buka detail WO */
+  const openDetail = (wo: WorkOrder) => {
+    setSelectedWO(wo);
+    setDetailNotes(wo.notes);
+    setDetailMechSearch('');
+    setNewStepTitle('');
+    setNewStepDesc('');
+    setView('detail');
+  };
 
+  /** Update status WO langsung dari tabel */
+  const updateStatus = (woId: string, newStatus: WOStatus) => {
+    setWorkOrders(prev => prev.map(w => w.id === woId ? { ...w, status: newStatus } : w));
+    setStatusDropdownId(null);
+    // Kalau WO yang sedang dibuka di-update, sync selectedWO juga
+    if (selectedWO?.id === woId) {
+      setSelectedWO(prev => prev ? { ...prev, status: newStatus } : prev);
+    }
+  };
+
+  /** Tambah step progress */
   const addProgressStep = () => {
-    if (!selectedWO || !newStepTitle) return;
+    if (!selectedWO || !newStepTitle.trim()) return;
+    // Tandai semua step sebelumnya sebagai done (tidak active lagi)
+    const prevProgress = selectedWO.progress.map(s => ({ ...s, active: false, done: true }));
     const step: ProgressStep = {
-      id: Date.now().toString(), title: newStepTitle, description: newStepDesc,
-      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      active: true, done: false,
+      id:          Date.now().toString(),
+      title:       newStepTitle.trim(),
+      description: newStepDesc.trim(),
+      time:        new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      active:      true,
+      done:        false,
     };
-    const updated = { ...selectedWO, progress: [...selectedWO.progress, step], status: 'RUNNING' as WOStatus };
+    const updated: WorkOrder = { ...selectedWO, progress: [...prevProgress, step], status: 'RUNNING' };
     setWorkOrders(prev => prev.map(w => w.id === selectedWO.id ? updated : w));
-    setSelectedWO(updated); setNewStepTitle(''); setNewStepDesc('');
+    setSelectedWO(updated);
+    setNewStepTitle('');
+    setNewStepDesc('');
   };
 
+  /** Tandai step sebagai selesai */
+  const markStepDone = (stepId: string) => {
+    if (!selectedWO) return;
+    const newProgress = selectedWO.progress.map(s =>
+      s.id === stepId ? { ...s, active: false, done: true } : s
+    );
+    const allDone = newProgress.every(s => s.done);
+    const updated: WorkOrder = {
+      ...selectedWO,
+      progress: newProgress,
+      status:   allDone ? 'FINISHED' : 'RUNNING',
+    };
+    setWorkOrders(prev => prev.map(w => w.id === selectedWO.id ? updated : w));
+    setSelectedWO(updated);
+  };
+
+  /** Assign mekanik ke WO yang sedang dibuka */
   const assignMechanic = (mechName: string) => {
     if (!selectedWO) return;
     const updated = { ...selectedWO, assignedMechanic: mechName };
@@ -207,6 +244,7 @@ export default function KelolaJadwalPage() {
     setSelectedWO(updated);
   };
 
+  /** Simpan catatan ke WO yang sedang dibuka */
   const saveNotes = () => {
     if (!selectedWO) return;
     const updated = { ...selectedWO, notes: detailNotes };
@@ -214,23 +252,53 @@ export default function KelolaJadwalPage() {
     setSelectedWO(updated);
   };
 
-  const inputCls = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
+  /** Upload foto bukti untuk sebuah step */
+  const handlePhotoUpload = (stepId: string, file: File) => {
+    const url = URL.createObjectURL(file);
+    setPhotoMap(prev => ({ ...prev, [stepId]: url }));
+    // Simpan ke selectedWO progress juga
+    if (!selectedWO) return;
+    const newProgress = selectedWO.progress.map(s =>
+      s.id === stepId ? { ...s, foto: url } : s
+    );
+    const updated = { ...selectedWO, progress: newProgress };
+    setWorkOrders(prev => prev.map(w => w.id === selectedWO.id ? updated : w));
+    setSelectedWO(updated);
+  };
 
-  const filteredMechanics = DUMMY_MECHANICS.filter(m =>
-    m.name.toLowerCase().includes(mechSearch.toLowerCase())
-  );
-  const filteredDetailMechanics = DUMMY_MECHANICS.filter(m =>
-    m.name.toLowerCase().includes(detailMechSearch.toLowerCase())
-  );
+  /** Tugaskan mekanik & ubah status ke RUNNING dari detail */
+  const handleTugaskan = () => {
+    if (!selectedWO) return;
+    const mech = selectedWO.assignedMechanic;
+    if (!mech) { alert('Pilih mekanik terlebih dahulu!'); return; }
+    const updated: WorkOrder = { ...selectedWO, status: 'RUNNING' };
+    setWorkOrders(prev => prev.map(w => w.id === selectedWO.id ? updated : w));
+    setSelectedWO(updated);
+  };
 
+  // ── Derived ────────────────────────────────────────────────────────────
+  const filteredMechanics       = INITIAL_MECHANICS.filter(m => m.name.toLowerCase().includes(mechSearch.toLowerCase()));
+  const filteredDetailMechanics = INITIAL_MECHANICS.filter(m => m.name.toLowerCase().includes(detailMechSearch.toLowerCase()));
+
+  // ── Reset filter & page on search change ───────────────────────────────
+  const handleSearchChange = (val: string) => { setSearch(val); setPage(1); };
+  const handleStatusChange = (val: string)  => { setFilterStatus(val as any); setPage(1); };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  RENDER
+  // ═══════════════════════════════════════════════════════════════════════
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0f1117] text-[#e2e8f0]" style={{ fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-
+    <div
+      className="flex h-screen overflow-hidden bg-[#0f1117] text-[#e2e8f0]"
+      style={{ fontFamily: "'DM Sans','Segoe UI',sans-serif" }}
+      // Tutup status dropdown kalau klik di luar
+      onClick={() => setStatusDropdownId(null)}
+    >
       <SidebarAdmin />
 
       <main className="flex-1 overflow-y-auto h-screen">
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="sticky top-0 z-10 bg-[#0f1117]/95 backdrop-blur border-b border-[#1e2230] px-8 py-4 flex justify-between items-center">
           <div>
             <h2 className="text-[18px] font-bold text-white leading-none">Kelola Jadwal & Work Order</h2>
@@ -239,8 +307,11 @@ export default function KelolaJadwalPage() {
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={13} />
-              <input type="text" placeholder="ID Servis/Plat Nomor"
-                className="bg-[#13161e] border border-[#1e2230] rounded-lg py-2 pl-9 pr-4 text-[12px] outline-none focus:border-orange-500/50 w-56 placeholder:text-[#374151] text-[#e2e8f0]" />
+              <input
+                type="text"
+                placeholder="ID Servis / Plat Nomor"
+                className="bg-[#13161e] border border-[#1e2230] rounded-lg py-2 pl-9 pr-4 text-[12px] outline-none focus:border-orange-500/50 w-56 placeholder:text-[#374151] text-[#e2e8f0]"
+              />
             </div>
             <button className="w-9 h-9 bg-[#13161e] border border-[#1e2230] rounded-lg flex items-center justify-center text-[#4b5563] hover:text-white transition-colors relative">
               <Bell size={15} />
@@ -258,55 +329,80 @@ export default function KelolaJadwalPage() {
             {/* Stat Cards */}
             <div className="grid grid-cols-4 gap-3.5">
               {[
-                { label: 'Total Work Order', value: total, color: 'border-l-orange-500', icon: <ClipboardList size={20} className="text-orange-400 opacity-50" /> },
-                { label: 'Pending', value: pending, color: 'border-l-yellow-500', icon: <Clock size={20} className="text-yellow-400 opacity-50" /> },
-                { label: 'Approved', value: approved, color: 'border-l-green-500', icon: <CheckCircle size={20} className="text-green-400 opacity-50" /> },
-                { label: 'Running', value: running, color: 'border-l-yellow-400', icon: <RefreshCw size={20} className="text-yellow-300 opacity-50" /> },
-              ].map(({ label, value, color, icon }) => (
-                <div key={label} className={`bg-[#13161e] border border-[#1e2230] border-l-2 ${color} rounded-xl px-5 py-4 flex items-center justify-between`}>
+                { label: 'Total Work Order', value: total,    colorBorder: 'border-l-orange-500', iconColor: 'text-orange-400', icon: <ClipboardList size={22} /> },
+                { label: 'Pending',          value: pending,  colorBorder: 'border-l-yellow-500', iconColor: 'text-yellow-400', icon: <Clock size={22} />         },
+                { label: 'Finished',         value: finished, colorBorder: 'border-l-green-500',  iconColor: 'text-green-400',  icon: <CheckCircle size={22} />   },
+                { label: 'Running',          value: running,  colorBorder: 'border-l-orange-400', iconColor: 'text-orange-300', icon: <RefreshCw size={22} />     },
+              ].map(({ label, value, colorBorder, iconColor, icon }) => (
+                <div key={label} className={`bg-[#13161e] border border-[#1e2230] border-l-2 ${colorBorder} rounded-xl px-5 py-4 flex items-center justify-between`}>
                   <div>
                     <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1">{label}</p>
                     <p className="text-[28px] font-black text-white leading-none">{value}</p>
                   </div>
-                  {icon}
+                  <span className={`${iconColor} opacity-40`}>{icon}</span>
                 </div>
               ))}
             </div>
 
-            {/* Filters */}
+            {/* Filters + Buat WO button */}
             <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-4">
-              <div className="flex items-center gap-4">
-                <div>
+              <div className="flex items-end gap-4 flex-wrap">
+                {/* Search */}
+                <div className="flex-1 min-w-[200px]">
                   <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Search Records</p>
-                  <div className="relative w-96">
+                  <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={13} />
-                    <input type="text" placeholder="Customer name, plate number, or ID..."
-                      value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+                    <input
+                      type="text"
+                      placeholder="Customer name, plate number, or ID..."
+                      value={search}
+                      onChange={e => handleSearchChange(e.target.value)}
                       className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2.5 pl-9 pr-4 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
                     />
                   </div>
                 </div>
+
+                {/* Status Filter */}
                 <div>
                   <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Status Filter</p>
-                  <select value={filterStatus} onChange={e => {
-                    setFilterStatus(
-                      e.target.value as 'All Status' | 'PENDING' | 'RUNNING' | 'FINISHED'
-                    ); setPage(1);
-                  }}
-                    className="bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer w-36">
+                  <select
+                    value={filterStatus}
+                    onChange={e => handleStatusChange(e.target.value)}
+                    className="bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer w-36"
+                  >
                     {['All Status', 'PENDING', 'RUNNING', 'FINISHED'].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
+
+                {/* Date Range */}
                 <div>
                   <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Date Range</p>
-                  <input type="date"
-                    className="bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer" />
+                  <input
+                    type="date"
+                    value={filterDate}
+                    onChange={e => { setFilterDate(e.target.value); setPage(1); }}
+                    className="bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer"
+                  />
                 </div>
-                <div className="mt-5">
-                  <button className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all">
-                    Apply Filters
-                  </button>
-                </div>
+
+                {/* Apply Filters */}
+                <button
+                  onClick={() => setPage(1)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all"
+                >
+                  <Filter size={13} /> Apply Filters
+                </button>
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Buat WO Baru */}
+                <button
+                  onClick={() => { setView('create'); setFoundBooking(null); setBookingSearch(''); setBookingNotFound(false); }}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all"
+                >
+                  <Plus size={14} /> Buat WO Baru
+                </button>
               </div>
             </div>
 
@@ -321,20 +417,39 @@ export default function KelolaJadwalPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((w, i) => (
+                  {paginated.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-14 text-[#4b5563]">
+                        <Search size={28} className="mx-auto mb-3 opacity-20" />
+                        <p className="text-[12px]">Tidak ada data yang cocok</p>
+                      </td>
+                    </tr>
+                  ) : paginated.map((w, i) => (
                     <tr key={w.id} className={`border-b border-[#1e2230] hover:bg-[#1a1d28] transition-colors ${i === paginated.length - 1 ? 'border-b-0' : ''}`}>
-                      <td className="px-5 py-4"><span className="text-[11px] font-mono font-bold text-orange-400">{w.id}</span></td>
+                      {/* Booking ID */}
+                      <td className="px-5 py-4">
+                        <p className="text-[11px] font-mono font-bold text-orange-400">{w.bookingId}</p>
+                        <p className="text-[9px] text-[#4b5563] mt-0.5 font-mono">{w.id}</p>
+                      </td>
+
+                      {/* Customer */}
                       <td className="px-5 py-4">
                         <p className="text-[12px] font-bold text-white">{w.customer}</p>
                         <p className="text-[9px] text-[#4b5563] font-bold tracking-wider mt-0.5">{w.customerType}</p>
                       </td>
+
+                      {/* Vehicle */}
                       <td className="px-5 py-4">
                         <p className="text-[12px] font-semibold text-white">{w.vehicle}</p>
                         <p className="text-[10px] font-mono text-[#6b7280] mt-0.5">{w.plateNumber}</p>
                       </td>
-                      <td className="px-5 py-4 max-w-[150px]">
+
+                      {/* Complaint */}
+                      <td className="px-5 py-4 max-w-[160px]">
                         <p className="text-[11px] text-[#9ca3af] truncate">{w.complaint}</p>
                       </td>
+
+                      {/* Schedule */}
                       <td className="px-5 py-4">
                         <p className="text-[11px] font-semibold text-white">{w.entryDate}</p>
                         <div className="flex items-center gap-1 mt-0.5">
@@ -342,23 +457,63 @@ export default function KelolaJadwalPage() {
                           <p className="text-[10px] text-[#4b5563]">{w.entryTime}</p>
                         </div>
                       </td>
+
+                      {/* Status */}
                       <td className="px-5 py-4">
                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[w.status]}`}>
                           {w.status}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+
+                      {/* Actions */}
+                      <td className="px-5 py-4" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-1.5">
-                          {w.status === 'RUNNING' && (
-                            <button onClick={() => openDetail(w)} title="Progress"
-                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all">
-                              <RefreshCw size={13} />
+                          {/* View Detail */}
+                          <button
+                            onClick={() => openDetail(w)}
+                            title="Lihat Detail"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 text-[#6b7280] text-[10px] font-bold transition-all"
+                          >
+                            <Eye size={12} /> Detail
+                          </button>
+
+                          {/* Update Status — hanya jika bukan FINISHED */}
+                          {w.status !== 'FINISHED' && (
+                            <div className="relative">
+                              <button
+                                onClick={() => setStatusDropdownId(prev => prev === w.id ? null : w.id)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 text-[#6b7280] text-[10px] font-bold transition-all"
+                              >
+                                <RefreshCw size={12} /> Update Status
+                                <ChevronRight size={10} className="rotate-90" />
+                              </button>
+                              {statusDropdownId === w.id && (
+                                <div className="absolute right-0 top-full mt-1.5 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg overflow-hidden shadow-xl z-20 min-w-[140px]">
+                                  {(w.status === 'PENDING' ? ['RUNNING'] : ['FINISHED']).map(s => (
+                                    <button
+                                      key={s}
+                                      onClick={() => updateStatus(w.id, s as WOStatus)}
+                                      className="w-full text-left px-4 py-2.5 text-[11px] font-bold hover:bg-[#2a2f3e] transition-colors"
+                                    >
+                                      <span className={s === 'RUNNING' ? 'text-orange-400' : 'text-green-400'}>
+                                        → {s}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Buat WO — khusus PENDING yang belum punya WO */}
+                          {w.status === 'PENDING' && !w.id.startsWith('#WO') && (
+                            <button
+                              onClick={() => openDetail(w)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 text-orange-400 text-[10px] font-bold transition-all"
+                            >
+                              <Plus size={12} /> Buat WO
                             </button>
                           )}
-                          <button onClick={() => openDetail(w)} title="View Detail"
-                            className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all">
-                            <Eye size={13} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -369,24 +524,26 @@ export default function KelolaJadwalPage() {
               {/* Pagination */}
               <div className="px-5 py-3.5 border-t border-[#1e2230] flex items-center justify-between">
                 <p className="text-[11px] text-[#4b5563]">
-                  Showing <span className="text-white font-bold">
-                    {filtered.length === 0 ? '0' : `${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, filtered.length)}`}
-                  </span> of <span className="text-white font-bold">{filtered.length}</span> bookings
+                  Showing{' '}
+                  <span className="text-white font-bold">
+                    {filtered.length === 0 ? '0' : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)}`}
+                  </span>{' '}
+                  of <span className="text-white font-bold">{filtered.length}</span> work orders
                 </p>
                 <div className="flex items-center gap-1">
                   {[
-                    { icon: ChevronFirst, action: () => setPage(1), disabled: page === 1 },
-                    { icon: ChevronLeft, action: () => setPage(p => Math.max(1, p - 1)), disabled: page === 1 },
+                    { icon: ChevronFirst, action: () => setPage(1),                             disabled: page === 1 },
+                    { icon: ChevronLeft,  action: () => setPage(p => Math.max(1, p - 1)),       disabled: page === 1 },
                   ].map(({ icon: Icon, action, disabled }, i) => (
                     <button key={i} onClick={action} disabled={disabled}
                       className="w-8 h-8 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center text-[#6b7280] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                       <Icon size={13} />
                     </button>
                   ))}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <button key={p} onClick={() => setPage(p)}
-                      className={`w-8 h-8 rounded-lg text-[12px] font-bold border transition-all ${page === p ? 'bg-orange-500 border-orange-500 text-white' : 'bg-[#1a1d28] border-[#2a2f3e] text-[#6b7280] hover:text-white'}`}>
-                      {p}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+                    <button key={pg} onClick={() => setPage(pg)}
+                      className={`w-8 h-8 rounded-lg text-[12px] font-bold border transition-all ${page === pg ? 'bg-orange-500 border-orange-500 text-white' : 'bg-[#1a1d28] border-[#2a2f3e] text-[#6b7280] hover:text-white'}`}>
+                      {pg}
                     </button>
                   ))}
                   {[
@@ -401,7 +558,6 @@ export default function KelolaJadwalPage() {
                 </div>
               </div>
             </div>
-
           </div>
         )}
 
@@ -410,27 +566,48 @@ export default function KelolaJadwalPage() {
         ══════════════════════════════════════ */}
         {view === 'create' && (
           <div className="flex gap-0 h-[calc(100vh-73px)]">
-            {/* Left */}
+
+            {/* Left — form */}
             <div className="flex-1 overflow-y-auto p-8 space-y-4">
 
+              {/* Back */}
+              <button onClick={() => setView('list')}
+                className="flex items-center gap-1.5 text-[11px] text-[#4b5563] hover:text-white transition-colors mb-2">
+                <ChevronLeft size={14} /> Kembali ke List
+              </button>
+
+              <h3 className="text-[15px] font-bold text-white mb-2">Buat Work Order Baru</h3>
+
               {/* Search Booking */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={13} />
-                <input type="text" placeholder="Cari Booking ID..."
-                  value={bookingSearch} onChange={e => setBookingSearch(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSearchBooking()}
-                  className="w-full bg-[#13161e] border border-[#1e2230] rounded-lg py-3 pl-9 pr-4 text-[13px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={13} />
+                  <input
+                    type="text"
+                    placeholder="Masukkan Booking ID (contoh: #BK-2024-004)..."
+                    value={bookingSearch}
+                    onChange={e => setBookingSearch(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSearchBooking()}
+                    className="w-full bg-[#13161e] border border-[#1e2230] rounded-lg py-3 pl-9 pr-4 text-[13px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
+                  />
+                </div>
+                <button
+                  onClick={handleSearchBooking}
+                  className="px-5 py-3 bg-[#1a1d28] border border-[#2a2f3e] text-[12px] font-bold text-white rounded-lg hover:border-orange-500/40 transition-all whitespace-nowrap"
+                >
+                  Cari Booking
+                </button>
               </div>
 
+              {/* Error not found */}
               {bookingNotFound && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-500/5 border border-red-500/20 rounded-xl">
                   <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
-                  <p className="text-[12px] text-red-400">Booking ID tidak ditemukan. Coba lagi.</p>
+                  <p className="text-[12px] text-red-400">Booking ID tidak ditemukan. Pastikan format ID benar (contoh: #BK-2024-004).</p>
                 </div>
               )}
 
-              {/* WO Info */}
+              {/* WO Info Preview */}
               <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Info size={13} className="text-orange-500" />
@@ -471,7 +648,7 @@ export default function KelolaJadwalPage() {
                       </div>
                     </div>
 
-                    {/* Booking card */}
+                    {/* Customer card */}
                     <div className="flex items-center gap-3 p-3 bg-[#0f1117] border border-[#1e2230] rounded-xl">
                       <div className="w-8 h-8 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
                         <User size={14} className="text-[#6b7280]" />
@@ -480,33 +657,35 @@ export default function KelolaJadwalPage() {
                         <p className="text-[12px] font-bold text-white">{foundBooking.customer}</p>
                         <p className="text-[10px] text-[#4b5563]">{foundBooking.id} · {foundBooking.vehicle}</p>
                       </div>
-                      <span className="text-[10px] font-bold text-orange-400">{foundBooking.vehicle}</span>
+                      <span className="text-[10px] font-bold text-orange-400">{foundBooking.plate}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-10 text-[#4b5563]">
                     <Search size={28} className="mx-auto mb-3 opacity-30" />
                     <p className="text-[12px]">Cari Booking ID untuk memuat data WO</p>
+                    <p className="text-[11px] mt-1 opacity-60">Contoh: #BK-2024-004 atau #BK-2024-005</p>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setView('list')} className="px-5 py-2.5 text-[12px] font-bold text-[#6b7280] hover:text-white transition-colors">Batal</button>
-                <button onClick={handleSearchBooking}
-                  className="px-5 py-2.5 bg-[#1a1d28] border border-[#2a2f3e] text-[12px] font-bold text-white rounded-lg hover:border-orange-500/40 transition-all">
-                  Cari Booking
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={() => setView('list')} className="px-5 py-2.5 text-[12px] font-bold text-[#6b7280] hover:text-white transition-colors">
+                  Batal
                 </button>
                 {foundBooking && (
-                  <button onClick={handleCreateWO}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-lg transition-all">
+                  <button
+                    onClick={handleCreateWO}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-lg transition-all"
+                  >
                     <Plus size={14} /> Buat WO Baru
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Right Sidebar */}
+            {/* Right Sidebar — Assign Mekanik + Catatan */}
             <div className="w-[320px] flex-shrink-0 border-l border-[#1e2230] flex flex-col overflow-y-auto">
               {/* Assign Mekanik */}
               <div className="p-5 border-b border-[#1e2230]">
@@ -514,18 +693,30 @@ export default function KelolaJadwalPage() {
                   <UserCheck size={13} className="text-orange-500" />
                   <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Assign Mekanik</p>
                 </div>
+                {selectedMechanic && (
+                  <div className="mb-3 flex items-center gap-2 text-[11px] text-green-400 bg-green-500/5 border border-green-500/20 rounded-lg px-3 py-2">
+                    <CheckCircle size={12} /> Dipilih: <span className="font-bold">{selectedMechanic}</span>
+                  </div>
+                )}
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={12} />
-                  <input type="text" placeholder="Cari mekanik..." value={mechSearch}
+                  <input
+                    type="text"
+                    placeholder="Cari mekanik..."
+                    value={mechSearch}
                     onChange={e => setMechSearch(e.target.value)}
-                    className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]" />
+                    className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
+                  />
                 </div>
                 <div className="space-y-2">
                   {filteredMechanics.map(m => (
-                    <div key={m.id} onClick={() => m.status === 'READY' && setSelectedMechanic(m.name)}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer
-                        ${selectedMechanic === m.name ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#1e2230] bg-[#0f1117] hover:border-[#2a2f3e]'}
-                        ${m.status === 'BUSY' ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <div
+                      key={m.id}
+                      onClick={() => m.status === 'READY' && setSelectedMechanic(m.name === selectedMechanic ? '' : m.name)}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all
+                        ${m.status === 'BUSY' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+                        ${selectedMechanic === m.name ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#1e2230] bg-[#0f1117] hover:border-[#2a2f3e]'}`}
+                    >
                       <div className="w-7 h-7 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
                         <User size={12} className="text-[#6b7280]" />
                       </div>
@@ -536,21 +727,37 @@ export default function KelolaJadwalPage() {
                           <span className={m.status === 'READY' ? 'text-green-400' : 'text-red-400'}>{m.status}</span>
                         </p>
                       </div>
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${selectedMechanic === m.name ? 'border-orange-500 bg-orange-500' : 'border-[#4b5563]'}`} />
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 transition-all ${selectedMechanic === m.name ? 'border-orange-500 bg-orange-500' : 'border-[#4b5563]'}`} />
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Catatan */}
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="flex items-center gap-2 mb-3">
+              <div className="p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
                   <ClipboardList size={13} className="text-orange-500" />
                   <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Catatan Pengerjaan</p>
                 </div>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={6}
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  rows={6}
                   placeholder="Tuliskan detail temuan teknis atau catatan khusus di sini..."
-                  className="flex-1 bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 resize-none transition-colors" />
+                  className="h-[170px] min-h-[170px] bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 resize-none transition-colors"
+                />
+                <p className="text-[10px] text-[#4b5563]">Catatan ini akan tersimpan saat WO dibuat.</p>
+              </div>
+
+              {/* Tombol Buat WO */}
+              <div className="p-4 border-t border-[#1e2230] bg-[#0f1117]">
+                <button
+                  onClick={handleCreateWO}
+                  disabled={!foundBooking}
+                  className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-xl transition-all disabled:cursor-not-allowed disabled:bg-orange-500/30"
+                >
+                  Buat WO Baru
+                </button>
               </div>
             </div>
           </div>
@@ -561,20 +768,29 @@ export default function KelolaJadwalPage() {
         ══════════════════════════════════════ */}
         {view === 'detail' && selectedWO && (
           <div className="flex gap-0 h-[calc(100vh-73px)]">
-            {/* Left */}
+
+            {/* Left — info + progress */}
             <div className="flex-1 overflow-y-auto p-8 space-y-4">
 
               {/* Back */}
-              <button onClick={() => setView('list')}
-                className="flex items-center gap-1.5 text-[11px] text-[#4b5563] hover:text-white transition-colors mb-2">
+              <button
+                onClick={() => setView('list')}
+                className="flex items-center gap-1.5 text-[11px] text-[#4b5563] hover:text-white transition-colors mb-2"
+              >
                 <ChevronLeft size={14} /> Kembali ke List
               </button>
 
-              {/* WO Header */}
+              {/* WO Header Info */}
               <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Info size={13} className="text-orange-500" />
-                  <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Informasi Umum WO</p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Info size={13} className="text-orange-500" />
+                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Informasi Umum WO</p>
+                  </div>
+                  {/* Status badge */}
+                  <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[selectedWO.status]}`}>
+                    {selectedWO.status}
+                  </span>
                 </div>
 
                 <div className="border border-orange-500/30 rounded-xl p-5 bg-orange-500/5">
@@ -610,7 +826,7 @@ export default function KelolaJadwalPage() {
                   </div>
                 </div>
 
-                {/* Booking card */}
+                {/* Customer card bawah */}
                 <div className="flex items-center gap-3 p-3 bg-[#0f1117] border border-[#1e2230] rounded-xl mt-4">
                   <div className="w-8 h-8 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
                     <User size={14} className="text-[#6b7280]" />
@@ -619,25 +835,32 @@ export default function KelolaJadwalPage() {
                     <p className="text-[12px] font-bold text-white">{selectedWO.customer}</p>
                     <p className="text-[10px] text-[#4b5563]">{selectedWO.bookingId} · {selectedWO.vehicle}</p>
                   </div>
-                  <span className="text-[10px] font-bold text-orange-400">{selectedWO.vehicle}</span>
+                  <span className="text-[10px] font-bold text-orange-400">{selectedWO.plateNumber}</span>
                 </div>
               </div>
 
-              {/* Progress */}
-              {(selectedWO.progress.length > 0 || selectedWO.status === 'RUNNING') && (
-                <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw size={13} className="text-orange-500" />
-                      <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Progress Pengerjaan</p>
-                    </div>
-                    <button onClick={() => { }}
-                      className="text-[10px] font-bold text-orange-400 hover:text-orange-300 transition-colors">
-                      + Tambah Step Progress
-                    </button>
+              {/* Progress Section */}
+              <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw size={13} className="text-orange-500" />
+                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest">Progress Pengerjaan</p>
                   </div>
+                  {selectedWO.status === 'FINISHED' && (
+                    <span className="text-[10px] font-bold text-green-400 flex items-center gap-1">
+                      <CheckCircle size={11} /> Selesai
+                    </span>
+                  )}
+                </div>
 
-                  <div className="space-y-4">
+                {/* Timeline */}
+                {selectedWO.progress.length === 0 ? (
+                  <div className="text-center py-8 text-[#4b5563]">
+                    <Wrench size={24} className="mx-auto mb-2 opacity-20" />
+                    <p className="text-[12px]">Belum ada progress. Tambahkan step pengerjaan di bawah.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 mb-4">
                     {selectedWO.progress.map((step, idx) => (
                       <div key={step.id} className="flex gap-3">
                         <div className="flex flex-col items-center">
@@ -647,100 +870,222 @@ export default function KelolaJadwalPage() {
                               : <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
                             }
                           </div>
-                          {idx < selectedWO.progress.length - 1 && <div className="w-px flex-1 bg-[#1e2230] mt-1" />}
+                          {idx < selectedWO.progress.length - 1 && (
+                            <div className="w-px flex-1 bg-[#1e2230] mt-1" />
+                          )}
                         </div>
                         <div className="flex-1 pb-4">
                           <div className="flex justify-between items-start mb-1">
                             <p className="text-[12px] font-bold text-white">{step.title}</p>
-                            <span className="text-[10px] text-[#4b5563] font-mono">{step.time}{step.active ? ' (ACTIVE)' : ''}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-[#4b5563] font-mono">
+                                {step.time}{step.active ? ' · ACTIVE' : ''}
+                              </span>
+                              {/* Tombol tandai selesai (hanya step active) */}
+                              {step.active && selectedWO.status !== 'FINISHED' && (
+                                <button
+                                  onClick={() => markStepDone(step.id)}
+                                  title="Tandai selesai"
+                                  className="px-2 py-0.5 text-[9px] font-bold text-green-400 border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 rounded transition-all"
+                                >
+                                  Selesai ✓
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <p className="text-[11px] text-[#6b7280]">{step.description}</p>
+
+                          {/* Upload foto bukti */}
                           {step.active && (
                             <div className="mt-3">
                               <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-widest mb-2">Foto Bukti Pengerjaan</p>
-                              <div onClick={() => fileRef.current?.click()}
-                                className="w-24 h-20 border-2 border-dashed border-[#2a2f3e] hover:border-orange-500/40 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all">
-                                <Camera size={16} className="text-[#4b5563] mb-1" />
-                                <span className="text-[8px] text-[#4b5563] uppercase tracking-widest">Upload Foto</span>
-                              </div>
-                              <input ref={fileRef} type="file" accept="image/*" className="hidden" />
+                              {step.foto ? (
+                                <div className="relative w-24 h-20">
+                                  <img src={step.foto} alt="Bukti" className="w-24 h-20 object-cover rounded-lg border border-[#2a2f3e]" />
+                                  <button
+                                    onClick={() => {
+                                      setActiveStepId(step.id);
+                                      fileInputRef.current?.click();
+                                    }}
+                                    className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity text-[9px] text-white font-bold"
+                                  >
+                                    Ganti
+                                  </button>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => {
+                                    setActiveStepId(step.id);
+                                    fileInputRef.current?.click();
+                                  }}
+                                  className="w-24 h-20 border-2 border-dashed border-[#2a2f3e] hover:border-orange-500/40 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all"
+                                >
+                                  <Camera size={16} className="text-[#4b5563] mb-1" />
+                                  <span className="text-[8px] text-[#4b5563] uppercase tracking-widest">Upload Foto</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Foto yang sudah diupload untuk step done */}
+                          {step.done && step.foto && (
+                            <div className="mt-2">
+                              <img src={step.foto} alt="Bukti" className="w-20 h-16 object-cover rounded-lg border border-green-500/20" />
                             </div>
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
+                )}
 
-                  {/* Add Step Form */}
+                {/* Input file tersembunyi */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file && activeStepId) {
+                      handlePhotoUpload(activeStepId, file);
+                      setActiveStepId(null);
+                    }
+                    e.target.value = '';
+                  }}
+                />
+
+                {/* Tambah Step — hanya jika WO belum FINISHED */}
+                {selectedWO.status !== 'FINISHED' && (
                   <div className="mt-4 pt-4 border-t border-[#1e2230] space-y-2">
-                    <input type="text" placeholder="Judul step baru..." value={newStepTitle}
-                      onChange={e => setNewStepTitle(e.target.value)} className={inputCls} />
-                    <input type="text" placeholder="Deskripsi langkah pengerjaan..." value={newStepDesc}
-                      onChange={e => setNewStepDesc(e.target.value)} className={inputCls} />
-                    <button onClick={addProgressStep}
-                      className="w-full py-2.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-400 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all">
+                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-2">+ Tambah Step Progress</p>
+                    <input
+                      type="text"
+                      placeholder="Judul step baru..."
+                      value={newStepTitle}
+                      onChange={e => setNewStepTitle(e.target.value)}
+                      className={inputCls}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Deskripsi langkah pengerjaan..."
+                      value={newStepDesc}
+                      onChange={e => setNewStepDesc(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addProgressStep()}
+                      className={inputCls}
+                    />
+                    <button
+                      onClick={addProgressStep}
+                      disabled={!newStepTitle.trim()}
+                      className="w-full py-2.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-400 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
                       + Tambah Step
                     </button>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Right Sidebar */}
-            <div className="w-[320px] flex-shrink-0 border-l border-[#1e2230] flex flex-col overflow-y-auto">
-              {/* Assign Mekanik */}
-              <div className="p-5 border-b border-[#1e2230]">
-                <div className="flex items-center gap-2 mb-3">
-                  <UserCheck size={13} className="text-orange-500" />
-                  <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Assign Mekanik</p>
-                </div>
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={12} />
-                  <input type="text" placeholder="Cari mekanik..." value={detailMechSearch}
-                    onChange={e => setDetailMechSearch(e.target.value)}
-                    className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]" />
-                </div>
-                <div className="space-y-2">
-                  {filteredDetailMechanics.map(m => (
-                    <div key={m.id} onClick={() => m.status === 'READY' && assignMechanic(m.name)}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer
-                        ${selectedWO.assignedMechanic === m.name ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#1e2230] bg-[#0f1117] hover:border-[#2a2f3e]'}
-                        ${m.status === 'BUSY' ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      <div className="w-7 h-7 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
-                        <User size={12} className="text-[#6b7280]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-bold text-white truncate">{m.name}</p>
-                        <p className="text-[9px] font-bold">
-                          <span className="text-[#4b5563]">{m.specialization} · </span>
-                          <span className={m.status === 'READY' ? 'text-green-400' : 'text-red-400'}>{m.status}</span>
-                        </p>
-                      </div>
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${selectedWO.assignedMechanic === m.name ? 'border-orange-500 bg-orange-500' : 'border-[#4b5563]'}`} />
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="w-[320px] flex-shrink-0 border-l border-[#1e2230] flex flex-col">
 
-              {/* Catatan */}
-              <div className="p-5 flex-1 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <ClipboardList size={13} className="text-orange-500" />
-                  <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Catatan Pengerjaan</p>
+              {/* Scrollable content area */}
+              <div className="flex-1 overflow-y-auto flex flex-col">
+
+                {/* Assign Mekanik */}
+                <div className="p-5 border-b border-[#1e2230]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <UserCheck size={13} className="text-orange-500" />
+                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Assign Mekanik</p>
+                  </div>
+
+                  {/* Mekanik terpilih saat ini */}
+                  {selectedWO.assignedMechanic && (
+                    <div className="mb-3 flex items-center gap-2 text-[11px] text-green-400 bg-green-500/5 border border-green-500/20 rounded-lg px-3 py-2">
+                      <CheckCircle size={12} /> Ditugaskan: <span className="font-bold">{selectedWO.assignedMechanic}</span>
+                    </div>
+                  )}
+
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={12} />
+                    <input
+                      type="text"
+                      placeholder="Cari mekanik..."
+                      value={detailMechSearch}
+                      onChange={e => setDetailMechSearch(e.target.value)}
+                      className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    {filteredDetailMechanics.map(m => (
+                      <div
+                        key={m.id}
+                        onClick={() => m.status === 'READY' && assignMechanic(m.name)}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all
+                          ${m.status === 'BUSY' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+                          ${selectedWO.assignedMechanic === m.name ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#1e2230] bg-[#0f1117] hover:border-[#2a2f3e]'}`}
+                      >
+                        <div className="w-7 h-7 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
+                          <User size={12} className="text-[#6b7280]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-bold text-white truncate">{m.name}</p>
+                          <p className="text-[9px] font-bold">
+                            <span className="text-[#4b5563]">{m.specialization} · </span>
+                            <span className={m.status === 'READY' ? 'text-green-400' : 'text-red-400'}>{m.status}</span>
+                          </p>
+                        </div>
+                        <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 transition-all ${selectedWO.assignedMechanic === m.name ? 'border-orange-500 bg-orange-500' : 'border-[#4b5563]'}`} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <textarea value={detailNotes} onChange={e => setDetailNotes(e.target.value)} rows={8}
-                  placeholder="Tuliskan detail temuan teknis atau catatan khusus di sini..."
-                  className="flex-1 bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 resize-none transition-colors" />
-                <button onClick={saveNotes}
-                  className="w-full py-2.5 bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all">
-                  Simpan Catatan
-                </button>
-              </div>
-            </div>
+
+                {/* Catatan */}
+                <div className="p-5 flex-1 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList size={13} className="text-orange-500" />
+                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Catatan Pengerjaan</p>
+                  </div>
+                  <textarea
+                    value={detailNotes}
+                    onChange={e => setDetailNotes(e.target.value)}
+                    rows={6}
+                    placeholder="Tuliskan detail temuan teknis atau catatan khusus di sini..."
+                    className="flex-1 bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 resize-none transition-colors"
+                  />
+                  <button
+                    onClick={saveNotes}
+                    className="w-full py-2.5 bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all"
+                  >
+                    Simpan Catatan
+                  </button>
+                </div>
+
+              </div>{/* end scrollable */}
+
+              {/* Tombol Tugaskan — pinned di bawah, selalu kelihatan */}
+              <div className="p-4 border-t border-[#1e2230] bg-[#0f1117]">
+                {selectedWO.status === 'PENDING' && selectedWO.assignedMechanic && (
+                  <button
+                    onClick={handleTugaskan}
+                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-xl transition-all"
+                  >
+                    Tugaskan
+                  </button>
+                )}
+
+                {/* Info kalau sudah FINISHED */}
+                {selectedWO.status === 'FINISHED' && (
+                  <div className="flex items-center gap-2 text-[11px] text-green-400 bg-green-500/5 border border-green-500/20 rounded-lg px-3 py-2.5">
+                    <CheckCircle size={13} /> Work Order telah selesai
+                  </div>
+                )}
+              </div>{/* end pinned bottom */}
+            </div>{/* end right sidebar */}
           </div>
         )}
-
-
 
       </main>
     </div>
