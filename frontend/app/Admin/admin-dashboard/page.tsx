@@ -1,286 +1,209 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  LayoutDashboard,
-  Wrench,
-  Activity,
-  CreditCard,
-  Settings,
-  LogOut,
-  Search,
-  Bell,
-  Car,
-  Box,
-  CheckCircle2,
-  ChevronRight
+  Search, Bell, Car, Wrench, Box, CheckCircle2,
+  AlertTriangle, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
+import SidebarAdmin from '../../components/sidebar-admin/page';
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  type User = {
-    name: string;
-    role: string;
-    fotoProfile?: string;
-  };
-
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem('token');
-
-      const res = await fetch('http://127.0.0.1:8000/api/user', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      console.log("USER DATA:", data);
-
-      setUser(data);
-    };
-
-    fetchUser();
-  }, []);
-
-  const handleLogout = async () => {
-    console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
-
-    const token = localStorage.getItem('token');
-
-    const res = await fetch('http://127.0.0.1:8000/api/logout', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log("STATUS LOGOUT:", res.status);
-
-    localStorage.removeItem('token');
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
-    console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
-    console.log("COOKIE SETELAH LOGOUT:", document.cookie);
-
-    router.push('/auth/login');
-  };
-
+export default function AdminDashboardPage() {
   return (
-    <div className="flex min-h-screen bg-[#0d1117] text-gray-300 font-sans">
+    <div className="flex h-screen overflow-hidden bg-[#0f1117] text-[#e2e8f0]" style={{ fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
 
-      <aside className="w-64 border-r border-white/5 flex flex-col p-6">
-        <div className="mb-10">
-          <h1 className="text-xl font-black italic tracking-tighter text-white">PASBER</h1>
-          <p className="text-[8px] uppercase tracking-[0.3em] text-gray-500 font-bold">Engineering V12 Control Unit</p>
-        </div>
+      {/* ── SIDEBAR ── */}
+      <SidebarAdmin />
 
-        <nav className="flex-1 space-y-2">
-          <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active />
-          <NavItem icon={<Wrench size={18} />} label="Servis Aktif" />
-          <NavItem icon={<Activity size={18} />} label="Diagnosa Mesin" />
-          <NavItem icon={<CreditCard size={18} />} label="Invoice & Pembayaran" />
-          <NavItem icon={<Settings size={18} />} label="Pengaturan Sistem" />
-        </nav>
+      {/* ── MAIN ── */}
+      <main className="flex-1 overflow-y-auto h-screen">
 
-        <div className="mt-auto pt-6 border-t border-white/5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-orange-500 overflow-hidden border border-white/10">
-              <img src={
-                user?.fotoProfile
-                  ? `http://127.0.0.1:8000/storage/${user.fotoProfile}`
-                  : "/images/avatar.jpg"
-              }
-                alt="Profile"
-                className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">{user?.name || "Loading..."}</p>
-              <p className="text-[10px] text-gray-500">{user?.role || "User"}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut size={16} />
-              <span>{isLoggingOut ? 'Logging out...' : 'Keluar Sistem'}</span>
-            </div>
-            <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 p-10 overflow-y-auto">
-
-        <header className="flex justify-between items-start mb-8">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-[#0f1117]/95 backdrop-blur border-b border-[#1e2230] px-8 py-4 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-white">Sistem Kontrol Bengkel</h2>
-            <p className="text-xs text-gray-500 mt-1">Ringkasan operasional dan telemetri kendaraan untuk hari ini</p>
+            <h2 className="text-[18px] font-bold text-white leading-none">Sistem Kontrol Bengkel</h2>
+            <p className="text-[11px] text-[#4b5563] mt-1">Ringkasan operasional dan telemetri kendaraan untuk hari ini</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-2.5">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={13} />
               <input
-                type="text"
-                placeholder="ID Servis/Plat Nomor"
-                className="bg-[#161b22] border border-white/5 rounded-lg py-2 pl-10 pr-4 text-xs outline-none focus:border-orange-500/50 w-64"
+                type="text" placeholder="ID Servis / Plat Nomor"
+                className="bg-[#13161e] border border-[#1e2230] rounded-lg py-2 pl-9 pr-4 text-[12px] outline-none focus:border-orange-500/50 w-56 placeholder:text-[#374151] text-[#e2e8f0]"
               />
             </div>
-            <button className="p-2 bg-[#161b22] border border-white/5 rounded-lg text-gray-500 hover:text-white">
-              <Bell size={18} />
+            <button className="w-9 h-9 bg-[#13161e] border border-[#1e2230] rounded-lg flex items-center justify-center text-[#4b5563] hover:text-white transition-colors relative">
+              <Bell size={15} />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full" />
             </button>
           </div>
-        </header>
-
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <StatCard label="Unit Masuk" value="12" icon={<Car className="text-blue-500" />} border="border-l-blue-500" />
-          <StatCard label="Proses Pengerjaan" value="4" icon={<Wrench className="text-orange-500" />} border="border-l-orange-500" />
-          <StatCard label="Menunggu Komponen" value="2" icon={<Box className="text-yellow-500" />} border="border-l-yellow-500" />
-          <StatCard label="Selesai & Siap Ambil" value="6" icon={<CheckCircle2 className="text-green-500" />} border="border-l-green-500" />
         </div>
 
-        <div className="flex gap-6">
-          <div className="flex-[2] bg-[#161b22] rounded-3xl border border-white/5 p-8 relative overflow-hidden">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" /> Live Telemetry
-                </span>
-                <h3 className="text-3xl font-bold text-white mt-2">Legenda Astrea</h3>
-                <p className="text-xs text-gray-500 mt-1">Service ID #ENG-992-42</p>
+        <div className="px-8 py-6 space-y-3.5">
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-4 gap-3.5">
+            {[
+              { label: 'Unit Masuk',         value: '12', icon: Car,         color: 'text-blue-400',   border: 'border-l-blue-500'   },
+              { label: 'Proses Pengerjaan',  value: '4',  icon: Wrench,      color: 'text-orange-400', border: 'border-l-orange-500' },
+              { label: 'Menunggu Komponen',  value: '2',  icon: Box,         color: 'text-yellow-400', border: 'border-l-yellow-500' },
+              { label: 'Selesai & Siap Ambil', value: '6', icon: CheckCircle2, color: 'text-green-400', border: 'border-l-green-500'  },
+            ].map(({ label, value, icon: Icon, color, border }) => (
+              <div key={label} className={`bg-[#13161e] border border-[#1e2230] border-l-2 ${border} rounded-xl px-5 py-4 flex items-center justify-between`}>
+                <div>
+                  <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1">{label}</p>
+                  <p className="text-[28px] font-black text-white leading-none">{value}</p>
+                </div>
+                <Icon size={22} className={`${color} opacity-60`} />
               </div>
-              <button className="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                Buka Kontrol Panel
+            ))}
+          </div>
+
+          {/* Middle row: Live Telemetry + Antrean */}
+          <div className="grid gap-3.5" style={{ gridTemplateColumns: '2fr 1fr' }}>
+
+            {/* Live Telemetry */}
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6">
+              <div className="flex justify-between items-start mb-5">
+                <div>
+                  <span className="flex items-center gap-1.5 text-[10px] font-black text-orange-500 uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" /> Live Telemetry
+                  </span>
+                  <h3 className="text-[22px] font-bold text-white mt-1.5 leading-none">Legenda Astrea</h3>
+                  <p className="text-[11px] text-[#4b5563] mt-1">Service ID #ENG-992-42</p>
+                </div>
+                <button className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all">
+                  Buka Kontrol Panel
+                </button>
+              </div>
+
+              <div className="w-full h-52 bg-[#0f1117] rounded-xl border border-[#1e2230] mb-5 flex flex-col justify-end p-5">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                    <span className="text-[#4b5563]">Tugas Saat Ini</span>
+                    <span className="text-orange-500">65%</span>
+                  </div>
+                  <h4 className="text-[13px] font-bold text-white">Engine Tuning (Protokol V12)</h4>
+                  <div className="w-full h-1.5 bg-[#1a1d28] rounded-full overflow-hidden">
+                    <div className="w-[65%] h-full bg-orange-500 rounded-full" style={{ boxShadow: '0 0 10px rgba(249,115,22,0.4)' }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[{ l: 'Oil Temp', v: '98°C' }, { l: 'RPM Idle', v: '850' }, { l: 'Turbo PSI', v: '14.2' }].map(({ l, v }) => (
+                  <div key={l} className="bg-[#0f1117] border border-[#1e2230] p-3.5 rounded-xl">
+                    <p className="text-[9px] text-[#4b5563] font-bold uppercase tracking-widest mb-1">{l}</p>
+                    <p className="text-[16px] font-bold text-white">{v}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Antrean Servis */}
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl flex flex-col">
+              <div className="px-5 py-4 border-b border-[#1e2230] flex justify-between items-center">
+                <h3 className="text-[13px] font-bold text-white">Antrean Servis</h3>
+                <span className="text-[10px] text-[#4b5563] font-bold">UNIT: 3</span>
+              </div>
+              <div className="flex-1 p-2 space-y-0.5">
+                {[
+                  { title: 'Toyota Fortuner GR',  plate: 'B 1234 XYZ', time: '14:00', done: false },
+                  { title: 'Honda Civic Type R',   plate: 'L 9901 AB',  time: '15:30', done: false },
+                  { title: 'BMW M3 Competition',   plate: 'D 4452 CC',  time: undefined, done: true },
+                ].map(({ title, plate, time, done }) => (
+                  <div key={plate} className="p-3.5 hover:bg-[#1a1d28] rounded-lg transition-all cursor-pointer group">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-[12px] font-bold text-white group-hover:text-orange-400 transition-colors">{title}</p>
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold ${done ? 'bg-green-500/10 text-green-500' : 'bg-[#1a1d28] text-[#4b5563]'}`}>
+                        {done ? 'SIAP AMBIL' : 'PENDING'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#4b5563] font-mono tracking-wide">{plate}</p>
+                    {time && <p className="text-[9px] text-[#374151] mt-1">Estimasi mulai: {time} WIB</p>}
+                    {done && <p className="text-[9px] text-green-500 font-bold mt-1 flex items-center gap-1"><CheckCircle2 size={9} /> Pengecekan Akhir Selesai</p>}
+                  </div>
+                ))}
+              </div>
+              <button className="px-5 py-3.5 text-[10px] font-bold text-[#4b5563] hover:text-white transition-all text-center border-t border-[#1e2230] uppercase tracking-widest">
+                Lihat Semua Antrean
               </button>
             </div>
+          </div>
 
-            <div className="w-full h-80 bg-black/40 rounded-2xl border border-white/5 mb-6 flex flex-col justify-end p-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
-                  <span className="text-gray-400">Tugas Saat Ini</span>
-                  <span className="text-orange-500">65%</span>
+          {/* Bottom row: Alert Stok + Booking Approval */}
+          <div className="grid gap-3.5" style={{ gridTemplateColumns: '2fr 1fr' }}>
+
+            {/* Alert Stok Komponen */}
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl">
+              <div className="px-5 py-4 border-b border-[#1e2230] flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle size={14} color="#f97316" />
+                  <h3 className="text-[13px] font-bold text-white">Alert Stok Komponen</h3>
                 </div>
-                <h4 className="text-sm font-bold text-white">Engine Tuning (Protokol V12)</h4>
-                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div className="w-[65%] h-full bg-orange-600" />
-                </div>
+                <button className="text-[10px] text-[#4b5563] hover:text-white transition-colors">Lihat Semua</button>
+              </div>
+              <div className="divide-y divide-[#1e2230]">
+                {[
+                  { name: 'Castrol Edge 5W-40 (4L)',    code: 'OIL-001', status: 'HABIS',           statusColor: 'text-red-500 bg-red-500/10',         dot: 'bg-red-500'    },
+                  { name: 'Brake Pads - Brembo Front',  code: 'BRK-923', status: 'MENIPIS (2 Unit)', statusColor: 'text-yellow-500 bg-yellow-500/10',  dot: 'bg-yellow-500' },
+                  { name: 'NGK Spark Plugs Iridium',    code: 'SPK-115', status: 'AMAN (48 Unit)',   statusColor: 'text-green-500 bg-green-500/10',    dot: 'bg-green-500'  },
+                ].map(({ name, code, status, statusColor, dot }) => (
+                  <div key={code} className="flex items-center justify-between px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+                      <div>
+                        <p className="text-[12px] font-semibold text-white">{name}</p>
+                        <p className="text-[10px] text-[#4b5563] font-mono">KODE: {code}</p>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${statusColor}`}>{status}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <TelemetryItem label="Oil Temp" value="98°C" />
-              <TelemetryItem label="RPM Idle" value="850" />
-              <TelemetryItem label="Turbo PSI" value="14.2" />
+            {/* Booking Perlu Approval */}
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl flex flex-col">
+              <div className="px-5 py-4 border-b border-[#1e2230]">
+                <h3 className="text-[13px] font-bold text-white">Booking Perlu Approval</h3>
+              </div>
+              <div className="flex-1 divide-y divide-[#1e2230]">
+                {[
+                  { name: 'Budi Santoso',   time: '22 Okt, 09:00', service: 'Transmission Slipping' },
+                  { name: 'Jessica Wijaya', time: '22 Okt, 10:00', service: 'Transmission Slipping' },
+                ].map(({ name, time, service }) => (
+                  <div key={name} className="px-5 py-4">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-[12px] font-bold text-white">{name}</p>
+                      <p className="text-[9px] text-[#4b5563]">{time}</p>
+                    </div>
+                    <p className="text-[10px] text-orange-500 font-semibold mb-3">{service}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button className="flex items-center justify-center gap-1.5 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-[11px] font-bold text-green-500 transition-all">
+                        <ThumbsUp size={11} /> Approve
+                      </button>
+                      <button className="flex items-center justify-center gap-1.5 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-[11px] font-bold text-red-500 transition-all">
+                        <ThumbsDown size={11} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex-1 bg-[#161b22] rounded-3xl border border-white/5 flex flex-col">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-              <h3 className="font-bold text-white text-sm">Antrean Servis</h3>
-              <span className="text-[10px] text-gray-500 font-bold">UNIT: 3</span>
+          {/* Footer */}
+          <div className="flex justify-between items-center pt-2 pb-4 text-[9px] font-bold text-[#374151] uppercase tracking-[0.2em]">
+            <p>© 2024 Pasber Automotive Engineering | Technical Mastery</p>
+            <div className="flex gap-5">
+              <span>System Status</span>
+              <span>API Documentation</span>
+              <span>Compliance</span>
             </div>
-            <div className="flex-1 p-2 space-y-1">
-              <QueueItem title="Toyota Fortuner GR" plate="B 1234 XYZ" time="14:00" status="PENDING" />
-              <QueueItem title="Honda Civic Type R" plate="L 9901 AB" time="15:30" status="PENDING" />
-              <QueueItem title="BMW M3 Competition" plate="D 4452 CC" status="SIAP AMBIL" done />
-            </div>
-            <button className="p-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-all text-center border-t border-white/5">
-              Lihat Semua Antrean
-            </button>
           </div>
+
         </div>
-
-        <footer className="mt-10 flex justify-between items-center text-[8px] font-bold text-gray-600 uppercase tracking-[0.2em]">
-          <p>© 2024 PRECISION AUTOMOTIVE ENGINEERING | TECHNICAL MASTERY</p>
-          <div className="flex gap-6">
-            <span>System Status</span>
-            <span>API Documentation</span>
-            <span>Compliance</span>
-          </div>
-        </footer>
       </main>
-    </div>
-  );
-}
-
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <div className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-all ${active ? 'bg-orange-600/10 text-orange-500 border border-orange-500/20' : 'hover:bg-white/5 text-gray-500'}`}>
-      {icon}
-      <span className="text-xs font-bold">{label}</span>
-    </div>
-  );
-}
-
-type StatCardProps = {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  border: string;
-};
-
-function StatCard({ label, value, icon, border }: StatCardProps) {
-  return (
-    <div className={`bg-[#161b22] p-6 rounded-2xl border border-white/5 border-l-4 ${border} flex justify-between items-start`}>
-      <div>
-        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">{label}</p>
-        <p className="text-3xl font-black text-white">{value}</p>
-      </div>
-      <div className="p-2 bg-white/5 rounded-lg">{icon}</div>
-    </div>
-  );
-}
-
-type TelemetryItemProps = {
-  label: string;
-  value: string;
-};
-
-function TelemetryItem({ label, value }: TelemetryItemProps) {
-  return (
-    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-lg font-bold text-white">{value}</p>
-    </div>
-  );
-}
-
-type QueueItemProps = {
-  title: string;
-  plate: string;
-  time?: string;
-  status: string;
-  done?: boolean;
-};
-
-function QueueItem({ title, plate, time, status, done = false }: QueueItemProps) {
-  return (
-    <div className="p-4 hover:bg-white/5 rounded-2xl transition-all cursor-pointer group">
-      <div className="flex justify-between items-start mb-1">
-        <h4 className="text-xs font-bold text-white group-hover:text-orange-500 transition-colors">{title}</h4>
-        <span className={`text-[8px] px-1.5 py-0.5 rounded font-black ${done ? 'bg-green-500/10 text-green-500' : 'bg-white/5 text-gray-500'}`}>
-          {status}
-        </span>
-      </div>
-      <p className="text-[10px] text-gray-500 font-medium mb-2">{plate}</p>
-      {time && (
-        <div className="flex items-center gap-2 text-[9px] text-gray-600">
-          <div className="w-1 h-1 rounded-full bg-gray-600" /> Estimasi Mulai: {time} WIB
-        </div>
-      )}
-      {done && (
-        <div className="flex items-center gap-2 text-[9px] text-green-500 font-bold">
-          <CheckCircle2 size={10} /> Pengecekan Akhir Selesai
-        </div>
-      )}
     </div>
   );
 }
