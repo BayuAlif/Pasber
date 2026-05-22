@@ -22,8 +22,8 @@ type Mekanik = {
 
 const STATUS_STYLE: Record<StatusType, string> = {
   READY: 'bg-green-500/10 text-green-400 border border-green-500/20',
-  BUSY:  'bg-orange-500/10 text-orange-400 border border-orange-500/20',
-  REST:  'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+  BUSY: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
+  REST: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
 };
 
 const SPESIALISASI_OPTIONS = [
@@ -37,43 +37,43 @@ const PAGE_SIZE = 5;
 export default function KelolaMekanikPage() {
   // data
   const [mekaniks, setMekaniks] = useState<Mekanik[]>([]);
-  const [search, setSearch]     = useState('');
+  const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'Semua' | StatusType>('Semua');
-  const [page, setPage]         = useState(1);
+  const [page, setPage] = useState(1);
 
   // modals
-  const [showAdd, setShowAdd]       = useState(false);
-  const [showEdit, setShowEdit]     = useState<Mekanik | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showEdit, setShowEdit] = useState<Mekanik | null>(null);
   const [showStatus, setShowStatus] = useState<Mekanik | null>(null);
   const [showDelete, setShowDelete] = useState<Mekanik | null>(null);
 
   // form state
   const emptyForm = { foto: '', namaLengkap: '', idMekanik: '', noTelp: '', spesialisasi: 'Engine Specialist', status: 'READY' as StatusType };
-  const [form, setForm]           = useState({ ...emptyForm });
+  const [form, setForm] = useState({ ...emptyForm });
   const [newStatus, setNewStatus] = useState<StatusType>('READY');
-  const fileRef                   = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // ── Filter & Pagination ────────────────────────────────────────────────
   const filtered = mekaniks.filter(m => {
     const matchSearch = m.nama.toLowerCase().includes(search.toLowerCase()) ||
-                        m.idMekanik.toLowerCase().includes(search.toLowerCase());
+      m.idMekanik.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'Semua' || m.status === filterStatus;
     return matchSearch && matchStatus;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // ── CRUD handlers ──────────────────────────────────────────────────────
   const handleAddSubmit = () => {
     if (!form.namaLengkap || !form.idMekanik || !form.noTelp) return;
     const newMek: Mekanik = {
-      id:           Date.now(),
-      foto:         form.foto || '',
-      idMekanik:    form.idMekanik,
-      nama:         form.namaLengkap,
+      id: Date.now(),
+      foto: form.foto || '',
+      idMekanik: form.idMekanik,
+      nama: form.namaLengkap,
       spesialisasi: form.spesialisasi,
-      noTelp:       form.noTelp,
-      status:       form.status,
+      noTelp: form.noTelp,
+      status: form.status,
     };
     setMekaniks(prev => [...prev, newMek]);
     setForm({ ...emptyForm });
@@ -84,8 +84,10 @@ export default function KelolaMekanikPage() {
     if (!showEdit) return;
     setMekaniks(prev => prev.map(m =>
       m.id === showEdit.id
-        ? { ...m, nama: form.namaLengkap, idMekanik: form.idMekanik,
-            noTelp: form.noTelp, spesialisasi: form.spesialisasi, foto: form.foto || m.foto }
+        ? {
+          ...m, nama: form.namaLengkap, idMekanik: form.idMekanik,
+          noTelp: form.noTelp, spesialisasi: form.spesialisasi, foto: form.foto || m.foto
+        }
         : m
     ));
     setShowEdit(null);
@@ -119,7 +121,7 @@ export default function KelolaMekanikPage() {
   };
 
   // ── Shared input style ─────────────────────────────────────────────────
-  const inputCls  = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[13px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
+  const inputCls = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[13px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
   const selectCls = inputCls + " appearance-none cursor-pointer";
 
   return (
@@ -164,7 +166,10 @@ export default function KelolaMekanikPage() {
 
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-[#4b5563] font-medium">Filter Status:</span>
-              <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value as any); setPage(1); }}
+              <select value={filterStatus} onChange={e => {
+                setFilterStatus(e.target.value as StatusType | 'Semua');
+                setPage(1);
+              }}
                 className="bg-[#13161e] border border-[#1e2230] rounded-lg px-3 py-2.5 text-[13px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer">
                 {['Semua', 'READY', 'BUSY', 'REST'].map(s => <option key={s}>{s}</option>)}
               </select>
@@ -192,7 +197,7 @@ export default function KelolaMekanikPage() {
                     <td colSpan={7} className="px-5 py-16 text-center text-[#4b5563]">
                       <Users size={32} className="mx-auto mb-3 opacity-30" />
                       <p className="text-[13px] font-medium">Belum ada data mekanik</p>
-                      <p className="text-[11px] mt-1">Klik "Tambah Mekanik" untuk menambahkan mekanik baru</p>
+                      <p className="text-[11px] mt-1">Klik Tambah Mekanik untuk menambahkan mekanik baru</p>
                     </td>
                   </tr>
                 ) : paginated.map((m, i) => (
@@ -261,8 +266,8 @@ export default function KelolaMekanikPage() {
               </p>
               <div className="flex items-center gap-1">
                 {[
-                  { icon: ChevronFirst, action: () => setPage(1),                       disabled: page === 1          },
-                  { icon: ChevronLeft,  action: () => setPage(p => Math.max(1, p - 1)), disabled: page === 1          },
+                  { icon: ChevronFirst, action: () => setPage(1), disabled: page === 1 },
+                  { icon: ChevronLeft, action: () => setPage(p => Math.max(1, p - 1)), disabled: page === 1 },
                 ].map(({ icon: Icon, action, disabled }, i) => (
                   <button key={i} onClick={action} disabled={disabled}
                     className="w-8 h-8 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center text-[#6b7280] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -278,7 +283,7 @@ export default function KelolaMekanikPage() {
                 ))}
                 {[
                   { icon: ChevronRight, action: () => setPage(p => Math.min(totalPages, p + 1)), disabled: page === totalPages },
-                  { icon: ChevronLast,  action: () => setPage(totalPages),                       disabled: page === totalPages },
+                  { icon: ChevronLast, action: () => setPage(totalPages), disabled: page === totalPages },
                 ].map(({ icon: Icon, action, disabled }, i) => (
                   <button key={i} onClick={action} disabled={disabled}
                     className="w-8 h-8 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center text-[#6b7280] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -461,7 +466,7 @@ export default function KelolaMekanikPage() {
             <div className="flex items-start gap-2.5 p-3.5 bg-[rgba(249,115,22,0.05)] border border-orange-500/15 rounded-xl mb-6">
               <Info size={13} color="#f97316" className="flex-shrink-0 mt-0.5" />
               <p className="text-[11px] text-[#9ca3af] leading-relaxed">
-                Status <strong className="text-white">"Busy"</strong> dan <strong className="text-white">"Rest"</strong> akan mencegah sistem otomatis mengalokasikan antrean servis baru ke teknisi ini hingga status diubah kembali menjadi "Ready".
+                Status <strong className="text-white">Busy</strong> dan <strong className="text-white">Rest</strong> akan mencegah sistem otomatis mengalokasikan antrean servis baru ke teknisi ini hingga status diubah kembali menjadi Ready.
               </p>
             </div>
 

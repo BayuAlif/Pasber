@@ -7,6 +7,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\BengkelController;
 use App\Http\Controllers\WorkOrderController;
+use App\Http\Controllers\KelolaBookingController;
 
 
 
@@ -32,3 +33,13 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
         return $request->user();
     });
 });
+
+Route::middleware(['auth:sanctum','role:admin'])->group(function () {
+    Route::get('/admin/user', function (Request $request) {
+            return response()->json($request->user());
+        });
+
+    Route::apiResource('kelola-booking', KelolaBookingController::class);
+});
+
+

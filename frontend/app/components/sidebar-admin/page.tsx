@@ -40,7 +40,7 @@ export default function SidebarAdmin() {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://127.0.0.1:8000/api/user', {
+        const res = await fetch('http://127.0.0.1:8000/api/admin/user', {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

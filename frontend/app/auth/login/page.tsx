@@ -33,8 +33,16 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('token', data.token);
-      document.cookie = `token=${data.token}; path=/`;
 
+      document.cookie = `token=${data.token}; path=/`;
+      document.cookie = `role=${data.role}; path=/`;
+
+      if (data.role === "admin") {
+        router.push("/Admin/admin-dashboard");
+        return;
+      }
+
+      // CUSTOMER
       if (data.user.is_profile_complete) {
         router.push("/User/dashboard");
       } else {

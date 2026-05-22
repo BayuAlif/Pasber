@@ -314,12 +314,8 @@ export default function BookingServicePage() {
         });
         const result = await response.json();
         console.log(result);
-        if (!response.ok) {
-          setFailedMessage(result.message || "Booking gagal diproses.");
-          setShowFailed(true);
-          return;
-        }
       }
+<<<<<<< HEAD
       const bengkelNama = bengkels.find((b) => b.id === selectedBengkel)?.nama ?? "-";
       const kendaraanLabel = selectedVehicleList.map((v) => `${v.brand} ${v.model}`).join(", ");
       const tanggalLabel = `${selectedDate} ${months[selectedMonth]} ${YEAR}`;
@@ -351,6 +347,13 @@ export default function BookingServicePage() {
   const testPopupFailed = () => {
     setFailedMessage("Gagal memproses booking. Coba lagi nanti.");
     setShowFailed(true);
+=======
+      alert("Booking berhasil dibuat!");
+
+      setStep(1);
+      router.refresh();
+    } catch (error) { console.error(error); alert("Booking gagal"); }
+>>>>>>> 699a8cbf68cd6e94f8a97391225fcd2919d517c4
   };
   const filteredBengkels = bengkels.filter((b) =>
 
@@ -414,7 +417,7 @@ export default function BookingServicePage() {
         </div>
 
         {/* Test popup buttons */}
-        <div className="flex gap-3 mb-8">
+        {/* <div className="flex gap-3 mb-8">
           <button
             onClick={testPopupSuccess}
             className="py-2 px-4 bg-[#10b981] hover:bg-[#059669] rounded-lg text-[12px] font-bold text-white transition"
@@ -427,7 +430,7 @@ export default function BookingServicePage() {
           >
             Test Popup Failed
           </button>
-        </div>
+        </div> */}
 
         {/* Stepper */}
         <div className="flex items-center mb-8 max-w-[520px]">

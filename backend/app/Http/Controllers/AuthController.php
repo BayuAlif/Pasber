@@ -31,27 +31,36 @@ public function register(Request $request)
     ]);
 }
 
-    public function login(Request $request){
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
         $user = User::where('email', $request->email)->first();
 
+        // cek email
         if (!$user) {
             return response()->json([
-                'debug' => 'EMAIL TIDAK DITEMUKAN'
+                'message' => 'Email tidak ditemukan'
             ], 401);
         }
 
+        // cek password
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
-                'debug' => 'PASSWORD SALAH',
-                'input' => $request->password,
-                'hash_db' => $user->password
+                'message' => 'Password salah'
             ], 401);
         }
 
+        // buat token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'message' => 'Login berhasil',
             'token' => $token,
+            'role' => $user->role,
             'user' => $user
         ]);
     }
