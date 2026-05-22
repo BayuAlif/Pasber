@@ -20,6 +20,7 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             $table->foreignId('mekanik_id')
+                ->nullable()
                 ->constrained('mekanik')
                 ->onDelete('cascade');
 

@@ -35,33 +35,19 @@ const getProgressSteps = (status: string) => {
   }));
 };
 
-const activityLog = [
-  {
-    icon: Wrench,
-    title: "Mekanik mulai mengerjakan",
-    time: "10:45 WIB",
-    source: "Service Area B: Oil",
-  },
-  {
-    icon: CheckCircle2,
-    title: "Mekanik ditugaskan",
-    time: "10:15 WIB",
-    source: "Admin Panel",
-  },
-  {
-    icon: Package,
-    title: "Suku cadang diproses",
-    time: "10:00 WIB",
-    source: "Gudang",
-  },
-];
-
-
+type WorkOrderLog = {
+  id: number;
+  status: string;
+  created_at: string;
+  
+};
 
 type WorkOrder = {
   id: number;
   statusWO: string;
   estimasiWaktu: number;
+
+   logs: WorkOrderLog[];
 
   booking: {
     tanggalBooking: string;
@@ -71,11 +57,16 @@ type WorkOrder = {
       model: string;
       nomorPolisi: string;
     };
+    bengkel: {
+      nama: string;
+    };
   };
 
   mekanik: {
     nama: string;
   };
+
+
 };
 
 
@@ -142,29 +133,85 @@ export default function PantauServicePage() {
     fetchUser();
   }, []);
 
-      const filteredWorkOrders = workOrders.filter((wo) => {
+  const filteredWorkOrders = workOrders.filter((wo) => {
 
-        const kendaraan =
-          `${wo.booking?.kendaraan?.merek ?? ""} ${wo.booking?.kendaraan?.model ?? ""}`.toLowerCase();
+    const kendaraan =
+      `${wo.booking?.kendaraan?.merek ?? ""} ${wo.booking?.kendaraan?.model ?? ""}`.toLowerCase();
 
-        const matchesSearch =
-          kendaraan.includes(searchQuery.toLowerCase()) ||
-          wo.id.toString().includes(searchQuery);
+    const matchesSearch =
+      kendaraan.includes(searchQuery.toLowerCase()) ||
+      wo.id.toString().includes(searchQuery);
 
-        const matchesStatus =
-          statusFilter === "Semua Status" ||
-          wo.statusWO.toLowerCase() === statusFilter.toLowerCase();
+    const matchesStatus =
+      statusFilter === "Semua Status" ||
+      wo.statusWO.toLowerCase() === statusFilter.toLowerCase();
 
-        return matchesSearch && matchesStatus;
-      });
+    return matchesSearch && matchesStatus;
+  });
 
-if (loading) {
-  return (
-    <div className="min-h-screen bg-[#0f1117] flex items-center justify-center text-white">
-      Loading...
-    </div>
-  );
-}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center text-white">
+        Loading...
+      </div>
+    );
+  }
+
+
+
+  const getActivityLog = (
+    logsFromBackend: WorkOrderLog[]
+  ) => {
+
+    return logsFromBackend.map((log) => {
+
+      let title = "";
+
+      switch (log.status) {
+
+        case "approved":
+          title = "Booking disetujui";
+          break;
+
+        case "assigned":
+          title = "Mekanik ditugaskan";
+          break;
+
+        case "running":
+          title = "Service sedang dikerjakan";
+          break;
+
+        case "qc":
+          title = "Quality Control";
+          break;
+
+        case "done":
+          title = "Service selesai";
+          break;
+
+        case "paid":
+          title = "Pembayaran selesai";
+          break;
+
+        default:
+          title = log.status;
+      }
+
+      return {
+        title,
+
+        time: new Date(log.created_at)
+          .toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+
+        source: "Admin Panel",
+        active: true,
+      };
+
+    }).reverse();
+  };
 
   return (
     <div className="flex min-h-screen bg-[#0f1117]">
@@ -233,11 +280,12 @@ if (loading) {
 
         {/* Work Order Card */}
         {filteredWorkOrders.map((wo) => {
+          const activityLog = getActivityLog(wo.logs  );
 
           const steps = getProgressSteps(wo.statusWO);
 
           return (
-            <div key={wo.id} className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden">
+            <div key={wo.id} className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden mb-7">
               {/* WO Header */}
               <div className="p-5 px-6 border-b border-[#1e2230] flex justify-between items-start">
                 <div>
@@ -248,7 +296,13 @@ if (loading) {
                     WO-{String(wo.id).padStart(4, "0")}
                   </div>
                   <div className="text-sm text-gray-400 mt-1">{wo.booking?.kendaraan?.merek} {wo.booking.kendaraan.model}</div>
-                  <div className="text-xs text-gray-600 mt-0.5">{wo.booking?.kendaraan?.nomorPolisi}</div>
+                  <div>
+                    <p>{wo.booking.kendaraan.nomorPolisi}</p>
+
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      {wo.booking.bengkel.nama}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1.5 py-1 px-3 bg-orange-500/10 border border-orange-500/30 rounded-full text-[11px] font-bold text-orange-500 tracking-widest">
@@ -331,7 +385,13 @@ if (loading) {
                     ).toLocaleDateString("id-ID"),
                   },
                   { label: "JENIS SERVICE", value: wo.booking.Keluhan },
-                  { label: "ESTIMASI", value: `${wo.estimasiWaktu} Menit`, highlight: true },
+                  {
+                    label: "ESTIMASI",
+                    value: wo.estimasiWaktu
+                      ? `${wo.estimasiWaktu} Menit`
+                      : "-",
+                    highlight: true
+                  },
                   { label: "MEKANIK", value: wo.mekanik?.nama },
                 ].map((item) => (
                   <div key={item.label} className="bg-[#13161e] p-4 px-6">
@@ -371,27 +431,36 @@ if (loading) {
                           : "bg-[#1a1d28] border-[#2a2f3e]"
                           }`}
                       >
-                        <item.icon
+                        <Clock
                           size={13}
-                          className={i === 0 ? "text-orange-500" : "text-gray-600"}
+                          className={
+                            item.active
+                              ? "text-orange-500"
+                              : "text-gray-600"
+                          }
                         />
                       </div>
-                      <div>
+                      <div className="min-w-0">
+
                         <div
-                          className={`text-sm font-semibold ${i === 0 ? "text-slate-200" : "text-gray-500"
+                          className={`text-sm font-semibold ${item.active
+                            ? "text-slate-200"
+                            : "text-gray-500"
                             }`}
                         >
                           {item.title}
                         </div>
+
                         <div className="text-[11px] text-gray-600 mt-0.5">
                           {item.time} • {item.source}
                         </div>
+
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-           </div>
+            </div>
           );
         })}
       </main>
