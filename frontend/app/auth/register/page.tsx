@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import SuccessRegisterPopup from '@/app/components/popUp/SuccessRegisterPopup';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,6 +14,10 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+
+  // ─── Popup state ────────────────────────────────────────────────────────
+  const [showRegisterSuccess, setShowRegisterSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // ─── Inline validation errors ───────────────────────────────────────────
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({});
@@ -71,8 +76,8 @@ export default function RegisterPage() {
       }
 
       if (res.ok) {
-        alert("Register berhasil");
-        router.push('/auth/login');
+        setRegisteredEmail(email);
+        setShowRegisterSuccess(true);
       } else {
         if (data.errors) {
           const allErrors = Object.values(data.errors).flat().join('\n');
@@ -381,6 +386,19 @@ export default function RegisterPage() {
           ))}
         </div>
       </footer>
+
+      {/* Success Register Popup */}
+      {showRegisterSuccess && (
+        <SuccessRegisterPopup
+          show={showRegisterSuccess}
+          email={registeredEmail}
+          onClose={() => setShowRegisterSuccess(false)}
+          onLoginClick={() => {
+            setShowRegisterSuccess(false);
+            router.push('/auth/login');
+          }}
+        />
+      )}
     </div>
   );
 }
