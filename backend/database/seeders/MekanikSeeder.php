@@ -20,7 +20,7 @@ class MekanikSeeder extends Seeder
                 'bengkel_id' => 1,
                 'nama' => 'Budi Santoso',
                 'email' => 'budi@gmail.com',
-                'status' => 'not available',
+                'status' => 'unavailable',
             ],
             [
                 'bengkel_id' => 1,
@@ -32,7 +32,7 @@ class MekanikSeeder extends Seeder
                 'bengkel_id' => 2,
                 'nama' => 'Dimas Wijaya',
                 'email' => 'dimas@gmail.com',
-                'status' => 'not available',
+                'status' => 'unavailable',
             ],
             [
                 'bengkel_id' => 2,
@@ -44,7 +44,7 @@ class MekanikSeeder extends Seeder
                 'bengkel_id' => 2,
                 'nama' => 'Yoga Permana',
                 'email' => 'yoga@gmail.com',
-                'status' => 'not available',
+                'status' => 'unavailable',
             ],
             [
                 'bengkel_id' => 1,
@@ -56,7 +56,7 @@ class MekanikSeeder extends Seeder
                 'bengkel_id' => 1,
                 'nama' => 'Asep Kurniawan',
                 'email' => 'asep@gmail.com',
-                'status' => 'not available',
+                'status' => 'unavailable',
             ],
             [
                 'bengkel_id' => 2,
@@ -68,7 +68,7 @@ class MekanikSeeder extends Seeder
                 'bengkel_id' => 2,
                 'nama' => 'Bayu Ramadhan',
                 'email' => 'bayu@gmail.com',
-                'status' => 'not available',
+                'status' => 'unavailable',
             ],
         ]);
     }

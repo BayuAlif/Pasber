@@ -13,15 +13,18 @@ class BookingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = Booking::where(
-            'user_id',
-            Auth::id()
-        )->get();
+        $bookings = Booking::with([
+            'kendaraan',
+            'booking.bengkel',
+            'workOrder'
+        ])
+        ->where('user_id', $request->user()->id)
+        ->latest()
+        ->get();
 
         return response()->json([
-            'message' => 'Data booking berhasil diambil',
             'data' => $bookings
         ]);
     }

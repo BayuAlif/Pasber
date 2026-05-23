@@ -11,7 +11,9 @@ class WorkOrderController extends Controller
         {
                 $workOrders = work_order::with([
                 'booking.kendaraan',
-                'mekanik'
+                'booking.bengkel',
+                'mekanik',
+                'logs'
             ])->get();
 
             return response()->json([
@@ -21,24 +23,10 @@ class WorkOrderController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'booking_id' => 'required|exists:booking,id',
-            'mekanik_id' => 'required|exists:mekanik,id',
-            'statusWO' => 'required',
-        ]);
 
-        $workOrder = work_order::create([
-            'booking_id' => $request->booking_id,
-            'mekanik_id' => $request->mekanik_id,
-            'statusWO' => $request->statusWO,
-            'estimasiWaktu' => $request->estimasiWaktu,
-        ]);
 
-        return response()->json([
-            'message' => 'Work order berhasil dibuat',
-            'data' => $workOrder
-        ], 201);
     }
+
 
     public function show(string $id)
     {
@@ -48,10 +36,10 @@ class WorkOrderController extends Controller
         ])->get();
     }
 
-    public function update(Request $request, string $id)
-    {
+ public function update(Request $request, string $id)
+{
 
-    }
+}
 
     public function destroy(string $id)
     {

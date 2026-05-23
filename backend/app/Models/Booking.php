@@ -36,4 +36,8 @@ class Booking extends Model
     {
         return $this->hasOne(work_order::class);
     }
+        public function bengkel()
+    {
+        return $this->belongsTo(Bengkel::class);
+    }
 }

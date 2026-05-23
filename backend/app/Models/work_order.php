@@ -26,4 +26,10 @@ class work_order extends Model
     {
         return $this->belongsTo(Mekanik::class);
     }
+
+    public function logs()
+    {
+        return $this->hasMany(WorkOrderLog::class);
+    }
+
 }
