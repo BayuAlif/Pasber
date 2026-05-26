@@ -31,6 +31,11 @@ type Booking = {
   jadwalService: string;
 
   status: StatusType;
+
+    bengkel?: {
+    id: number;
+    nama: string;
+  };
 };
 
 // ── Styles ─────────────────────────────────────────────────────────────────
@@ -313,7 +318,15 @@ function KelolaBookingView({
                   {/* Booking ID */}
                   <td className="px-5 py-4">
                     <span className="text-[11px] font-mono font-bold text-orange-400">
-                      #{b.id}
+
+                      BOOK-
+                      {b.bengkel?.nama
+                        ?.substring(0, 3)
+                        .toUpperCase()
+                      }
+                      -
+                      {String(i + 1).padStart(3, '0')}
+
                     </span>
                   </td>
 

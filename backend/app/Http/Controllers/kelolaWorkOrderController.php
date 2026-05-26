@@ -33,6 +33,8 @@ class kelolaWorkOrderController extends Controller
         ->latest()
         ->get();
 
+        dd($workOrders->toArray());
+
         return response()->json([
             'data' => $workOrders
         ]);

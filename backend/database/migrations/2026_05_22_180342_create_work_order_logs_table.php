@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('work_order_logs', function (Blueprint $table) {
 
             $table->id();
+            
 
             $table->foreignId('work_order_id')
                 ->constrained('work_order')

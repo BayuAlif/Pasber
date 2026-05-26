@@ -58,40 +58,74 @@ class KelolaBookingController extends Controller
 
         $booking = Booking::findOrFail($id);
 
-        // =========================
-        // UPDATE STATUS BOOKING
-        // =========================
         $booking->status = $request->status;
         $booking->save();
 
-        // =========================
-        // JIKA APPROVED
-        // BUAT WORK ORDER
-        // =========================
         if ($request->status === 'approved') {
 
-            $existingWO = work_order::where(
-                'booking_id',
-                $booking->id
-            )->first();
+    $existingWO = work_order::where(
+        'booking_id',
+        $booking->id
+    )->first();
 
-            // supaya tidak duplicate
-            if (!$existingWO) {
+    // supaya tidak duplicate
+        if (!$existingWO) {
 
-                $workOrder = work_order::create([
-                    'booking_id' => $booking->id,
-                    'statusWO' => 'approved',
-                ]);
+            // =========================
+            // GENERATE KODE WO
+            // =========================
 
-                // =========================
-                // CREATE FIRST LOG
-                // =========================
-                WorkOrderLog::create([
-                    'work_order_id' => $workOrder->id,
-                    'status' => 'approved',
-                ]);
-            }
+            $bengkel = $booking->bengkel;
+
+            $prefix = strtoupper(
+                substr($bengkel->nama, 0, 3)
+            );
+
+            $totalWO = work_order::whereHas(
+                'booking',
+                function ($query) use ($booking) {
+
+                    $query->where(
+                        'bengkel_id',
+                        $booking->bengkel_id
+                    );
+                }
+            )->count() + 1;
+
+            $kodeWO =
+                'WO-' .
+                $prefix .
+                '-' .
+                str_pad(
+                    $totalWO,
+                    3,
+                    '0',
+                    STR_PAD_LEFT
+                );
+
+            // =========================
+            // CREATE WORK ORDER
+            // =========================
+
+            $workOrder = work_order::create([
+
+                'booking_id' => $booking->id,
+
+                'statusWO' => 'approved',
+
+                'kodeWO' => $kodeWO,
+            ]);
+
+            // =========================
+            // CREATE FIRST LOG
+            // =========================
+
+            WorkOrderLog::create([
+                'work_order_id' => $workOrder->id,
+                'status' => 'approved',
+            ]);
         }
+    }
 
         return response()->json([
             'message' => 'Status booking berhasil diupdate',

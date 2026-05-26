@@ -15,6 +15,7 @@ class work_order extends Model
         'mekanik_id',
         'statusWO',
         'estimasiWaktu',
+        'kodeWO',
     ];
 
     public function booking()

@@ -170,7 +170,7 @@ export default function PantauServicePage() {
       switch (log.status) {
 
         case "approved":
-          title = "Booking disetujui";
+          title = "Booking disetujui silahkan serahkan kendaraan anda";
           break;
 
         case "assigned":
