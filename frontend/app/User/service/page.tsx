@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { useRouter } from 'next/navigation'
+
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
 import BookingSuccessPopup, { BookingSuccessData } from "@/app/components/popUp/BookingSuccessPopup";
@@ -52,10 +53,6 @@ const sessions = [
   "13:00", "14:00", "15:00", "16:00",
 ];
 
-const YEAR = 2026;
-
-
-
 type Bengkel = {
   id: number;
   nama: string;
@@ -63,9 +60,6 @@ type Bengkel = {
   lat: number;
   lng: number;
 };
-
-
-
 
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function BookingServicePage() {
@@ -106,6 +100,80 @@ export default function BookingServicePage() {
   const [selectedTime, setSelectedTime] = useState("09:00");
   const [selectedBengkel, setSelectedBengkel] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear()
+  );
+
+  // apakah tanggal full atau tidak
+  const [fullDates, setFullDates] = useState<number[]>([]);
+
+  useEffect(() => {
+
+    if (!selectedBengkel) return;
+
+    const fetchFullDates = async () => {
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/full-dates?bulan=${selectedMonth + 1}&tahun=${selectedYear}&bengkel_id=${selectedBengkel}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const data = await res.json();
+      setFullDates(data.fullDates || []);
+    };
+
+    fetchFullDates();
+
+  }, [
+    selectedMonth,
+    selectedYear,
+    selectedBengkel
+  ]);
+
+  // auto update set selected sesi
+  useEffect(() => {
+
+    const currentDate = new Date();
+
+    const totalDays = getDays(selectedMonth);
+
+    for (let d = 1; d <= totalDays; d++) {
+
+      const cellDate = new Date(
+        selectedYear,
+        selectedMonth,
+        d
+      );
+
+      const isPast =
+        cellDate < new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate()
+        );
+
+      const isFull =
+        fullDates.includes(d);
+
+      if (!isPast && !isFull) {
+
+        setSelectedDate(d);
+
+        return;
+      }
+    }
+
+  }, [
+    fullDates,
+    selectedMonth,
+    selectedYear
+  ]);
 
   // ─── Get User Location API Browser Geolocation API. ──────────────────────────────────────────────────
   useEffect(() => {
@@ -171,7 +239,7 @@ export default function BookingServicePage() {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       const result = await response.json();
-      console.log(result);
+      // console.log(result);
       const formattedVehicles: Vehicle[] = (result.data || []).map((v: {
         id: number; merek: string; model: string;
         nomorPolisi: string; tahun: string; jenisKendaraan: "motor" | "mobil";
@@ -229,11 +297,11 @@ export default function BookingServicePage() {
 
   }, []);
 
-  console.log(bengkels);
+  // console.log(bengkels);
 
   // ─── Helpers ────────────────────────────────────────────────────────────
-  const getDays = (m: number) => new Date(YEAR, m + 1, 0).getDate();
-  const getFirstDay = (m: number) => { const d = new Date(YEAR, m, 1).getDay(); return d === 0 ? 6 : d - 1; };
+  const getDays = (m: number) => new Date(selectedYear, m + 1, 0).getDate();
+  const getFirstDay = (m: number) => { const d = new Date(selectedYear, m, 1).getDay(); return d === 0 ? 6 : d - 1; };
 
   // ─── Modal ──────────────────────────────────────────────────────────────
   const openModal = () => {
@@ -291,7 +359,7 @@ export default function BookingServicePage() {
   const handleBooking = async () => {
     try {
       const token = localStorage.getItem("token");
-      const bookingDate = new Date(YEAR, selectedMonth, selectedDate);
+      const bookingDate = new Date(selectedYear, selectedMonth, selectedDate);
       const formattedDate =
         `${bookingDate.getFullYear()}-` +
         `${String(bookingDate.getMonth() + 1).padStart(2, "0")}-` +
@@ -535,7 +603,7 @@ export default function BookingServicePage() {
                     <ChevronLeft size={14} />
                   </button>
                   <span className="text-[13px] font-semibold text-[#e2e8f0] min-w-[120px] text-center">
-                    {months[selectedMonth]} {YEAR}
+                    {months[selectedMonth]} {selectedYear}
                   </span>
                   <button onClick={() => setSelectedMonth((m) => Math.min(11, m + 1))}
                     className="w-7 h-7 bg-[#1a1d28] border border-[#2a2f3e] rounded-md flex items-center justify-center cursor-pointer text-[#9ca3af]">
@@ -553,14 +621,58 @@ export default function BookingServicePage() {
 
               {/* Calendar */}
               <div className="grid grid-cols-7 gap-1.5 mb-7">
-                {Array.from({ length: getFirstDay(selectedMonth) }).map((_, i) => <div key={`e${i}`} />)}
+
+                {Array.from({ length: getFirstDay(selectedMonth) }).map((_, i) => (
+                  <div key={`e${i}`} />
+                ))}
+
                 {Array.from({ length: getDays(selectedMonth) }).map((_, i) => {
+
                   const d = i + 1;
-                  const isSel = selectedDate === d;
+
+                  const currentDate = new Date();
+
+                  const cellDate = new Date(
+                    selectedYear,
+                    selectedMonth,
+                    d
+                  );
+
+                  const isPast =
+                    cellDate < new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth(),
+                      currentDate.getDate()
+                    );
+
+                  const isFull =
+                    fullDates.includes(d);
+
+                  const isDisabled =
+                    isPast || isFull;
+
+                  const isSel =
+                    selectedDate === d;
+
                   return (
-                    <button key={d} onClick={() => setSelectedDate(d)}
-                      className={`py-2.5 rounded-lg border text-[13px] font-semibold cursor-pointer
-                        ${isSel ? "border-[#f97316] bg-[#f97316] text-white" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
+                    <button
+                      key={d}
+
+                      disabled={isDisabled}
+
+                      onClick={() => !isDisabled && setSelectedDate(d)}
+
+                      className={`py-2.5 rounded-lg border text-[13px] font-semibold
+
+        ${isDisabled
+                          ? "border-[#1a1d28] bg-[#111827] text-[#374151] opacity-50 cursor-not-allowed"
+
+                          : isSel
+                            ? "border-[#f97316] bg-[#f97316] text-white"
+
+                            : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"
+                        }`}
+                    >
                       {d}
                     </button>
                   );
@@ -570,19 +682,35 @@ export default function BookingServicePage() {
               {/* Time slots */}
               <div className="flex items-center gap-2 mb-3.5">
                 <Clock size={13} color="#f97316" />
-                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">SESI TERSEDIA</div>
+                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">
+                  SESI TERSEDIA
+                </div>
               </div>
+
               <div className="grid grid-cols-4 gap-2 mb-7">
+
                 {sessions.map((t) => {
+
                   const isSel = selectedTime === t;
+
                   return (
-                    <button key={t} onClick={() => setSelectedTime(t)}
-                      className={`py-2.5 rounded-lg border text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5
-                        ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
+                    <button
+                      key={t}
+
+                      onClick={() => setSelectedTime(t)}
+
+                      className={`py-2.5 rounded-lg border text-[12px] font-semibold flex items-center justify-center gap-1.5
+
+                        ${isSel
+                          ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]"
+                          : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"
+                        }`}
+                    >
                       {t}
                     </button>
                   );
                 })}
+
               </div>
 
               <div className="flex gap-3">
@@ -634,7 +762,7 @@ export default function BookingServicePage() {
                       <span>{dist} km</span>
                     )
                   }
-                  console.log("Bengkel:", b);
+                  // console.log("Bengkel:", b);
                   return (
 
                     <div
@@ -806,7 +934,7 @@ export default function BookingServicePage() {
                           })()
                           : null
                     },
-                    { label: "Tanggal", value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
+                    { label: "Tanggal", value: `${selectedDate} ${months[selectedMonth]} ${selectedYear}` },
                     { label: "Sesi Waktu", value: `${selectedTime} WIB` },
                   ].map((item, i) => (
                     <div key={item.label}
