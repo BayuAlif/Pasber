@@ -20,6 +20,7 @@ type User = { name: string; fotoProfile?: string };
 
 const getProgressSteps = (status: string) => {
   const steps = [
+    "pending",
     "approved",
     "assigned",
     "running",
@@ -39,7 +40,7 @@ type WorkOrderLog = {
   id: number;
   status: string;
   created_at: string;
-  
+
 };
 
 type WorkOrder = {
@@ -47,7 +48,7 @@ type WorkOrder = {
   statusWO: string;
   estimasiWaktu: number;
 
-   logs: WorkOrderLog[];
+  logs: WorkOrderLog[];
 
   booking: {
     tanggalBooking: string;
@@ -142,9 +143,18 @@ export default function PantauServicePage() {
       kendaraan.includes(searchQuery.toLowerCase()) ||
       wo.id.toString().includes(searchQuery);
 
+    const statusMap: Record<string, string[]> = {
+      "Semua Status": [],
+      Pending: ["pending"],
+      Running: ["running", "assigned", "qc"],
+      Selesai: ["done", "paid"],
+    };
+
     const matchesStatus =
       statusFilter === "Semua Status" ||
-      wo.statusWO.toLowerCase() === statusFilter.toLowerCase();
+      statusMap[statusFilter]?.includes(
+        wo.statusWO?.toLowerCase().trim()
+      );
 
     return matchesSearch && matchesStatus;
   });
@@ -168,6 +178,10 @@ export default function PantauServicePage() {
       let title = "";
 
       switch (log.status) {
+
+        case "pending":
+          title = "Booking sedang pending.";
+          break;
 
         case "approved":
           title = "Booking disetujui silahkan serahkan kendaraan anda";
@@ -280,7 +294,7 @@ export default function PantauServicePage() {
 
         {/* Work Order Card */}
         {filteredWorkOrders.map((wo) => {
-          const activityLog = getActivityLog(wo.logs  );
+          const activityLog = getActivityLog(wo.logs);
 
           const steps = getProgressSteps(wo.statusWO);
 
