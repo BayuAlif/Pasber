@@ -24,6 +24,7 @@ class kelolaWorkOrderController extends Controller
             'mekanik',
             'logs'
         ])
+        ->where('statusWO', '!=', 'pending')
         ->whereHas('booking', function ($query) use ($user) {
             $query->where(
                 'bengkel_id',
