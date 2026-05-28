@@ -186,7 +186,7 @@ export default function PantauServicePage() {
           break;
 
         case "done":
-          title = "Service selesai";
+          title = "Service selesai mohon bayar jasa service";
           break;
 
         case "paid":

@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\work_order;
 use App\Models\WorkOrderLog;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
-class kelolaWorkOrderController extends Controller
+class AdminWorkOrderController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -33,9 +32,9 @@ class kelolaWorkOrderController extends Controller
         ->latest()
         ->get();
 
-       return response()->json([
-        'data' => $workOrders
-    ]);
+        return response()->json([
+            'data' => $workOrders
+        ]);
     }
 
     /**
@@ -59,32 +58,28 @@ class kelolaWorkOrderController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $workOrder = work_order::findOrFail($id);
-
-        // =========================
-        // UPDATE DATA
-        // =========================
-        $workOrder->update([
-            'mekanik_id' => $request->mekanik_id
-                ?? $workOrder->mekanik_id,
-
-            'estimasiWaktu' => $request->estimasiWaktu
-                ?? $workOrder->estimasiWaktu,
-
-            'statusWO' => $request->statusWO
-                ?? $workOrder->statusWO,
+        $request->validate([
+            'mekanik_id' => 'nullable|exists:mekanik,id',
+            'estimasiWaktu' => 'nullable|numeric',
+            'statusWO' => 'required',
         ]);
 
-        // =========================
-        // CREATE LOG
-        // =========================
-        if ($request->statusWO) {
+        $workOrder = work_order::findOrFail($id);
 
-            WorkOrderLog::create([
-                'work_order_id' => $workOrder->id,
-                'status' => $request->statusWO,
-            ]);
-        }
+        $workOrder->update([
+
+            'mekanik_id' => $request->mekanik_id,
+
+            'estimasiWaktu' => $request->estimasiWaktu,
+
+            'statusWO' => $request->statusWO,
+        ]);
+
+        // log status
+        WorkOrderLog::create([
+            'work_order_id' => $workOrder->id,
+            'status' => $request->statusWO,
+        ]);
 
         return response()->json([
             'message' => 'Work order berhasil diupdate',
