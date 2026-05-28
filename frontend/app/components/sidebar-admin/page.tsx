@@ -21,10 +21,10 @@ import {
 const navItems = [
   { label: 'Dashboard',                  href: '/Admin/admin-dashboard', icon: LayoutDashboard },
   { label: 'Kelola Booking',             href: '/Admin/Booking',         icon: CalendarCheck   },
-  { label: 'Kelola Jadwal & Work Order', href: '/Admin/jadwal',          icon: CalendarClock   },
+  { label: 'Work Order',                 href: '/Admin/jadwal',          icon: CalendarClock   },
   { label: 'Kelola Mekanik',             href: '/Admin/mekanik',         icon: Users           },
   { label: 'Kelola Customer',            href: '/Admin/customer',        icon: UserCircle      },
-  { label: 'Invoice & Pembayaran',       href: '/Admin/invoice',         icon: CreditCard      },
+  { label: 'Invoice & Pembayaran',       href: '/Admin/pembayaran',      icon: CreditCard      },
   { label: 'Inventory',                  href: '/Admin/inventory',       icon: Package         },
   { label: 'Riwayat & Log',              href: '/Admin/riwayat',         icon: History         },
   { label: 'Laporan Keuangan',           href: '/Admin/laporan',         icon: BarChart3       },

@@ -123,6 +123,9 @@ const STATUS_STYLE: Record<WOStatus, string> = {
 
 const PAGE_SIZE = 5;
 
+// ── Input class helper ─────────────────────────────────────────────────────
+const inputCls = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[12px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
+
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function KelolaJadwalPage() {
   // ── VIEW ───────────────────────────────────────────────────
@@ -466,13 +469,17 @@ export default function KelolaJadwalPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0f1117] text-[#e2e8f0]" style={{ fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-
+    <div
+      className="flex h-screen overflow-hidden bg-[#0f1117] text-[#e2e8f0]"
+      style={{ fontFamily: "'DM Sans','Segoe UI',sans-serif" }}
+      // Tutup status dropdown kalau klik di luar
+      onClick={() => setStatusDropdownId(null)}
+    >
       <SidebarAdmin />
 
       <main className="flex-1 overflow-y-auto h-screen">
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="sticky top-0 z-10 bg-[#0f1117]/95 backdrop-blur border-b border-[#1e2230] px-8 py-4 flex justify-between items-center">
           <div>
             <h2 className="text-[18px] font-bold text-white leading-none">Kelola Jadwal & Work Order</h2>
@@ -481,8 +488,11 @@ export default function KelolaJadwalPage() {
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={13} />
-              <input type="text" placeholder="ID Servis/Plat Nomor"
-                className="bg-[#13161e] border border-[#1e2230] rounded-lg py-2 pl-9 pr-4 text-[12px] outline-none focus:border-orange-500/50 w-56 placeholder:text-[#374151] text-[#e2e8f0]" />
+              <input
+                type="text"
+                placeholder="ID Servis / Plat Nomor"
+                className="bg-[#13161e] border border-[#1e2230] rounded-lg py-2 pl-9 pr-4 text-[12px] outline-none focus:border-orange-500/50 w-56 placeholder:text-[#374151] text-[#e2e8f0]"
+              />
             </div>
             <button className="w-9 h-9 bg-[#13161e] border border-[#1e2230] rounded-lg flex items-center justify-center text-[#4b5563] hover:text-white transition-colors relative">
               <Bell size={15} />
@@ -560,7 +570,7 @@ export default function KelolaJadwalPage() {
 
             </div>
 
-            {/* Filters */}
+            {/* Filters + Buat WO button */}
             <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-4">
 
               <div className="flex items-center gap-4">
@@ -768,6 +778,8 @@ export default function KelolaJadwalPage() {
                       </td>
 
                       {/* Schedule */}
+
+                      {/* Schedule */}
                       <td className="px-5 py-4">
 
                         <p className="text-[11px] font-semibold text-white">
@@ -788,6 +800,8 @@ export default function KelolaJadwalPage() {
                         </div>
 
                       </td>
+
+                      {/* Status */}
 
                       {/* Status */}
                       <td className="px-5 py-4">
@@ -921,7 +935,6 @@ export default function KelolaJadwalPage() {
               </div>
 
             </div>
-
           </div>
         )}
 
@@ -929,7 +942,17 @@ export default function KelolaJadwalPage() {
           <div className="flex gap-0 h-[calc(100vh-73px)]">
 
             {/* Left — form */}
+
+            {/* Left — form */}
             <div className="flex-1 overflow-y-auto p-8 space-y-4">
+
+              {/* Back */}
+              <button onClick={() => setView('list')}
+                className="flex items-center gap-1.5 text-[11px] text-[#4b5563] hover:text-white transition-colors mb-2">
+                <ChevronLeft size={14} /> Kembali ke List
+              </button>
+
+              <h3 className="text-[15px] font-bold text-white mb-2">Buat Work Order Baru</h3>
 
               {/* Back */}
               <button onClick={() => setView('list')}
@@ -990,6 +1013,7 @@ export default function KelolaJadwalPage() {
                     </div>
 
                     {/* Customer card */}
+                    {/* Customer card */}
                     <div className="flex items-center gap-3 p-3 bg-[#0f1117] border border-[#1e2230] rounded-xl">
                       <div className="w-8 h-8 rounded-full bg-[#1a1d28] border border-[#2a2f3e] flex items-center justify-center flex-shrink-0">
                         <User size={14} className="text-[#6b7280]" />
@@ -1008,10 +1032,15 @@ export default function KelolaJadwalPage() {
                     <Search size={28} className="mx-auto mb-3 opacity-30" />
                     <p className="text-[12px]">Cari Booking ID untuk memuat data WO</p>
                     <p className="text-[11px] mt-1 opacity-60">Contoh: #BK-2024-004 atau #BK-2024-005</p>
+                    <p className="text-[11px] mt-1 opacity-60">Contoh: #BK-2024-004 atau #BK-2024-005</p>
                   </div>
                 )}
               </div>
 
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={() => setView('list')} className="px-5 py-2.5 text-[12px] font-bold text-[#6b7280] hover:text-white transition-colors">
+                  Batal
               {/* Buttons */}
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => setView('list')} className="px-5 py-2.5 text-[12px] font-bold text-[#6b7280] hover:text-white transition-colors">
@@ -1022,12 +1051,17 @@ export default function KelolaJadwalPage() {
                     onClick={handleCreateWO}
                     className="flex items-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-lg transition-all"
                   >
+                  <button
+                    onClick={handleCreateWO}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[12px] font-bold uppercase tracking-widest rounded-lg transition-all"
+                  >
                     <Plus size={14} /> Buat WO Baru
                   </button>
                 )}
               </div>
             </div>
 
+            {/* Right Sidebar — Assign Mekanik + Catatan */}
             {/* Right Sidebar — Assign Mekanik + Catatan */}
             <div className="w-[320px] flex-shrink-0 border-l border-[#1e2230] flex flex-col overflow-y-auto">
               {/* Assign Mekanik */}
@@ -1041,13 +1075,24 @@ export default function KelolaJadwalPage() {
                     <CheckCircle size={12} /> Dipilih: <span className="font-bold">{selectedMechanic}</span>
                   </div>
                 )}
+                {selectedMechanic && (
+                  <div className="mb-3 flex items-center gap-2 text-[11px] text-green-400 bg-green-500/5 border border-green-500/20 rounded-lg px-3 py-2">
+                    <CheckCircle size={12} /> Dipilih: <span className="font-bold">{selectedMechanic}</span>
+                  </div>
+                )}
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4b5563]" size={12} />
                   <input
                     type="text"
                     placeholder="Cari mekanik..."
                     value={mechSearch}
+                  <input
+                    type="text"
+                    placeholder="Cari mekanik..."
+                    value={mechSearch}
                     onChange={e => setMechSearch(e.target.value)}
+                    className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
+                  />
                     className="w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg py-2 pl-8 pr-3 text-[12px] outline-none focus:border-orange-500/50 placeholder:text-[#374151] text-[#e2e8f0]"
                   />
                 </div>
@@ -1147,9 +1192,15 @@ export default function KelolaJadwalPage() {
               {/* Catatan */}
               <div className="p-5 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
+              <div className="p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
                   <ClipboardList size={13} className="text-orange-500" />
                   <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Catatan Pengerjaan</p>
                 </div>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  rows={6}
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}

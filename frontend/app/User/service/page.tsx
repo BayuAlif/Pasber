@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 
 import { useRouter } from 'next/navigation'
-
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
 import BookingSuccessPopup, { BookingSuccessData } from "@/app/components/popUp/BookingSuccessPopup";
