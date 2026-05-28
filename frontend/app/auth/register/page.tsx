@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthPopup from '../../components/auth_popup/Auth_popup';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,6 +14,17 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [popupType, setPopupType] =
+    useState<'success' | 'error'>('success');
+
+  const [popupTitle, setPopupTitle] =
+    useState('');
+
+  const [popupMessage, setPopupMessage] =
+    useState('');
 
   // ─── Inline validation errors ───────────────────────────────────────────
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({});
@@ -27,9 +39,27 @@ export default function RegisterPage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Format email tidak valid — pastikan ada @ dan domain yang benar";
     return "";
   };
+
   const validatePassword = (v: string) => {
-    if (!v) return "Password wajib diisi";
-    if (v.length < 6) return "Password minimal 6 karakter";
+
+    if (!v)
+      return "Password wajib diisi";
+
+    if (v.length < 8)
+      return "Password minimal 8 karakter";
+
+    if (!/[A-Z]/.test(v))
+      return "Password harus memiliki huruf besar";
+
+    if (!/[a-z]/.test(v))
+      return "Password harus memiliki huruf kecil";
+
+    if (!/[0-9]/.test(v))
+      return "Password harus memiliki angka";
+
+    if (!/[@$!%*#?&.]/.test(v))
+      return "Password harus memiliki simbol";
+
     return "";
   };
   const validateConfirm = (v: string, pw: string) => {
@@ -41,9 +71,9 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const nameErr    = validateName(name);
-    const emailErr   = validateEmail(email);
-    const passErr    = validatePassword(password);
+    const nameErr = validateName(name);
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
     const confirmErr = validateConfirm(confirmPassword, password);
     setErrors({ name: nameErr, email: emailErr, password: passErr, confirm: confirmErr });
 
@@ -71,14 +101,33 @@ export default function RegisterPage() {
       }
 
       if (res.ok) {
-        alert("Register berhasil");
-        router.push('/auth/login');
+        setPopupType('success');
+
+        setPopupTitle('Registrasi Berhasil');
+
+        setPopupMessage(
+          'Akun berhasil dibuat. Silakan login untuk melanjutkan.'
+        );
+
+        setShowPopup(true);
+
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 1800);
       } else {
         if (data.errors) {
           const allErrors = Object.values(data.errors).flat().join('\n');
           alert(allErrors);
         } else {
-          alert(data.message || "Register gagal");
+          setPopupType('error');
+
+          setPopupTitle('Registrasi Gagal');
+
+          setPopupMessage(
+            data.message || 'Terjadi kesalahan saat registrasi.'
+          );
+
+          setShowPopup(true);
         }
       }
     } catch (err) {
@@ -86,8 +135,6 @@ export default function RegisterPage() {
       alert("Terjadi error");
     }
   };
-
-  const [role, setRole] = useState<'admin' | 'user'>('user');
 
   return (
     <div className="min-h-screen w-full bg-[#0d1117] text-white font-sans flex flex-col relative overflow-hidden">
@@ -103,24 +150,15 @@ export default function RegisterPage() {
       </div>
 
       {/* Navbar */}
-      <nav className="w-full px-5 py-5 sm:px-10 sm:py-6 flex justify-between items-center relative z-10">
+      <nav className="w-full px-5 py-6 sm:px-10 sm:py-8 flex justify-between items-center relative z-10">
         <span className="font-black tracking-tighter text-xl sm:text-2xl italic">PASBER</span>
-        <div className="hidden md:flex items-center gap-8">
-          <span className="text-gray-400 text-xs font-semibold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">System Status</span>
-          <span className="text-gray-400 text-xs font-semibold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Technical Support</span>
-          <Link href="/auth/login">
-            <button className="px-5 py-2 bg-orange-600 hover:bg-orange-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all">
-              Log In
-            </button>
-          </Link>
-        </div>
       </nav>
 
       {/* Main */}
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 px-5 sm:px-8 lg:px-24 relative z-10 pb-8">
 
-        {/* Left copy */}
-        <div className="hidden md:flex flex-col max-w-xl space-y-5 lg:space-y-6">
+        {/* Left copy - hidden on small, visible md+ */}
+        <div className="hidden md:block max-w-xl space-y-5 lg:space-y-6">
           <span className="text-orange-500 font-bold text-xs uppercase tracking-widest">Kemitraan Teknis</span>
           <h1 className="text-5xl lg:text-7xl font-black leading-tight tracking-tight">
             GABUNG <br />
@@ -128,30 +166,12 @@ export default function RegisterPage() {
             KAMI.
           </h1>
           <p className="text-gray-400 text-base lg:text-lg leading-relaxed max-w-md">
-            Akses penuh ke sistem diagnosa V12, manajemen inventori komponen presisi, dan penjadwalan unit kontrol otomatis.
+            Akses penuh ke sistem diagnosa V12 dan manajemen inventori komponen presisi.
           </p>
-          <div className="flex flex-col gap-3 pt-2">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-gray-300 text-sm font-medium">Advanced Diagnostics Protocols</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
-              </div>
-              <span className="text-gray-300 text-sm font-medium">Direct ECU Interface Access</span>
-            </div>
-          </div>
         </div>
 
         {/* Form card */}
-        <div className="w-full max-w-md bg-[#161b22]/80 backdrop-blur-xl border border-white/10 p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-[2rem] shadow-2xl">
+        <div className="w-full max-w-md bg-[#161b22]/70 backdrop-blur-xl border border-white/10 p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-[2rem] shadow-2xl">
 
           {/* Mobile-only heading */}
           <div className="md:hidden mb-5">
@@ -160,25 +180,7 @@ export default function RegisterPage() {
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold mb-1">Registrasi Akun</h2>
-          <p className="text-gray-500 text-xs sm:text-sm mb-5 font-medium">Masukan kredensial teknis anda untuk memulai</p>
-
-          {/* Admin / User Tab */}
-          <div className="grid grid-cols-2 mb-6 bg-black/40 rounded-xl p-1 border border-white/5">
-            <button
-              type="button"
-              onClick={() => setRole('admin')}
-              className={`py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${role === 'admin' ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/30' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('user')}
-              className={`py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${role === 'user' ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/30' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              User
-            </button>
-          </div>
+          <p className="text-gray-500 text-xs sm:text-sm mb-6 font-medium">Masukkan kredensial teknis anda untuk memulai</p>
 
           <form className="space-y-4" onSubmit={handleRegister}>
 
@@ -193,7 +195,7 @@ export default function RegisterPage() {
                 </span>
                 <input
                   type="text"
-                  placeholder="User Name"
+                  placeholder="Masukkan nama lengkap"
                   value={name}
                   onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: validateName(e.target.value) })); }}
                   onBlur={(e) => setErrors((prev) => ({ ...prev, name: validateName(e.target.value) }))}
@@ -205,7 +207,7 @@ export default function RegisterPage() {
               {errors.name && (
                 <div className="flex items-start gap-1.5 mt-1.5 px-1">
                   <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span className="text-[11px] text-red-400 leading-tight">{errors.name}</span>
                 </div>
@@ -223,7 +225,7 @@ export default function RegisterPage() {
                 </span>
                 <input
                   type="email"
-                  placeholder="@tech@pasber.auto"
+                  placeholder="admin@pasber.auto"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) })); }}
                   onBlur={(e) => setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }))}
@@ -235,7 +237,7 @@ export default function RegisterPage() {
               {errors.email && (
                 <div className="flex items-start gap-1.5 mt-1.5 px-1">
                   <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span className="text-[11px] text-red-400 leading-tight">{errors.email}</span>
                 </div>
@@ -273,7 +275,7 @@ export default function RegisterPage() {
                 {errors.password && (
                   <div className="flex items-start gap-1.5 mt-1.5 px-1">
                     <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <span className="text-[11px] text-red-400 leading-tight">{errors.password}</span>
                   </div>
@@ -293,7 +295,7 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirm) setErrors((prev) => ({ ...prev, confirm: validateConfirm(e.target.value, password) })); }}
                     onBlur={(e) => setErrors((prev) => ({ ...prev, confirm: validateConfirm(e.target.value, password) }))}
-                    placeholder="••••••"
+                    placeholder="••••••••"
                     required
                     className={`w-full bg-black/40 border rounded-xl py-3 pl-10 pr-9 text-sm outline-none transition-all
                       ${errors.confirm ? "border-red-500/60 focus:border-red-500" : "border-white/5 focus:border-orange-500/50"}`}
@@ -309,7 +311,7 @@ export default function RegisterPage() {
                 {errors.confirm && (
                   <div className="flex items-start gap-1.5 mt-1.5 px-1">
                     <svg className="w-3 h-3 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <span className="text-[11px] text-red-400 leading-tight">{errors.confirm}</span>
                   </div>
@@ -373,14 +375,17 @@ export default function RegisterPage() {
         </div>
       </main>
 
-      <footer className="w-full px-5 sm:px-10 py-5 flex flex-col sm:flex-row justify-between items-center gap-2 relative z-10 border-t border-white/5">
-        <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">© 2024 PASBER AUTOMOTIVE ENGINEERING & TECHNICAL MASTERY</p>
-        <div className="hidden sm:flex items-center gap-6">
-          {["System Status", "API Documentation", "Compliance", "Global Support"].map((item) => (
-            <span key={item} className="text-[9px] font-bold text-gray-600 uppercase tracking-widest cursor-pointer hover:text-gray-400 transition-colors">{item}</span>
-          ))}
-        </div>
+      <footer className="w-full px-5 py-5 text-center relative z-10">
+        <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">© 2024 PASBER AUTOMOTIVE ENGINEERING</p>
       </footer>
+
+      <AuthPopup
+        open={showPopup}
+        type={popupType}
+        title={popupTitle}
+        message={popupMessage}
+        onClose={() => setShowPopup(false)}
+      />
     </div>
   );
 }

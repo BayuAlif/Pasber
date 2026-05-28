@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import AuthPopup from '../components/auth_popup/Auth_popup';
 
 export default function FinalStepPage() {
   const router = useRouter();
@@ -13,6 +14,25 @@ export default function FinalStepPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+
+
+  const [errors, setErrors] = useState<{
+    noKontak?: string;
+    alamat?: string;
+  }>({});
+
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [popupType, setPopupType] =
+    useState<'success' | 'error'>('success');
+
+  const [popupTitle, setPopupTitle] =
+    useState('');
+
+  const [popupMessage, setPopupMessage] =
+    useState('');
+
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -84,19 +104,64 @@ export default function FinalStepPage() {
       console.log("RESPONSE:", data);
 
       if (response.ok) {
-        router.push('User/dashboard');
-      } else {
+
+        setPopupType('success');
+
+        setPopupTitle('Profil Berhasil Disimpan');
+
+        setPopupMessage(
+          'Data profil berhasil diperbarui. Anda akan masuk ke dashboard.'
+        );
+
+        setShowPopup(true);
+
+        setTimeout(() => {
+          router.push('/User/dashboard');
+        }, 1800);
+
+      }
+      else {
+
         if (data.errors) {
-          const allErrors = Object.values(data.errors).flat().join('\n');
-          alert(allErrors);
+
+          setErrors({
+            noKontak: data.errors?.noKontak?.[0],
+            alamat: data.errors?.alamat?.[0],
+          });
+
         } else {
-          alert(data.message || "Gagal menyimpan profil.");
+
+          setPopupType('error');
+
+          setPopupTitle('Gagal Menyimpan');
+
+          setPopupMessage(
+            data.message || 'Terjadi kesalahan saat menyimpan profil.'
+          );
+
+          setShowPopup(true);
+
         }
+
+
       }
     } catch (error) {
+
       console.error("Error saving profile:", error);
+
+      setPopupType('error');
+
+      setPopupTitle('Server Error');
+
+      setPopupMessage(
+        'Tidak dapat terhubung ke server.'
+      );
+
+      setShowPopup(true);
     }
   };
+
+
 
 
   return (
@@ -212,12 +277,34 @@ export default function FinalStepPage() {
                       Nomor Kontak (Aktif)
                     </label>
                     <input
-                      type="text"
-                      placeholder="+62 8..."
+                      type="tel"
+                      placeholder="08xxxxxxxxxx"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-[#0d1117] border border-white/10 focus:border-orange-500/50 outline-none rounded-xl px-4 py-3 text-sm transition-all"
+                      onChange={(e) => {
+
+                        let value = e.target.value.replace(/\D/g, '');
+
+                        if (value.length >= 2 && !value.startsWith('08')) {
+                          return;
+                        }
+
+                        if (value.length > 13) {
+                          value = value.slice(0, 13);
+                        }
+                        setErrors((prev) => ({ ...prev, noKontak: undefined }));
+                        setPhone(value);
+                      }}
+                      className={`w-full bg-[#0d1117] border outline-none rounded-xl px-4 py-3 text-sm transition-all ${errors.noKontak ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-orange-500/50'} `}
                     />
+
+
+                    {errors.noKontak && (
+                      <p className="text-red-400 text-[11px] mt-2 px-1">
+                        {errors.noKontak}
+                      </p>
+                    )}
+
+
                   </div>
 
                   {/* ADDRESS */}
@@ -229,9 +316,25 @@ export default function FinalStepPage() {
                       placeholder="Masukkan detail alamat tempat tinggal saat ini..."
                       rows={3}
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full bg-[#0d1117] border border-white/10 focus:border-orange-500/50 outline-none rounded-xl px-4 py-3 text-sm transition-all resize-none"
+
+                      onChange={(e) => {
+
+                        setErrors((prev) => ({
+                          ...prev,
+                          alamat: undefined
+                        }));
+
+                        setAddress(e.target.value);
+                      }}
+                      className={`w-full bg-[#0d1117] border outline-none rounded-xl px-4 py-3 text-sm transition-all resize-none
+
+                      ${errors.alamat
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-white/10 focus:border-orange-500/50'
+                        }
+                      `}
                     />
+                    {errors.alamat && (<p className="text-red-400 text-[11px] mt-2 px-1"> {errors.alamat} </p>)}
                   </div>
 
                 </div>

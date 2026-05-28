@@ -24,6 +24,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
     Route::get('/dahsboard', [AuthController::class, 'dashboard']);
 
+    Route::get('/my-kendaraan', [KendaraanController::class, 'myVehicle']);
     Route::apiResource('kendaraan', KendaraanController::class);
 
     Route::apiResource('booking', BookingController::class);
@@ -34,16 +35,16 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::get('/active-work-order', [WorkOrderController::class, 'active']);
 });
 
-Route::middleware(['auth:sanctum','role:admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/user', function (Request $request) {
-            return response()->json($request->user());
-        });
+        return response()->json($request->user());
+    });
 
     Route::apiResource('kelola-booking', KelolaBookingController::class);
     Route::apiResource('kelola-work-order', kelolaWorkOrderController::class);
     Route::apiResource('mekanik', MekanikController::class);
 });
-
-

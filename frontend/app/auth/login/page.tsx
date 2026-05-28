@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import AuthPopup from '../../components/auth_popup/Auth_popup';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +11,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [popupType, setPopupType] =
+    useState<'success' | 'error'>('success');
+
+  const [popupTitle, setPopupTitle] =
+    useState('');
+
+  const [popupMessage, setPopupMessage] =
+    useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +38,17 @@ export default function LoginPage() {
       console.log("LOGIN RESPONSE:", data);
 
       if (!res.ok) {
-        setErrorMessage(data.debug || data.message || 'Terjadi kesalahan');
-        setShowErrorModal(true);
-        return;
+        setPopupType('error');
+
+        setPopupTitle('Login Gagal');
+
+        setPopupMessage(
+          data.debug ||
+          data.message ||
+          'Email atau password salah.'
+        );
+
+        setShowPopup(true);
       }
 
       localStorage.setItem('token', data.token);
@@ -38,16 +57,44 @@ export default function LoginPage() {
       document.cookie = `role=${data.role}; path=/`;
 
       if (data.role === "admin") {
-        router.push("/Admin/admin-dashboard");
+
+        setPopupType('success');
+
+        setPopupTitle('Login Berhasil');
+
+        setPopupMessage(
+          'Selamat datang kembali Admin PASBER.'
+        );
+
+        setShowPopup(true);
+
+        setTimeout(() => {
+          router.push("/Admin/admin-dashboard");
+        }, 1800);
+
         return;
       }
 
       // CUSTOMER
-      if (data.user.is_profile_complete) {
-        router.push("/User/dashboard");
-      } else {
-        router.push("/onboarding");
-      }
+      setPopupType('success');
+
+      setPopupTitle('Login Berhasil');
+
+      setPopupMessage(
+        'Selamat datang kembali di PASBER.'
+      );
+
+      setShowPopup(true);
+
+      setTimeout(() => {
+
+        if (data.user.is_profile_complete) {
+          router.push("/User/dashboard");
+        } else {
+          router.push("/onboarding");
+        }
+
+      }, 1800);
 
     } catch (error) {
       console.log("ERROR:", error);
@@ -263,6 +310,13 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+      <AuthPopup
+        open={showPopup}
+        type={popupType}
+        title={popupTitle}
+        message={popupMessage}
+        onClose={() => setShowPopup(false)}
+      />
     </div>
   );
 }
