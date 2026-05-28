@@ -61,6 +61,7 @@ export default function DashboardPage() {
 
 
   const progressSteps = [
+    'pending',
     'approved',
     'assigned',
     'running',
@@ -71,7 +72,7 @@ export default function DashboardPage() {
 
   const currentWorkOrder = activeWO[currentWO] || activeWO[0];
 
-  const activeServiceCount = activeWO.filter( (wo) => wo.statusWO !== 'done' ).length;
+  const activeServiceCount = activeWO.filter( (wo) => wo.statusWO !== 'done' && wo.statusWO !== 'pending' ).length;
 
   const stats = [
     {
