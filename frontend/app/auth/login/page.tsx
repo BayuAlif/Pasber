@@ -22,100 +22,85 @@ export default function LoginPage() {
   const [popupMessage, setPopupMessage] =
     useState('');
 
-
   const handleLogin = async (e: React.FormEvent) => {
-
     e.preventDefault();
 
     try {
-
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      const res = await fetch('http://127.0.0.1:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await res.json();
 
+      console.log("STATUS:", res.status);
+      console.log("LOGIN RESPONSE:", data);
+
       if (!res.ok) {
+        setPopupType('error');
 
-        setPopupType("error");
-
-        setPopupTitle("Login Gagal");
+        setPopupTitle('Login Gagal');
 
         setPopupMessage(
-          data.message || "Email atau password salah."
+          data.debug ||
+          data.message ||
+          'Email atau password salah.'
+        );
+
+        setShowPopup(true);
+      }
+
+      localStorage.setItem('token', data.token);
+
+      document.cookie = `token=${data.token}; path=/`;
+      document.cookie = `role=${data.role}; path=/`;
+
+      if (data.role === "admin") {
+
+        setPopupType('success');
+
+        setPopupTitle('Login Berhasil');
+
+        setPopupMessage(
+          'Selamat datang kembali Admin PASBER.'
         );
 
         setShowPopup(true);
 
+        setTimeout(() => {
+          router.push("/Admin/admin-dashboard");
+        }, 1800);
+
         return;
       }
 
+      // CUSTOMER
+      setPopupType('success');
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("is_profile_complete", data.user.is_profile_complete);
-
-      document.cookie = `token = ${data.token}; path =/`;
-      document.cookie = `role=${data.role}; path=/`;
-
-      setPopupType("success");
-      if (data.role === "admin") { router.push("/Admin/admin-dashboard"); return; }
-      setPopupTitle("Login Berhasil");
+      setPopupTitle('Login Berhasil');
 
       setPopupMessage(
-        "Selamat datang kembali di PASBER."
+        'Selamat datang kembali di PASBER.'
       );
 
       setShowPopup(true);
+
+      setTimeout(() => {
+
+        if (data.user.is_profile_complete) {
+          router.push("/User/dashboard");
+        } else {
+          router.push("/onboarding");
+        }
+
+      }, 1800);
 
     } catch (error) {
-
-      setPopupType("error");
-
-      setPopupTitle("Server Error");
-
-      setPopupMessage(
-        "Terjadi kesalahan pada server."
-      );
-
-      setShowPopup(true);
+      console.log("ERROR:", error);
+      setShowErrorModal(true);
     }
   };
-
-
-
-  const handleContinue = () => {
-
-    setShowPopup(false);
-
-    const isProfileComplete =
-      localStorage.getItem("is_profile_complete");
-
-    if (isProfileComplete === "1") {
-
-      router.push("/User/dashboard");
-
-    } else {
-
-      router.push("/onboarding");
-    }
-  };
-
-
-
-
-
-
-
 
   return (
     <div className="min-h-screen w-full flex bg-[#0d1117] text-white font-sans overflow-hidden">
@@ -331,7 +316,6 @@ export default function LoginPage() {
         title={popupTitle}
         message={popupMessage}
         onClose={() => setShowPopup(false)}
-        onContinue={handleContinue}
       />
     </div>
   );

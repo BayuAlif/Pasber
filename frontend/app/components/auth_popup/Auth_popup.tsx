@@ -1,12 +1,11 @@
 'use client';
 
-type AuthPopupProps = {
+type Props = {
   open: boolean;
   type: 'success' | 'error';
   title: string;
   message: string;
   onClose: () => void;
-  onContinue?: () => void;
 };
 
 export default function AuthPopup({
@@ -15,8 +14,7 @@ export default function AuthPopup({
   title,
   message,
   onClose,
-  onContinue
-}: AuthPopupProps) {
+}: Props) {
 
   if (!open) return null;
 
@@ -110,26 +108,19 @@ export default function AuthPopup({
           </p>
 
           {/* Button */}
-
           <button
-            onClick={
-              success
-                ? onContinue
-                : onClose
-            }
+            onClick={onClose}
             className={`
-            w-full rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all duration-300 active:scale-[0.98]
+              w-full rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all duration-300 active:scale-[0.98]
 
-            ${success
-                        ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/30'
-                        : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30'
-                      }
-          `}
-                  >
+              ${success
+                ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/30'
+                : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30'
+              }
+            `}
+          >
             {success ? 'Lanjutkan' : 'Coba Lagi'}
           </button>
-
-
 
         </div>
       </div>
