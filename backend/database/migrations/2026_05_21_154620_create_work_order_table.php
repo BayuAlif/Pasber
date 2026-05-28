@@ -27,13 +27,14 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             $table->enum('statusWO', [
+                'pending', //
                 'approved',
                 'assigned',
                 'running',
                 'qc',
                 'done',
                 'paid'
-            ])->default('approved');
+            ])->default('pending'); //
 
             $table->integer('estimasiWaktu')->nullable();
 
