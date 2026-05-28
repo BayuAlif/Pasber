@@ -703,97 +703,110 @@ export default function KelolaJadwalPage() {
                 </thead>
 
                 <tbody>
+                  {paginated.length === 0 ? (
 
-                  {paginated.map((w, i) => (
-
-                    <tr
-                      key={w.id}
-                      className={`border-b border-[#1e2230] hover:bg-[#1a1d28] transition-colors ${i === paginated.length - 1
-                        ? 'border-b-0'
-                        : ''
-                        }`}
-                    >
-
-                      {/* ID */}
-                      <td className="px-5 py-4">
-
-                        <span className="text-[11px] font-mono font-bold text-orange-400">
-
-                          WO-
-                          {w.booking?.bengkel?.nama
-                            ?.substring(0, 3)
-                            .toUpperCase()
-                          }
-                          -
-                          {String(i + 1).padStart(3, '0')}
-
-                        </span>
-
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-10 text-center text-sm text-[#6b7280]"
+                      >
+                        Belum ada data work order
                       </td>
 
-                      {/* Customer */}
-                      <td className="px-5 py-4">
+                    </tr>
 
-                        <p className="text-[12px] font-bold text-white">
-                          {w.booking?.user?.name || '-'}
-                        </p>
+                  ) : 
 
-                        <p className="text-[9px] text-[#4b5563] font-bold tracking-wider mt-0.5">
-                          {w.booking?.user?.name || '-'}
-                        </p>
+                    paginated.map((w, i) => (
 
-                      </td>
+                      <tr
+                        key={w.id}
+                        className={`border-b border-[#1e2230] hover:bg-[#1a1d28] transition-colors ${i === paginated.length - 1
+                          ? 'border-b-0'
+                          : ''
+                          }`}
+                      >
 
-                      {/* Vehicle */}
-                      {/* Vehicle */}
-                      <td className="px-5 py-4">
+                        {/* ID */}
+                        <td className="px-5 py-4">
 
-                        <p className="text-[12px] font-semibold text-white">
-                          {w.booking?.kendaraan?.merek} - {w.booking?.kendaraan?.model}
-                        </p>
+                          <span className="text-[11px] font-mono font-bold text-orange-400">
 
-                        <p className="text-[10px] font-mono text-[#6b7280] mt-0.5">
-                          {w.booking?.kendaraan?.nomorPolisi}
-                        </p>
+                            WO-
+                            {w.booking?.bengkel?.nama
+                              ?.substring(0, 3)
+                              .toUpperCase()
+                            }
+                            -
+                            {String(i + 1).padStart(3, '0')}
 
-                      </td>
+                          </span>
 
-                      {/* Complaint */}
-                      <td className="px-5 py-4 max-w-[150px]">
+                        </td>
 
-                        <p className="text-[11px] text-[#9ca3af] truncate">
-                          {w.booking?.Keluhan}
-                        </p>
+                        {/* Customer */}
+                        <td className="px-5 py-4">
 
-                      </td>
-
-                      {/* Schedule */}
-                      <td className="px-5 py-4">
-
-                        <p className="text-[11px] font-semibold text-white">
-                          {w.booking?.tanggalBooking}
-                        </p>
-
-                        <div className="flex items-center gap-1 mt-0.5">
-
-                          <Clock
-                            size={9}
-                            className="text-[#4b5563]"
-                          />
-
-                          <p className="text-[10px] text-[#4b5563]">
-                            Service Booking
+                          <p className="text-[12px] font-bold text-white">
+                            {w.booking?.user?.name || '-'}
                           </p>
 
-                        </div>
+                          <p className="text-[9px] text-[#4b5563] font-bold tracking-wider mt-0.5">
+                            {w.booking?.user?.name || '-'}
+                          </p>
 
-                      </td>
+                        </td>
 
-                      {/* Status */}
-                      <td className="px-5 py-4">
+                        {/* Vehicle */}
+                        {/* Vehicle */}
+                        <td className="px-5 py-4">
 
-                        <span
-                          className={`
+                          <p className="text-[12px] font-semibold text-white">
+                            {w.booking?.kendaraan?.merek} - {w.booking?.kendaraan?.model}
+                          </p>
+
+                          <p className="text-[10px] font-mono text-[#6b7280] mt-0.5">
+                            {w.booking?.kendaraan?.nomorPolisi}
+                          </p>
+
+                        </td>
+
+                        {/* Complaint */}
+                        <td className="px-5 py-4 max-w-[150px]">
+
+                          <p className="text-[11px] text-[#9ca3af] truncate">
+                            {w.booking?.Keluhan}
+                          </p>
+
+                        </td>
+
+                        {/* Schedule */}
+                        <td className="px-5 py-4">
+
+                          <p className="text-[11px] font-semibold text-white">
+                            {w.booking?.tanggalBooking}
+                          </p>
+
+                          <div className="flex items-center gap-1 mt-0.5">
+
+                            <Clock
+                              size={9}
+                              className="text-[#4b5563]"
+                            />
+
+                            <p className="text-[10px] text-[#4b5563]">
+                              Service Booking
+                            </p>
+
+                          </div>
+
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-5 py-4">
+
+                          <span
+                            className={`
                     px-2.5 py-1
                     rounded-md
                     text-[10px]
@@ -802,86 +815,86 @@ export default function KelolaJadwalPage() {
                     tracking-wider
                     booking?.${STATUS_STYLE[w.statusWO as WOStatus]}
                   `}
-                        >
-                          {w.statusWO}
-                        </span>
+                          >
+                            {w.statusWO}
+                          </span>
 
-                      </td>
+                        </td>
 
-                      {/* Actions */}
-                      <td className="px-5 py-4">
+                        {/* Actions */}
+                        <td className="px-5 py-4">
 
-                        <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5">
 
-                          {/* APPROVED */}
-                          {w.statusWO === 'approved' && (
+                            {/* APPROVED */}
+                            {w.statusWO === 'approved' && (
 
-                            <button
-                              onClick={() => {
-                                setSelectedWO(w);
-                                setView('assign');
-                              }}
-                              className="px-4 py-2 bg-orange-500 rounded-md text-white text-[11px] font-bold"
-                            >
-                              ASSIGN
-                            </button>
-
-                          )}
-
-                          {w.statusWO !== 'approved' &&
-                            w.statusWO !== 'paid' && (
-
-                              <select
-                                defaultValue=""
-                                onChange={(e) =>
-                                  handleUpdateStatus(
-                                    w.id,
-                                    e.target.value as WOStatus
-                                  )
-                                }
-                                className="bg-[#1a1d28] border border-[#2a2f3e] rounded-lg px-2 py-1.5 text-[10px] text-white outline-none"
+                              <button
+                                onClick={() => {
+                                  setSelectedWO(w);
+                                  setView('assign');
+                                }}
+                                className="px-4 py-2 bg-orange-500 rounded-md text-white text-[11px] font-bold"
                               >
-
-                                <option value="">
-                                  Update
-                                </option>
-
-                                {getNextStatuses(
-                                  w.statusWO as WOStatus
-                                ).map(status => (
-
-                                  <option
-                                    key={status}
-                                    value={status}
-                                  >
-                                    {status.toUpperCase()}
-                                  </option>
-
-                                ))}
-
-                              </select>
+                                ASSIGN
+                              </button>
 
                             )}
 
-                          {/* DETAIL */}
-                          <button
-                            onClick={() => openDetail(w)}
-                            title="View Detail"
+                            {w.statusWO !== 'approved' &&
+                              w.statusWO !== 'paid' && (
 
-                            className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
-                          >
+                                <select
+                                  defaultValue=""
+                                  onChange={(e) =>
+                                    handleUpdateStatus(
+                                      w.id,
+                                      e.target.value as WOStatus
+                                    )
+                                  }
+                                  className="bg-[#1a1d28] border border-[#2a2f3e] rounded-lg px-2 py-1.5 text-[10px] text-white outline-none"
+                                >
 
-                            <Eye size={13} />
+                                  <option value="">
+                                    Update
+                                  </option>
 
-                          </button>
+                                  {getNextStatuses(
+                                    w.statusWO as WOStatus
+                                  ).map(status => (
 
-                        </div>
+                                    <option
+                                      key={status}
+                                      value={status}
+                                    >
+                                      {status.toUpperCase()}
+                                    </option>
 
-                      </td>
+                                  ))}
 
-                    </tr>
+                                </select>
 
-                  ))}
+                              )}
+
+                            {/* DETAIL */}
+                            <button
+                              onClick={() => openDetail(w)}
+                              title="View Detail"
+
+                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
+                            >
+
+                              <Eye size={13} />
+
+                            </button>
+
+                          </div>
+
+                        </td>
+
+                      </tr>
+
+                    ))}
 
                 </tbody>
 
