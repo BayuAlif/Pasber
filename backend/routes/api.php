@@ -29,6 +29,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
 
     Route::apiResource('booking', BookingController::class);
     Route::get('/bengkel', [BengkelController::class, 'index']);
+    Route::get('/full-dates', [BookingController::class, 'fullDates']);
 
     Route::apiResource('work-order', WorkOrderController::class);
 
