@@ -46,9 +46,9 @@ class BookingController extends Controller
         $bookings = Booking::where('bengkel_id', $request->bengkel_id)
             ->whereYear('jadwalService', $request->tahun)
             ->whereMonth('jadwalService', $request->bulan)
-            ->whereHas('workOut', function ($q) {
-                $q->where('statusWO', 'paid');
-            })
+            // ->whereHas('workOut', function ($q) {
+            //     $q->where('statusWO', '!=' , 'paid');
+            // }) // todo
             ->get()
             ->groupBy(function ($booking) {
                 return \Carbon\Carbon::parse(
