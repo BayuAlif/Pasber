@@ -44,15 +44,13 @@ class BookingController extends Controller
         $MAX_BOOKING = 5;
 
         $bookings = Booking::where('bengkel_id', $request->bengkel_id)
-
             ->whereYear('jadwalService', $request->tahun)
-
             ->whereMonth('jadwalService', $request->bulan)
-
+            ->whereHas('workOut', function ($q) {
+                $q->where('statusWO', 'paid');
+            })
             ->get()
-
             ->groupBy(function ($booking) {
-
                 return \Carbon\Carbon::parse(
                     $booking->jadwalService
                 )->format('Y-m-d');

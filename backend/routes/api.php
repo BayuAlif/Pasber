@@ -10,8 +10,7 @@ use App\Http\Controllers\WorkOrderController;
 use App\Http\Controllers\KelolaBookingController;
 use App\Http\Controllers\MekanikController;
 use App\Http\Controllers\kelolaWorkOrderController;
-
-
+use App\Http\Controllers\MaterialController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -48,4 +47,5 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('kelola-booking', KelolaBookingController::class);
     Route::apiResource('kelola-work-order', kelolaWorkOrderController::class);
     Route::apiResource('mekanik', MekanikController::class);
+    Route::apiResource('material', MaterialController::class);
 });
