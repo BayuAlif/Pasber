@@ -110,13 +110,6 @@ export default function LoginPage() {
     }
   };
 
-
-
-
-
-
-
-
   return (
     <div className="min-h-screen w-full flex bg-[#0d1117] text-white font-sans overflow-hidden">
 
@@ -219,7 +212,6 @@ export default function LoginPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Kata Sandi</label>
-                  <a href="#" className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-widest">Lupa?</a>
                 </div>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
@@ -263,12 +255,7 @@ export default function LoginPage() {
                   Daftar Sekarang
                 </Link>
               </p>
-              <Link
-                href="/auth/forgot-password"
-                className="text-[11px] text-gray-600 hover:text-orange-400 uppercase font-bold tracking-widest transition-colors"
-              >
-                Forgot Password?
-              </Link>
+              
             </div>
 
             {/* Mobile contact info */}
@@ -297,7 +284,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-8 sm:mt-10 lg:mt-20 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+            <div className="mt-2 sm:mt-3 lg:mt-7 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
               <span>© Pasti Beres.</span>
             </div>
           </div>
