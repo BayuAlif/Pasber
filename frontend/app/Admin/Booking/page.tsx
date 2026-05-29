@@ -281,10 +281,6 @@ function KelolaBookingView({
                 className="bg-[#0f1117] border border-[#1e2230] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer"
               />
             </div>
-
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap">
-              <Filter size={13} /> Apply Filters
-            </button>
           </div>
         </div>
 
