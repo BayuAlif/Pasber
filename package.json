@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "dev": "concurrently \"cd backend && php artisan serve\" \"cd frontend && npm run dev\"",
+    "setup:backend": "cd backend && composer install && copy .env.example .env && php artisan key:generate && php artisan storage:link && php artisan migrate",
+    "setup:frontend": "cd frontend && npm install",
+    "setup": "npm run setup:backend && npm run setup:frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
