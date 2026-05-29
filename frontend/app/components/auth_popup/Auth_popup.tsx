@@ -6,6 +6,8 @@ type Props = {
   title: string;
   message: string;
   onClose: () => void;
+  onContinue: () => void;
+
 };
 
 export default function AuthPopup({
@@ -14,6 +16,7 @@ export default function AuthPopup({
   title,
   message,
   onClose,
+  onContinue,
 }: Props) {
 
   if (!open) return null;
@@ -109,16 +112,16 @@ export default function AuthPopup({
 
           {/* Button */}
           <button
-            onClick={onClose}
+            onClick={success ? onContinue : onClose}
             className={`
               w-full rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all duration-300 active:scale-[0.98]
 
               ${success
-                ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/30'
-                : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30'
-              }
+                          ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/30'
+                          : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30'
+                        }
             `}
-          >
+                    >
             {success ? 'Lanjutkan' : 'Coba Lagi'}
           </button>
 
