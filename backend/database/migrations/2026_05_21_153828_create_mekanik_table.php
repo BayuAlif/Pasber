@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('mekanik', function (Blueprint $table) {
             $table->id();
+            $table->string('kodeMekanik')->nullable();
 
             $table->foreignId('bengkel_id')
                 ->constrained('bengkel')
@@ -21,6 +22,11 @@ return new class extends Migration
             $table->string('nama');
             $table->string('email')->unique();
 
+            $table->string('telepon')->nullable();
+
+            $table->string('spesialisasi')->nullable();
+
+            $table->string('foto')->nullable();
             $table->enum('status', [
                 'available',
                 'unavailable',

@@ -136,6 +136,23 @@ export default function RegisterPage() {
     }
   };
 
+  const handleContinue = () => {
+
+    setShowPopup(false);
+
+    const isProfileComplete =
+      localStorage.getItem("is_profile_complete");
+
+    if (isProfileComplete === "1") {
+
+      router.push("/User/dashboard");
+
+    } else {
+
+      router.push("/onboarding");
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#0d1117] text-white font-sans flex flex-col relative overflow-hidden">
 
@@ -385,6 +402,7 @@ export default function RegisterPage() {
         title={popupTitle}
         message={popupMessage}
         onClose={() => setShowPopup(false)}
+        onContinue={handleContinue}
       />
     </div>
   );

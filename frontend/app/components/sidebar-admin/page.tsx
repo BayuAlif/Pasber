@@ -23,11 +23,9 @@ const navItems = [
   { label: 'Kelola Booking',             href: '/Admin/Booking',         icon: CalendarCheck   },
   { label: 'Work Order',                 href: '/Admin/jadwal',          icon: CalendarClock   },
   { label: 'Kelola Mekanik',             href: '/Admin/mekanik',         icon: Users           },
-  { label: 'Kelola Customer',            href: '/Admin/customer',        icon: UserCircle      },
   { label: 'Invoice & Pembayaran',       href: '/Admin/pembayaran',      icon: CreditCard      },
   { label: 'Inventory',                  href: '/Admin/inventory',       icon: Package         },
   { label: 'Riwayat & Log',              href: '/Admin/riwayat',         icon: History         },
-  { label: 'Laporan Keuangan',           href: '/Admin/laporan',         icon: BarChart3       },
   { label: 'Pengaturan Sistem',          href: '/Admin/pengaturan',      icon: Settings        },
 ];
 

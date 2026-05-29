@@ -1,29 +1,38 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Users,
   Search, Bell, Plus, Pencil, Trash2, RefreshCw, X, Upload,
   AlertTriangle, Info, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import SidebarAdmin from '../../components/sidebar-admin/page';
+import axios from "axios";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type StatusType = 'READY' | 'BUSY' | 'REST';
+type StatusType = 'available' | 'unavailable';
 type Mekanik = {
   id: number;
-  foto: string;
-  idMekanik: string;
+  foto: string | null;
+  kodeMekanik: string;
   nama: string;
+  email: string;
+  telepon: string;
+  bengkel_id: number;
   spesialisasi: string;
-  noTelp: string;
   status: StatusType;
 };
 
+type Bengkel = {
+  id: number;
+  nama: string;
+};
+
+
+
 const STATUS_STYLE: Record<StatusType, string> = {
-  READY: 'bg-green-500/10 text-green-400 border border-green-500/20',
-  BUSY: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
-  REST: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+  available: 'bg-green-500/10 text-green-400 border border-green-500/20',
+  unavailable: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
 };
 
 const SPESIALISASI_OPTIONS = [
@@ -41,6 +50,7 @@ export default function KelolaMekanikPage() {
   const [filterStatus, setFilterStatus] = useState<'Semua' | StatusType>('Semua');
   const [page, setPage] = useState(1);
 
+
   // modals
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState<Mekanik | null>(null);
@@ -48,77 +58,266 @@ export default function KelolaMekanikPage() {
   const [showDelete, setShowDelete] = useState<Mekanik | null>(null);
 
   // form state
-  const emptyForm = { foto: '', namaLengkap: '', idMekanik: '', noTelp: '', spesialisasi: 'Engine Specialist', status: 'READY' as StatusType };
+  const emptyForm = {
+    foto: '',
+    nama: '',
+    email: '',
+    telepon: '',
+    spesialisasi: ''
+  };
+
+  const [selectedFile, setSelectedFile] =
+    useState<File | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
-  const [newStatus, setNewStatus] = useState<StatusType>('READY');
+  const [newStatus, setNewStatus] = useState<StatusType>('available');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // ── Filter & Pagination ────────────────────────────────────────────────
   const filtered = mekaniks.filter(m => {
     const matchSearch = m.nama.toLowerCase().includes(search.toLowerCase()) ||
-      m.idMekanik.toLowerCase().includes(search.toLowerCase());
+      m.kodeMekanik.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'Semua' || m.status === filterStatus;
     return matchSearch && matchStatus;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // ── CRUD handlers ──────────────────────────────────────────────────────
-  const handleAddSubmit = () => {
-    if (!form.namaLengkap || !form.idMekanik || !form.noTelp) return;
-    const newMek: Mekanik = {
-      id: Date.now(),
-      foto: form.foto || '',
-      idMekanik: form.idMekanik,
-      nama: form.namaLengkap,
-      spesialisasi: form.spesialisasi,
-      noTelp: form.noTelp,
-      status: form.status,
-    };
-    setMekaniks(prev => [...prev, newMek]);
-    setForm({ ...emptyForm });
-    setShowAdd(false);
-  };
 
-  const handleEditSubmit = () => {
-    if (!showEdit) return;
-    setMekaniks(prev => prev.map(m =>
-      m.id === showEdit.id
-        ? {
-          ...m, nama: form.namaLengkap, idMekanik: form.idMekanik,
-          noTelp: form.noTelp, spesialisasi: form.spesialisasi, foto: form.foto || m.foto
+
+  const fetchMekanik = async () => {
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const res = await axios.get(
+        "http://127.0.0.1:8000/api/mekanik",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+          }
         }
-        : m
-    ));
-    setShowEdit(null);
+      );
+
+      setMekaniks(res.data.data);
+
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleStatusUpdate = () => {
+
+
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchMekanik();
+    };
+
+    loadData();
+  }, []);
+  // ── CRUD handlers ──────────────────────────────────────────────────────
+  const handleAddSubmit = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const formData = new FormData();
+
+      formData.append("nama", form.nama);
+      formData.append("email", form.email);
+      formData.append("telepon", form.telepon);
+      formData.append("spesialisasi", form.spesialisasi);
+
+
+      if (selectedFile) {
+        formData.append("foto", selectedFile);
+      }
+
+      await axios.post(
+        "http://127.0.0.1:8000/api/mekanik",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+            Accept: "application/json"
+          }
+        }
+      );
+
+      if (selectedFile) {
+        formData.append("foto", selectedFile);
+      }
+
+      if (form.nama.trim().length < 3) {
+        alert("Nama minimal 3 karakter");
+        return;
+      }
+
+      if (!emailRegex.test(form.email)) {
+        alert("Format email tidak valid");
+        return;
+      }
+
+      if (!phoneRegex.test(form.telepon)) {
+        alert("Nomor telepon tidak valid");
+        return;
+      }
+
+      fetchMekanik();
+
+      setShowAdd(false);
+      setForm(emptyForm);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    if (!showEdit) return;
+
+    try {
+
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+
+      formData.append("_method", "PUT");
+      formData.append("nama", form.nama);
+      formData.append("email", form.email);
+      formData.append("telepon", form.telepon);
+      formData.append("spesialisasi", form.spesialisasi);
+      formData.append("status", showEdit.status);
+
+      if (selectedFile) {
+        formData.append("foto", selectedFile);
+      }
+      await axios.post(
+        `http://127.0.0.1:8000/api/mekanik/${showEdit.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
+
+      if (form.nama.trim().length < 3) {
+        alert("Nama minimal 3 karakter");
+        return;
+      }
+
+      if (!emailRegex.test(form.email)) {
+        alert("Format email tidak valid");
+        return;
+      }
+
+      if (!phoneRegex.test(form.telepon)) {
+        alert("Nomor telepon tidak valid");
+        return;
+      }
+
+      fetchMekanik();
+
+      setShowEdit(null);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleStatusUpdate = async () => {
     if (!showStatus) return;
-    setMekaniks(prev => prev.map(m => m.id === showStatus.id ? { ...m, status: newStatus } : m));
-    setShowStatus(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://127.0.0.1:8000/api/mekanik/${showStatus.id}`,
+        {
+          nama: showStatus.nama,
+          email: showStatus.email,
+          telepon: showStatus.telepon,
+          spesialisasi: showStatus.spesialisasi,
+          status: newStatus
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      await fetchMekanik();
+
+      setShowStatus(null);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!showDelete) return;
-    setMekaniks(prev => prev.filter(m => m.id !== showDelete.id));
-    setShowDelete(null);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(
+        `http://127.0.0.1:8000/api/mekanik/${showDelete.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      fetchMekanik();
+
+      setShowDelete(null);
+
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const openEdit = (m: Mekanik) => {
-    setForm({ foto: m.foto, namaLengkap: m.nama, idMekanik: m.idMekanik, noTelp: m.noTelp, spesialisasi: m.spesialisasi, status: m.status });
+    setForm({
+      foto: m.foto ?? '',
+      nama: m.nama,
+      email: m.email,
+      telepon: m.telepon,
+      spesialisasi: m.spesialisasi
+    });
     setShowEdit(m);
   };
 
   const openStatus = (m: Mekanik) => { setNewStatus(m.status); setShowStatus(m); };
 
-  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFotoChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
+
+    setSelectedFile(file);
+    console.log(selectedFile);
+
     const reader = new FileReader();
-    reader.onload = ev => setForm(f => ({ ...f, foto: ev.target?.result as string }));
+
+    reader.onload = (ev) => {
+      setForm(f => ({
+        ...f,
+        foto: ev.target?.result as string
+      }));
+    };
+
     reader.readAsDataURL(file);
   };
+
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex =
+    /^(\+62|62|08)[0-9]{8,13}$/;
 
   // ── Shared input style ─────────────────────────────────────────────────
   const inputCls = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[13px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
@@ -171,7 +370,7 @@ export default function KelolaMekanikPage() {
                 setPage(1);
               }}
                 className="bg-[#13161e] border border-[#1e2230] rounded-lg px-3 py-2.5 text-[13px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer">
-                {['Semua', 'READY', 'BUSY', 'REST'].map(s => <option key={s}>{s}</option>)}
+                {['Semua', 'available', 'unavailable'].map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
 
@@ -186,7 +385,7 @@ export default function KelolaMekanikPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#1e2230]">
-                  {['Foto Profile', 'ID Mekanik', 'Nama', 'Spesialisasi', 'No. Telp', 'Status', 'Aksi'].map(h => (
+                  {['ID Mekanik', 'Nama', 'Spesialisasi', 'No. Telp', 'Status', 'Aksi'].map(h => (
                     <th key={h} className="px-5 py-3.5 text-left text-[10px] font-bold text-[#4b5563] uppercase tracking-[1.5px]">{h}</th>
                   ))}
                 </tr>
@@ -202,18 +401,9 @@ export default function KelolaMekanikPage() {
                   </tr>
                 ) : paginated.map((m, i) => (
                   <tr key={m.id} className={`border-b border-[#1e2230] hover:bg-[#1a1d28] transition-colors ${i === paginated.length - 1 ? 'border-b-0' : ''}`}>
-                    {/* Foto */}
-                    <td className="px-5 py-3.5">
-                      <div className="w-9 h-9 rounded-lg bg-orange-500/10 border border-orange-500/20 overflow-hidden flex items-center justify-center flex-shrink-0">
-                        {m.foto
-                          ? <img src={m.foto} alt={m.nama} className="w-full h-full object-cover" />
-                          : <Users size={15} className="text-orange-400" />
-                        }
-                      </div>
-                    </td>
                     {/* ID */}
                     <td className="px-5 py-3.5">
-                      <span className="text-[12px] font-mono text-[#9ca3af]">{m.idMekanik}</span>
+                      <span className="text-[12px] font-mono text-[#9ca3af]">{m.kodeMekanik}</span>
                     </td>
                     {/* Nama */}
                     <td className="px-5 py-3.5">
@@ -225,7 +415,7 @@ export default function KelolaMekanikPage() {
                     </td>
                     {/* No. Telp */}
                     <td className="px-5 py-3.5">
-                      <span className="text-[12px] text-[#9ca3af]">{m.noTelp}</span>
+                      <span className="text-[12px] text-[#9ca3af]">{m.telepon}</span>
                     </td>
                     {/* Status */}
                     <td className="px-5 py-3.5">
@@ -322,37 +512,57 @@ export default function KelolaMekanikPage() {
                 <div>
                   <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Nama Lengkap</p>
                   <input className={inputCls} placeholder="Contoh: Budi Santoso"
-                    value={form.namaLengkap} onChange={e => setForm(f => ({ ...f, namaLengkap: e.target.value }))} />
+                    value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">
+                    Email
+                  </p>
+
+                  <input
+                    type="email"
+                    className={inputCls}
+                    placeholder="mekanik@email.com"
+                    value={form.email}
+                    onChange={e =>
+                      setForm(f => ({
+                        ...f,
+                        email: e.target.value
+                      }))
+                    }
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">ID Mekanik</p>
-                    <input className={inputCls} placeholder="MEC-2024-XXX"
-                      value={form.idMekanik} onChange={e => setForm(f => ({ ...f, idMekanik: e.target.value }))} />
-                  </div>
-                  <div>
                     <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">No. Telepon</p>
                     <input className={inputCls} placeholder="+62 8..."
-                      value={form.noTelp} onChange={e => setForm(f => ({ ...f, noTelp: e.target.value }))} />
+                      value={form.telepon} onChange={e => setForm(f => ({ ...f, telepon: e.target.value }))} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Spesialisasi</p>
+                    <select
+                      className={selectCls}
+                      value={form.spesialisasi}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          spesialisasi: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Pilih Spesialisasi</option>
+
+                      {SPESIALISASI_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div>
-                <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Spesialisasi</p>
-                <select className={selectCls} value={form.spesialisasi} onChange={e => setForm(f => ({ ...f, spesialisasi: e.target.value }))}>
-                  {SPESIALISASI_OPTIONS.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Status Awal</p>
-                <select className={selectCls} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as StatusType }))}>
-                  {(['READY', 'BUSY', 'REST'] as StatusType[]).map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
 
             <div className="flex items-center justify-end gap-3">
               <button onClick={() => setShowAdd(false)} className="px-5 py-2.5 text-[12px] font-bold text-[#6b7280] hover:text-white transition-colors">Batal</button>
@@ -397,28 +607,55 @@ export default function KelolaMekanikPage() {
               <div className="flex-1 space-y-3">
                 <div>
                   <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Nama Lengkap</p>
-                  <input className={inputCls} value={form.namaLengkap} onChange={e => setForm(f => ({ ...f, namaLengkap: e.target.value }))} />
+                  <input className={inputCls} value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">
+                    Email
+                  </p>
+
+                  <input
+                    type="email"
+                    className={inputCls}
+                    placeholder="mekanik@email.com"
+                    value={form.email}
+                    onChange={e =>
+                      setForm(f => ({
+                        ...f,
+                        email: e.target.value
+                      }))
+                    }
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">ID Mekanik</p>
-                    <input className={inputCls} value={form.idMekanik} onChange={e => setForm(f => ({ ...f, idMekanik: e.target.value }))} />
+                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">No. Telepon</p>
+                    <input className={inputCls} value={form.telepon} onChange={e => setForm(f => ({ ...f, telepon: e.target.value }))} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">No. Telepon</p>
-                    <input className={inputCls} value={form.noTelp} onChange={e => setForm(f => ({ ...f, noTelp: e.target.value }))} />
+                    <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Spesialisasi</p>
+                    <select
+                      className={selectCls}
+                      value={form.spesialisasi}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          spesialisasi: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Pilih Spesialisasi</option>
+
+                      {SPESIALISASI_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div className="mb-6">
-              <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Spesialisasi</p>
-              <select className={selectCls} value={form.spesialisasi} onChange={e => setForm(f => ({ ...f, spesialisasi: e.target.value }))}>
-                {SPESIALISASI_OPTIONS.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </div>
-
             <div className="flex items-center justify-end gap-3">
               <button onClick={() => setShowEdit(null)} className="px-5 py-2.5 text-[12px] font-bold text-[#6b7280] hover:text-white transition-colors">Batal</button>
               <button onClick={handleEditSubmit}
@@ -444,12 +681,6 @@ export default function KelolaMekanikPage() {
             </div>
 
             <div className="flex items-center gap-3 p-3.5 bg-[#1a1d28] border border-[#2a2f3e] rounded-xl mb-5">
-              <div className="w-10 h-10 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center flex-shrink-0">
-                {showStatus.foto
-                  ? <img src={showStatus.foto} alt={showStatus.nama} className="w-full h-full object-cover rounded-lg" />
-                  : <Users size={18} color="#f97316" />
-                }
-              </div>
               <div>
                 <p className="text-[13px] font-bold text-white">{showStatus.nama}</p>
                 <p className="text-[11px] text-[#4b5563]">{showStatus.spesialisasi}</p>
@@ -459,14 +690,14 @@ export default function KelolaMekanikPage() {
             <div className="mb-4">
               <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-2">Status Kerja Sekarang</p>
               <select className={selectCls} value={newStatus} onChange={e => setNewStatus(e.target.value as StatusType)}>
-                {(['READY', 'BUSY', 'REST'] as StatusType[]).map(s => <option key={s}>{s}</option>)}
+                {(['available', 'unavailable',] as StatusType[]).map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
 
             <div className="flex items-start gap-2.5 p-3.5 bg-[rgba(249,115,22,0.05)] border border-orange-500/15 rounded-xl mb-6">
               <Info size={13} color="#f97316" className="flex-shrink-0 mt-0.5" />
               <p className="text-[11px] text-[#9ca3af] leading-relaxed">
-                Status <strong className="text-white">Busy</strong> dan <strong className="text-white">Rest</strong> akan mencegah sistem otomatis mengalokasikan antrean servis baru ke teknisi ini hingga status diubah kembali menjadi Ready.
+                Status <strong className="text-white">unavailable</strong>  akan mencegah sistem otomatis mengalokasikan antrean servis baru ke teknisi ini hingga status diubah kembali menjadi available.
               </p>
             </div>
 
