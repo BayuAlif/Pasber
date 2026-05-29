@@ -784,7 +784,7 @@ export default function KelolaJadwalPage() {
                         <td className="px-5 py-4">
 
                           <p className="text-[11px] font-semibold text-white">
-                            {w.booking?.tanggalBooking}
+                            {w.booking?.jadwalService}
                           </p>
 
                           <div className="flex items-center gap-1 mt-0.5">
@@ -1328,16 +1328,12 @@ export default function KelolaJadwalPage() {
                         Estimasi
                       </p>
 
-                      <p className="text-[13px] font-semibold text-orange-400">
-
                         <p className="text-[13px] font-semibold text-orange-400">
                           {selectedWO.estimasiWaktu
                             ? `${selectedWO.estimasiWaktu} Menit`
                             : "-"
                           }
                         </p>
-
-                      </p>
 
                     </div>
 
