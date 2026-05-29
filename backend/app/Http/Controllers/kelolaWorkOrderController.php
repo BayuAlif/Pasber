@@ -6,7 +6,7 @@ use App\Models\work_order;
 use App\Models\WorkOrderLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\Nota;
 
 class kelolaWorkOrderController extends Controller
 {
@@ -24,19 +24,19 @@ class kelolaWorkOrderController extends Controller
             'mekanik',
             'logs'
         ])
-        ->where('statusWO', '!=', 'pending')
-        ->whereHas('booking', function ($query) use ($user) {
-            $query->where(
-                'bengkel_id',
-                $user->bengkel_id
-            );
-        })
-        ->latest()
-        ->get();
+            ->where('statusWO', '!=', 'pending')
+            ->whereHas('booking', function ($query) use ($user) {
+                $query->where(
+                    'bengkel_id',
+                    $user->bengkel_id
+                );
+            })
+            ->latest()
+            ->get();
 
-       return response()->json([
-        'data' => $workOrders
-    ]);
+        return response()->json([
+            'data' => $workOrders
+        ]);
     }
 
     /**
@@ -74,7 +74,20 @@ class kelolaWorkOrderController extends Controller
 
             'statusWO' => $request->statusWO
                 ?? $workOrder->statusWO,
+
         ]);
+
+        if ($request->statusWO === 'done') {
+
+            Nota::firstOrCreate(
+                ['WOID' => $workOrder->id],
+                [
+                    'tanggal' => now(),
+                    'totalHarga' => 0,
+                    'status' => 'pending'
+                ]
+            );
+        }
 
         // =========================
         // CREATE LOG

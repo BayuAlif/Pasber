@@ -11,6 +11,9 @@ use App\Http\Controllers\KelolaBookingController;
 use App\Http\Controllers\MekanikController;
 use App\Http\Controllers\kelolaWorkOrderController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\NotaController;
+use App\Http\Controllers\DetailNotaMaterialController;
+use App\Http\Controllers\DetailNotaJasaController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -50,3 +53,23 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::apiResource('material', MaterialController::class);
 });
+
+Route::get('/nota', [NotaController::class, 'index']);
+Route::apiResource(
+    'detail-nota-material',
+    DetailNotaMaterialController::class
+);
+
+Route::apiResource(
+    'detail-nota-jasa',
+    DetailNotaJasaController::class
+);
+
+Route::get(
+    'nota/{id}/calculate-total',
+    [NotaController::class, 'calculateTotal']
+);
+Route::get(
+    '/nota/{id}',
+    [NotaController::class, 'show']
+);

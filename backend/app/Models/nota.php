@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Nota extends Model
+{
+    protected $table = 'nota';
+
+    protected $fillable = [
+        'WOID',
+        'tanggal',
+        'totalHarga',
+        'status'
+    ];
+
+    public function workOrder()
+    {
+        return $this->belongsTo(
+            work_order::class,
+            'WOID'
+        );
+    }
+}

@@ -6,6 +6,7 @@ use App\Models\work_order;
 
 use Illuminate\Http\Request;
 
+
 class WorkOrderController extends Controller
 {
     public function index()
