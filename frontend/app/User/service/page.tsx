@@ -235,27 +235,57 @@ export default function BookingServicePage() {
     return (R * c).toFixed(1);
   };
 
+  const [vehicleLoading, setVehicleLoading] = useState(true);
   const fetchVehicles = async () => {
+
     try {
+
+      setVehicleLoading(true);
+
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/kendaraan`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
+
+      const response = await fetch(
+        `${API_URL}/kendaraan`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+          },
+        }
+      );
+
       const result = await response.json();
-      // console.log(result);
-      const formattedVehicles: Vehicle[] = (result.data || []).map((v: {
-        id: number; merek: string; model: string;
-        nomorPolisi: string; tahun: string; jenisKendaraan: "motor" | "mobil";
-      }) => ({
-        id: v.id.toString(),
-        type: v.jenisKendaraan,
-        brand: v.merek,
-        model: v.model,
-        plate: v.nomorPolisi,
-        year: v.tahun,
-      }));
+
+      const formattedVehicles: Vehicle[] =
+        (result.data || []).map((v: {
+          id: number;
+          merek: string;
+          model: string;
+          nomorPolisi: string;
+          tahun: string;
+          jenisKendaraan: "motor" | "mobil";
+        }) => ({
+
+          id: v.id.toString(),
+          type: v.jenisKendaraan,
+          brand: v.merek,
+          model: v.model,
+          plate: v.nomorPolisi,
+          year: v.tahun,
+
+        }));
+
       setVehicles(formattedVehicles);
-    } catch (error) { console.error(error); }
+
+    } catch (error) {
+
+      console.error(error);
+
+    } finally {
+
+      setVehicleLoading(false);
+
+    }
   };
 
   const fetchBengkels = async () => {
@@ -496,56 +526,141 @@ export default function BookingServicePage() {
 
             {/* Pilih Kendaraan */}
             <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6 flex flex-col">
+
               <div className="flex justify-between items-center mb-5">
-                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">PILIH KENDARAAN</div>
-                <button onClick={openModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-md text-[11px] font-bold text-[#f97316] cursor-pointer">
+                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">
+                  PILIH KENDARAAN
+                </div>
+
+                <button
+                  onClick={openModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-md text-[11px] font-bold text-[#f97316] cursor-pointer"
+                >
                   <Plus size={12} /> Tambah
                 </button>
               </div>
 
-              {vehicles.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-2.5 py-8 text-center">
-                  <div className="p-4 bg-[#1a1d28] rounded-xl"><Car size={28} color="#374151" /></div>
-                  <p className="text-[12px] font-bold text-[#4b5563] tracking-[1px] uppercase">Belum ada kendaraan</p>
-                  <p className="text-[11px] text-[#374151]">Tambahkan kendaraan untuk melanjutkan</p>
+              {vehicleLoading ? (
+
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 py-10">
+
+                  <div className="w-8 h-8 border-2 border-[#2a2f3e] border-t-[#f97316] rounded-full animate-spin" />
+
+                  <p className="text-[11px] text-[#4b5563] tracking-[1px] uppercase">
+                    Memuat Kendaraan...
+                  </p>
+
                 </div>
+
+              ) : vehicles.length === 0 ? (
+
+                <div className="flex-1 flex flex-col items-center justify-center gap-2.5 py-8 text-center">
+
+                  <div className="p-4 bg-[#1a1d28] rounded-xl">
+                    <Car size={28} color="#374151" />
+                  </div>
+
+                  <p className="text-[12px] font-bold text-[#4b5563] tracking-[1px] uppercase">
+                    Belum ada kendaraan
+                  </p>
+
+                  <p className="text-[11px] text-[#374151]">
+                    Tambahkan kendaraan untuk melanjutkan
+                  </p>
+
+                </div>
+
               ) : (
+
                 <div className="flex flex-col gap-2.5">
+
                   {vehicles.map((v) => {
+
                     const isSel = selectedVehicleIds.includes(v.id);
+
                     return (
-                      <div key={v.id} onClick={() => setSelectedVehicleIds((prev) => isSel ? prev.filter((id) => id !== v.id) : [...prev, v.id])}
+
+                      <div
+                        key={v.id}
+                        onClick={() =>
+                          setSelectedVehicleIds((prev) =>
+                            isSel
+                              ? prev.filter((id) => id !== v.id)
+                              : [...prev, v.id]
+                          )
+                        }
                         className={`px-4 py-3.5 rounded-[10px] border-2 cursor-pointer flex justify-between items-center
-                          ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]" : "border-[#1e2230] bg-[#0f1117]"}`}>
+            ${isSel
+                            ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]"
+                            : "border-[#1e2230] bg-[#0f1117]"
+                          }`}
+                      >
+
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${isSel ? "bg-[#f97316] text-white" : "bg-[#1a1d28] text-[#4b5563]"}`}>
-                            {v.type === "motor" ? <Bike size={16} /> : <Car size={16} />}
+
+                          <div
+                            className={`p-2 rounded-lg ${isSel
+                                ? "bg-[#f97316] text-white"
+                                : "bg-[#1a1d28] text-[#4b5563]"
+                              }`}
+                          >
+                            {v.type === "motor"
+                              ? <Bike size={16} />
+                              : <Car size={16} />
+                            }
                           </div>
+
                           <div>
                             <p className="text-[13px] font-bold text-white uppercase m-0">
-                              {v.brand} {v.model}{v.year ? ` (${v.year})` : ""}
+                              {v.brand} {v.model}
+                              {v.year ? ` (${v.year})` : ""}
                             </p>
-                            <p className="text-[10px] text-[#4b5563] font-mono tracking-[1px] m-0">{v.plate}</p>
+
+                            <p className="text-[10px] text-[#4b5563] font-mono tracking-[1px] m-0">
+                              {v.plate}
+                            </p>
                           </div>
+
                         </div>
+
                         <div className="flex items-center gap-2">
-                          <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all
-                            ${isSel ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`}>
+
+                          <div
+                            className={`w-5 h-5 rounded flex items-center justify-center border transition-all
+                ${isSel
+                                ? "bg-[#f97316] border-[#f97316]"
+                                : "bg-transparent border-[#2a2f3e]"
+                              }`}
+                          >
                             {isSel && (
                               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path
+                                  d="M2 5l2.5 2.5L8 3"
+                                  stroke="white"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
                               </svg>
                             )}
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); deleteVehicle(v.id); }}
-                            className="p-1.5 bg-transparent border-none cursor-pointer text-[#374151]">
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteVehicle(v.id);
+                            }}
+                            className="p-1.5 bg-transparent border-none cursor-pointer text-[#374151]"
+                          >
                             <Trash2 size={14} />
                           </button>
+
                         </div>
+
                       </div>
                     );
                   })}
+
                 </div>
               )}
             </div>
