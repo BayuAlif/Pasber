@@ -41,11 +41,18 @@ class BookingController extends Controller
             'bengkel_id' => 'required|exists:bengkel,id',
         ]);
 
+        $MAX_BOOKING = 5;
+
         $bookings = Booking::where('bengkel_id', $request->bengkel_id)
+
             ->whereYear('jadwalService', $request->tahun)
+
             ->whereMonth('jadwalService', $request->bulan)
+
             ->get()
+
             ->groupBy(function ($booking) {
+
                 return \Carbon\Carbon::parse(
                     $booking->jadwalService
                 )->format('Y-m-d');
@@ -53,17 +60,40 @@ class BookingController extends Controller
 
         $fullDates = [];
 
+        $quotaInfo = [];
+
         foreach ($bookings as $date => $items) {
 
-            if ($items->count() >= 5) {
+            $count = $items->count();
 
-                $fullDates[] =
-                    \Carbon\Carbon::parse($date)->day;
+            $remaining = max(
+                0,
+                $MAX_BOOKING - $count
+            );
+
+            $day =
+                \Carbon\Carbon::parse($date)->day;
+
+            // kalau full
+            if ($count >= $MAX_BOOKING) {
+
+                $fullDates[] = $day;
             }
+
+            // info quota
+            $quotaInfo[] = [
+                'date' => $date,
+                'day' => $day,
+                'booked' => $count,
+                'remaining' => $remaining,
+                'isFull' => $count >= $MAX_BOOKING,
+            ];
         }
 
         return response()->json([
-            'fullDates' => $fullDates
+            'maxBooking' => $MAX_BOOKING,
+            'fullDates' => $fullDates,
+            'quotaInfo' => $quotaInfo,
         ]);
     }
 

@@ -105,7 +105,7 @@ export default function BookingServicePage() {
 
   // apakah tanggal full atau tidak
   const [fullDates, setFullDates] = useState<number[]>([]);
-
+  const [quotaInfo, setQuotaInfo] = useState<any[]>([]);
   useEffect(() => {
 
     if (!selectedBengkel) return;
@@ -126,6 +126,7 @@ export default function BookingServicePage() {
 
       const data = await res.json();
       setFullDates(data.fullDates || []);
+      setQuotaInfo(data.quotaInfo || []);
     };
 
     fetchFullDates();
@@ -174,6 +175,8 @@ export default function BookingServicePage() {
     selectedMonth,
     selectedYear
   ]);
+
+
 
   // ─── Get User Location API Browser Geolocation API. ──────────────────────────────────────────────────
   useEffect(() => {
@@ -680,11 +683,46 @@ export default function BookingServicePage() {
               </div>
 
               {/* Time slots */}
-              <div className="flex items-center gap-2 mb-3.5">
-                <Clock size={13} color="#f97316" />
-                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">
-                  SESI TERSEDIA
+              <div className="flex items-center justify-between mb-3.5">
+
+                <div className="flex items-center gap-2">
+                  <Clock size={13} color="#f97316" />
+
+                  <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">
+                    SESI TERSEDIA
+                  </div>
                 </div>
+
+                {/* quota info */}
+                {(() => {
+
+                  const quota =
+                    quotaInfo.find(
+                      (q) => q.day === selectedDate
+                    ) || {
+                      remaining: 5,
+                      booked: 0,
+                      isFull: false,
+                    };
+
+                  return (
+                    <div
+                      className={`text-[10px] font-bold px-2 py-1 rounded-md border
+
+                          ${quota.remaining <= 1
+                          ? "text-[#ef4444] border-[#7f1d1d] bg-[rgba(239,68,68,0.08)]"
+
+                          : quota.remaining <= 2
+                            ? "text-[#f59e0b] border-[#78350f] bg-[rgba(245,158,11,0.08)]"
+
+                            : "text-[#10b981] border-[#064e3b] bg-[rgba(16,185,129,0.08)]"
+                        }`}
+                    >
+                      Sisa {quota.remaining} / 5 slot
+                    </div>
+                  );
+                })()}
+
               </div>
 
               <div className="grid grid-cols-4 gap-2 mb-7">
@@ -701,7 +739,7 @@ export default function BookingServicePage() {
 
                       className={`py-2.5 rounded-lg border text-[12px] font-semibold flex items-center justify-center gap-1.5
 
-                        ${isSel
+        ${isSel
                           ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]"
                           : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"
                         }`}
