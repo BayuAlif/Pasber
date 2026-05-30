@@ -22,6 +22,7 @@ export default function AuthPopup({
   if (!open) return null;
 
   const success = type === 'success';
+  
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">

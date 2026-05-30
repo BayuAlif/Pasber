@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\DetailNotaMaterial;
+use App\Models\Material;
 
 use Illuminate\Http\Request;
 
@@ -22,11 +24,26 @@ class DetailNotaMaterialController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'WOID' => 'required|exists:work_order,id',
-            'materialID' => 'required|exists:material,id',
-            'qty' => 'required|integer|min:1'
+        $material = Material::findOrFail(
+            $request->materialID
+        );
+
+        if ($material->stok < $request->qty) {
+            return response()->json([
+                'message' => 'Stok tidak mencukupi'
+            ], 400);
+        }
+
+        $detail = DetailNotaMaterial::create([
+            'WOID' => $request->WOID,
+            'materialID' => $request->materialID,
+            'qty' => $request->qty
         ]);
+
+        $material->decrement(
+            'stok',
+            $request->qty
+        );
 
         $detail = DetailNotaMaterial::create([
             'WOID' => $request->WOID,

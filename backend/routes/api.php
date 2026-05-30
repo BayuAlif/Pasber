@@ -69,6 +69,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::apiResource('material', MaterialController::class);
 
+    Route::apiResource('nota', NotaController::class);
+
     Route::get('/nota', [NotaController::class, 'index']);
     Route::apiResource(
         'detail-nota-material',

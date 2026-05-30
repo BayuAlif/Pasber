@@ -33,7 +33,21 @@ class NotaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'WOID' => 'required|exists:work_order,id'
+        ]);
+
+        $nota = Nota::create([
+            'WOID' => $request->WOID,
+            'tanggal' => now(),
+            'totalHarga' => 0,
+            'status' => 'belum_lunas'
+        ]);
+
+        return response()->json([
+            'message' => 'Nota berhasil dibuat',
+            'data' => $nota
+        ], 201);
     }
 
     /**

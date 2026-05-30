@@ -7,7 +7,7 @@ import {
   Plus, Minus, X, ChevronDown, Send, Save,
 } from 'lucide-react';
 import SidebarAdmin from '../../components/sidebar-admin/page';
-
+import AuthPopup from "@/app/components/auth_popup/Auth_popup";
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Interfaces
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,8 +109,6 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
     setJasaRows(prev => [...prev, { deskripsi: '', biaya: '' }]);
   };
 
-
-
   const validJasaRows = jasaRows.filter(r => r.deskripsi.trim() && Number(r.biaya) > 0);
   const jasaEstimasi = jasaRows.reduce((acc, r) => acc + Number(r.biaya || 0), 0);
 
@@ -128,9 +126,13 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
 
   // ── Material handlers ──
   const filteredItems = inventoryItems.filter(
-    item =>
-      item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchQuery.toLowerCase())
+    (item) =>
+      (item.nama ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (item.sku ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
 
   const getQty = (id: number): number => cart.find(c => c.item.id === id)?.qty ?? 0;
@@ -253,7 +255,7 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
                   className="w-full flex items-center justify-center gap-2 py-3 bg-orange-600 hover:bg-orange-500 rounded-lg text-xs font-black uppercase tracking-widest text-white transition-all"
                 >
                   <Plus size={14} />
-                  + Add Service
+                  Add Service
                 </button>
               </div>
 
@@ -433,17 +435,30 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CreateInvoiceViewProps {
-  inventoryItems: InventoryItem[];
   onBack: () => void;
 }
 
-const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack }) => {
+const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
+  onBack
+}) => {
   // ── State ──
   const [notaJasa, setNotaJasa] = useState<NotaJasa[]>([]);
   const [notaMaterial, setNotaMaterial] = useState<NotaMaterial[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [workOrders, setWorkOrders] = useState([]);
-  const [selectedWO, setSelectedWO] = useState<any>(null);
+  const [workOrders, setWorkOrders] = useState<WorkOrderData[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+
+  const [selectedWO, setSelectedWO] =
+    useState<WorkOrderData | null>(null);
+
+  const [popupOpen, setPopupOpen] = useState(false);
+
+  const [popupType, setPopupType] =
+    useState<"success" | "error">("error");
+
+  const [popupTitle, setPopupTitle] = useState("");
+
+  const [popupMessage, setPopupMessage] = useState("");
 
   // ── Derived totals ──
   const subtotalJasa = notaJasa.reduce((acc, j) => acc + j.biaya, 0);
@@ -453,9 +468,96 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
   // ── Handlers ──
   const handleAddJasa = (items: NotaJasa[]) => setNotaJasa(prev => [...prev, ...items]);
   const handleAddMaterial = (items: NotaMaterial[]) => setNotaMaterial(prev => [...prev, ...items]);
+  const handleTerbitkanNTA = async () => {
+    if (!selectedWO) {
+      setPopupType("error");
+      setPopupTitle("Work Order Belum Dipilih");
+      setPopupMessage("Silakan pilih Work Order terlebih dahulu.");
+      setPopupOpen(true);
+      return;
+    }
 
+    if (notaJasa.length === 0 && notaMaterial.length === 0) {
+      setPopupType("error");
+      setPopupTitle("Nota Masih Kosong");
+      setPopupMessage(
+        "Tambahkan minimal satu jasa atau material sebelum menerbitkan NTA."
+      );
+      setPopupOpen(true);
+      return;
+    }
+
+    try {
+      // proses simpan nota
+
+      setPopupType("success");
+      setPopupTitle("NTA Berhasil");
+      setPopupMessage("Nota berhasil diterbitkan.");
+      setPopupOpen(true);
+
+    } catch (error) {
+      setPopupType("error");
+      setPopupTitle("Gagal");
+      setPopupMessage("Terjadi kesalahan saat menerbitkan NTA.");
+      setPopupOpen(true);
+    }
+  };
   const removeJasa = (id: number) => setNotaJasa(prev => prev.filter(j => j.id !== id));
   const removeMaterial = (id: number) => setNotaMaterial(prev => prev.filter(m => m.id !== id));
+
+
+
+  interface WorkOrderData {
+    id: number;
+    status: string;
+
+
+    created_at: string;
+    updated_at: string;
+
+    booking: {
+      user: {
+        name: string;
+      };
+
+      kendaraan: {
+        merek: string;
+        model: string;
+      };
+    };
+
+    mekanik: {
+      nama: string;
+    };
+  }
+
+  useEffect(() => {
+    const fetchMaterial = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+          "http://localhost:8000/api/material",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        console.log(data);
+
+        setInventoryItems(data.data || data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchMaterial();
+  }, []);
 
   useEffect(() => {
     const fetchWO = async () => {
@@ -472,7 +574,8 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
       );
 
       const data = await response.json();
-
+      console.log("WO RESPONSE =", data);
+      console.log("IS ARRAY =", Array.isArray(data));
       setWorkOrders(data);
     };
 
@@ -503,15 +606,15 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
             <select
               onChange={(e) => {
                 const wo = workOrders.find(
-                  (item: any) => item.id === Number(e.target.value)
+                  (item) => item.id === Number(e.target.value)
                 );
 
-                setSelectedWO(wo);
+                setSelectedWO(wo ?? null);;
               }}
             >
               <option>Pilih Work Order</option>
 
-              {workOrders.map((wo: any) => (
+              {workOrders.map((wo) => (
                 <option key={wo.id} value={wo.id}>
                   WO-{wo.id}
                 </option>
@@ -525,15 +628,29 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
           </div>
         </div>
         <div className="border-l border-white/[0.08] pl-6">
-          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Customer & Unit</p>
-          <p className="text-sm font-bold text-white">{selectedWO
-            ? selectedWO.mekanik.nama
-            : "-"
-          }</p>
+          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">
+            Customer & Unit
+          </p>
+          <h3 className="font-semibold text-white">
+            {selectedWO?.booking?.user?.name ?? "-"}
+          </h3>
+
+          <p className="text-xs text-slate-500 mt-1">
+            {selectedWO
+              ? `${selectedWO.booking.kendaraan.merek} ${selectedWO.booking.kendaraan.model}`
+              : "-"}
+          </p>
         </div>
         <div className="border-l border-white/[0.08] pl-6">
-          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Tanggal Selesai</p>
-          <p className="text-sm font-bold text-white">—</p>
+          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">
+            Tanggal Selesai
+          </p>
+
+          <h3 className="font-semibold text-white">
+            {selectedWO?.updated_at
+              ? new Date(selectedWO.updated_at).toLocaleDateString("id-ID")
+              : "-"}
+          </h3>
         </div>
         <div className="border-l border-white/[0.08] pl-6 flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
@@ -554,6 +671,15 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
 
         {/* Left: nota sections */}
         <div className="flex-1 space-y-5 min-w-0">
+          <div className="flex justify-end items-center mb-4">
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg"
+            >
+              + Tambah Item
+            </button>
+          </div>
 
           {/* Nota Jasa */}
           <div className="bg-[#161b22] border border-white/[0.08] rounded-xl overflow-hidden">
@@ -566,8 +692,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-1 text-[10px] font-bold text-orange-400 hover:text-orange-300 transition-colors"
               >
-                <Plus size={11} />
-                Tambah Item
+
               </button>
             </div>
 
@@ -630,8 +755,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-1 text-[10px] font-bold text-orange-400 hover:text-orange-300 transition-colors"
               >
-                <Plus size={11} />
-                Tambah Item
+
               </button>
             </div>
 
@@ -710,7 +834,10 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
             </div>
 
             <div className="space-y-2">
-              <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-orange-600 hover:bg-orange-500 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all">
+              <button
+                onClick={handleTerbitkanNTA}
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-orange-600 hover:bg-orange-500 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all"
+              >
                 <Send size={13} />
                 Terbitkan NTA
               </button>
@@ -728,8 +855,18 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
           </div>
         </div>
       </div>
+      <AuthPopup
+        open={popupOpen}
+        type={popupType}
+        title={popupTitle}
+        message={popupMessage}
+        onClose={() => setPopupOpen(false)}
+        onContinue={() => setPopupOpen(false)}
+      />
     </div>
+
   );
+
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -861,6 +998,7 @@ export default function InvoicePembayaran() {
           total: Number(item.totalHarga),
 
           status: item.status as InvoiceStatus,
+
         }));
 
         setInvoices(mappedInvoices);
@@ -903,8 +1041,7 @@ export default function InvoicePembayaran() {
   if (view === 'create') {
     return shell(
       <CreateInvoiceView
-        inventoryItems={inventoryItems}
-        onBack={() => setView('list')}
+        onBack={() => setView("list")}
       />
     );
   }
@@ -1325,8 +1462,13 @@ export default function InvoicePembayaran() {
               </button>
             </div>
           </div>
+
         </div>
+
       )}
+
     </>
   );
+
 }
+
