@@ -119,9 +119,13 @@ class kelolaWorkOrderController extends Controller
         $wo = work_order::with([
             'booking.user',
             'booking.kendaraan',
-            'mekanik'
+            'mekanik',
+            'nota'
         ])
-            ->where('status', 'selesai')
+            ->where('statusWO', 'done')
+            ->whereHas('nota', function ($q) {
+                $q->where('status', 'pending');
+            })
             ->get();
 
         return response()->json($wo);
