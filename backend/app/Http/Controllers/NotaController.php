@@ -147,4 +147,15 @@ class NotaController extends Controller
             ->get();
         return response()->json($notas);
     }
+
+    public function userUnpaidCount()
+    {
+        $user = Auth::user();
+
+        $count = Nota::whereHas('workOrder.booking', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->where('status', 'belum_lunas')->count();
+
+        return response()->json(['count' => $count]);
+    }
 }
