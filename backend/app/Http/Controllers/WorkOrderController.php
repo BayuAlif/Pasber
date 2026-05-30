@@ -15,7 +15,7 @@ class WorkOrderController extends Controller
             'booking.kendaraan',
             'booking.bengkel',
             'mekanik',
-            'logs'
+            'logs',
         ])->get();
 
         return response()->json([

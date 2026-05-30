@@ -18,7 +18,8 @@ type WOStatus =
   | 'running'
   | 'qc'
   | 'done'
-  | 'paid';
+  | 'paid'
+  | 'rejected';
 
 type MechStatus =
   | 'available'
@@ -49,6 +50,7 @@ type ProgressStep = {
 
 type WorkOrder = {
   id: number;
+  kodeWO: string;
 
   booking?: {
     id: number;
@@ -119,6 +121,9 @@ const STATUS_STYLE: Record<WOStatus, string> = {
 
   paid:
     'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+
+  rejected:
+    'bg-red-500/10 text-red-400 border border-red-500/20',
 };
 
 const PAGE_SIZE = 5;
@@ -272,9 +277,9 @@ export default function KelolaJadwalPage() {
 
       const result = await response.json();
 
-      console.log(
-        JSON.stringify(result, null, 2)
-      );
+      // console.log(
+      //   JSON.stringify(result, null, 2)
+      // );
 
       setWorkOrders(
         Array.isArray(result.data)
@@ -394,6 +399,9 @@ export default function KelolaJadwalPage() {
       case "paid":
         return [];
 
+      case "rejected":
+        return [];
+
       default:
         return [];
     }
@@ -440,6 +448,7 @@ export default function KelolaJadwalPage() {
 
     try {
 
+      // update
       await axios.put(
         `http://127.0.0.1:8000/api/kelola-work-order/${selectedWO.id}`,
         {
@@ -630,7 +639,8 @@ export default function KelolaJadwalPage() {
                       'running',
                       'qc',
                       'done',
-                      'paid'
+                      'paid',
+                      'rejected'
                     ].map(s => (
 
                       <option key={s}>
@@ -681,6 +691,7 @@ export default function KelolaJadwalPage() {
 
                     {[
                       'Booking ID',
+                      'WO ID (Kode WO)',
                       'Customer',
                       'Vehicle Details',
                       'Complaint',
@@ -727,18 +738,24 @@ export default function KelolaJadwalPage() {
                           }`}
                       >
 
-                        {/* ID */}
+                        {/* Booking ID */}
                         <td className="px-5 py-4">
 
                           <span className="text-[11px] font-mono font-bold text-orange-400">
 
-                            WO-
-                            {w.booking?.bengkel?.nama
-                              ?.substring(0, 3)
-                              .toUpperCase()
-                            }
-                            -
-                            {String(i + 1).padStart(3, '0')}
+                            BOOK-
+                            {String(w.booking?.id || 0).padStart(3, '0')}
+
+                          </span>
+
+                        </td>
+
+                        {/* Work Order ID */}
+                        <td className="px-5 py-4">
+
+                          <span className="text-[11px] font-mono font-bold text-orange-400">
+
+                            {w.kodeWO}
 
                           </span>
 
@@ -826,67 +843,80 @@ export default function KelolaJadwalPage() {
 
                           <div className="flex items-center gap-1.5">
 
-                            {/* APPROVED */}
-                            {w.statusWO === 'approved' && (
-
+                            {w.statusWO === 'rejected' ? (
+                              /* Only show detail button for rejected */
                               <button
-                                onClick={() => {
-                                  setSelectedWO(w);
-                                  setView('assign');
-                                }}
-                                className="px-4 py-2 bg-orange-500 rounded-md text-white text-[11px] font-bold"
+                                onClick={() => openDetail(w)}
+                                title="View Detail"
+                                className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
                               >
-                                ASSIGN
+                                <Eye size={13} />
                               </button>
+                            ) : (
+                              <>
+                                {/* APPROVED */}
+                                {w.statusWO === 'approved' && (
 
-                            )}
+                                  <button
+                                    onClick={() => {
+                                      setSelectedWO(w);
+                                      setView('assign');
+                                    }}
+                                    className="px-4 py-2 bg-orange-500 rounded-md text-white text-[11px] font-bold"
+                                  >
+                                    ASSIGN
+                                  </button>
 
-                            {w.statusWO !== 'approved' &&
-                              w.statusWO !== 'paid' && (
+                                )}
 
-                                <select
-                                  defaultValue=""
-                                  onChange={(e) =>
-                                    handleUpdateStatus(
-                                      w.id,
-                                      e.target.value as WOStatus
-                                    )
-                                  }
-                                  className="bg-[#1a1d28] border border-[#2a2f3e] rounded-lg px-2 py-1.5 text-[10px] text-white outline-none"
+                                {w.statusWO !== 'approved' &&
+                                  w.statusWO !== 'paid' && (
+
+                                    <select
+                                      defaultValue=""
+                                      onChange={(e) =>
+                                        handleUpdateStatus(
+                                          w.id,
+                                          e.target.value as WOStatus
+                                        )
+                                      }
+                                      className="bg-[#1a1d28] border border-[#2a2f3e] rounded-lg px-2 py-1.5 text-[10px] text-white outline-none"
+                                    >
+
+                                      <option value="">
+                                        Update
+                                      </option>
+
+                                      {getNextStatuses(
+                                        w.statusWO as WOStatus
+                                      ).map(status => (
+
+                                        <option
+                                          key={status}
+                                          value={status}
+                                        >
+                                          {status.toUpperCase()}
+                                        </option>
+
+                                      ))}
+
+                                    </select>
+
+                                  )}
+
+                                {/* DETAIL */}
+                                <button
+                                  onClick={() => openDetail(w)}
+                                  title="View Detail"
+
+                                  className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
                                 >
 
-                                  <option value="">
-                                    Update
-                                  </option>
+                                  <Eye size={13} />
 
-                                  {getNextStatuses(
-                                    w.statusWO as WOStatus
-                                  ).map(status => (
-
-                                    <option
-                                      key={status}
-                                      value={status}
-                                    >
-                                      {status.toUpperCase()}
-                                    </option>
-
-                                  ))}
-
-                                </select>
-
-                              )}
-
-                            {/* DETAIL */}
-                            <button
-                              onClick={() => openDetail(w)}
-                              title="View Detail"
-
-                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
-                            >
-
-                              <Eye size={13} />
-
-                            </button>
+                                </button>
+                              </>
+                            )}
 
                           </div>
 
@@ -1241,9 +1271,9 @@ export default function KelolaJadwalPage() {
 
                 <div className="border border-orange-500/30 rounded-xl p-5 bg-orange-500/5">
 
-                  {/* WO ID */}
+                  {/* KodeWO */}
                   <p className="text-[22px] font-black text-orange-400 mb-4">
-                    #WO-{selectedWO.id}
+                    {selectedWO.kodeWO}
                   </p>
 
                   {/* Customer + Vehicle */}

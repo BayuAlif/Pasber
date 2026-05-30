@@ -68,6 +68,22 @@ class KelolaBookingController extends Controller
             $booking->id
         )->first();
 
+        $prefix = strtoupper(
+            substr($booking->bengkel->nama, 0, 3)
+        );
+        $kodeWO =
+            'WO-' .
+            $prefix .
+            '-' .
+            str_pad($booking->id, 5, '0', STR_PAD_LEFT);
+
+        // inih create work_order nya disini
+        $workOrder = work_order::create([
+            'booking_id' => $booking->id,
+            'statusWO' => 'pending',
+            'kodeWO' => $kodeWO,
+        ]);
+
         // kalau ada WO, update juga
         if ($workOrder) {
 

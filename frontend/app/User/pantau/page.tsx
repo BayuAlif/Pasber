@@ -27,6 +27,7 @@ const getProgressSteps = (status: string) => {
     "qc",
     "done",
     "paid",
+    "rejected",
   ];
 
   return steps.map((s, i) => ({
@@ -45,29 +46,28 @@ type WorkOrderLog = {
 
 type WorkOrder = {
   id: number;
-  statusWO: string;
-  estimasiWaktu: number;
+  status: string;
+  tanggalBooking: string;
+  Keluhan: string;
 
-  logs: WorkOrderLog[];
-
-  booking: {
-    tanggalBooking: string;
-    Keluhan: string;
-    kendaraan: {
-      merek: string;
-      model: string;
-      nomorPolisi: string;
-    };
-    bengkel: {
-      nama: string;
-    };
+  kendaraan: {
+    merek: string;
+    model: string;
+    nomorPolisi: string;
   };
 
-  mekanik: {
+  bengkel: {
     nama: string;
   };
 
-
+  workOrder?: {
+    statusWO: string;
+    estimasiWaktu?: number;
+    logs?: WorkOrderLog[];
+    mekanik?: {
+      nama: string;
+    };
+  };
 };
 
 
@@ -86,7 +86,7 @@ export default function PantauServicePage() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://127.0.0.1:8000/api/work-order",
+          "http://127.0.0.1:8000/api/fetch-pantau",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -137,24 +137,25 @@ export default function PantauServicePage() {
   const filteredWorkOrders = workOrders.filter((wo) => {
 
     const kendaraan =
-      `${wo.booking?.kendaraan?.merek ?? ""} ${wo.booking?.kendaraan?.model ?? ""}`.toLowerCase();
+      `${wo.kendaraan?.merek ?? ""} ${wo.kendaraan?.model ?? ""}`.toLowerCase();
 
     const matchesSearch =
       kendaraan.includes(searchQuery.toLowerCase()) ||
       wo.id.toString().includes(searchQuery);
+
+    const currentStatus = (wo.workOrder?.statusWO || wo.status || "").toLowerCase().trim();
 
     const statusMap: Record<string, string[]> = {
       "Semua Status": [],
       Pending: ["pending"],
       Running: ["running", "assigned", "qc"],
       Selesai: ["done", "paid"],
+      Rejected: ["rejected"],
     };
 
     const matchesStatus =
       statusFilter === "Semua Status" ||
-      statusMap[statusFilter]?.includes(
-        wo.statusWO?.toLowerCase().trim()
-      );
+      statusMap[statusFilter]?.includes(currentStatus);
 
     return matchesSearch && matchesStatus;
   });
@@ -170,17 +171,34 @@ export default function PantauServicePage() {
 
 
   const getActivityLog = (
-    logsFromBackend: WorkOrderLog[]
+    logsFromBackend: WorkOrderLog[] | undefined,
+    currentStatus: string
   ) => {
+    if (currentStatus === "pending") {
+      return [
+        {
+          title: "Booking sedang pending",
+          time: new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          source: "System",
+          active: true,
+        }
+      ];
+    }
+
+    if (!logsFromBackend || logsFromBackend.length === 0) {
+      return [];
+    }
 
     return logsFromBackend.map((log) => {
 
       let title = "";
 
       switch (log.status) {
-
         case "pending":
-          title = "Booking sedang pending.";
+          title = "Booking sedang pending";
           break;
 
         case "approved":
@@ -205,6 +223,10 @@ export default function PantauServicePage() {
 
         case "paid":
           title = "Pembayaran selesai";
+          break;
+
+        case "rejected":
+          title = "Booking ditolak";
           break;
 
         default:
@@ -274,7 +296,7 @@ export default function PantauServicePage() {
             </button>
             {dropdownOpen && (
               <div className="absolute top-[calc(100%+6px)] left-0 bg-[#1e2230] border border-[#2a2f3e] rounded-lg min-w-[150px] z-20 overflow-hidden">
-                {["Semua Status", "Running", "Selesai", "Pending"].map((s) => (
+                {["Semua Status", "Running", "Selesai", "Pending", "Rejected"].map((s) => (
                   <button
                     key={s}
                     onClick={() => {
@@ -292,11 +314,12 @@ export default function PantauServicePage() {
           </div>
         </div>
 
-        {/* Work Order Card */}
+        {/* Booking Card */}
         {filteredWorkOrders.map((wo) => {
-          const activityLog = getActivityLog(wo.logs);
+            const currentStatus = (wo.workOrder?.statusWO || wo.status || "pending").toLowerCase();
+          const activityLog = getActivityLog(wo.workOrder?.logs, currentStatus);
 
-          const steps = getProgressSteps(wo.statusWO);
+          const steps = getProgressSteps(currentStatus);
 
           return (
             <div key={wo.id} className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden mb-7">
@@ -304,24 +327,24 @@ export default function PantauServicePage() {
               <div className="p-5 px-6 border-b border-[#1e2230] flex justify-between items-start">
                 <div>
                   <div className="text-[10px] text-gray-600 tracking-[0.15em] mb-1">
-                    WORK ORDER
+                    BOOKING
                   </div>
                   <div className="text-[22px] font-bold text-white leading-none">
-                    WO-{String(wo.id).padStart(4, "0")}
+                    BOOK-{String(wo.id).padStart(3, "0")}
                   </div>
-                  <div className="text-sm text-gray-400 mt-1">{wo.booking?.kendaraan?.merek} {wo.booking.kendaraan.model}</div>
+                  <div className="text-sm text-gray-400 mt-1">{wo.kendaraan?.merek} {wo.kendaraan?.model}</div>
                   <div>
-                    <p>{wo.booking.kendaraan.nomorPolisi}</p>
+                    <p>{wo.kendaraan?.nomorPolisi}</p>
 
                     <p className="text-[11px] text-gray-400 mt-1">
-                      {wo.booking.bengkel.nama}
+                      {wo.bengkel?.nama}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1.5 py-1 px-3 bg-orange-500/10 border border-orange-500/30 rounded-full text-[11px] font-bold text-orange-500 tracking-widest">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                    {wo.statusWO.toUpperCase()}
+                    {(wo.workOrder?.statusWO || wo.status).toUpperCase()}
                   </span>
                   <ChevronDown size={16} className="text-gray-600" />
                 </div>
@@ -333,59 +356,67 @@ export default function PantauServicePage() {
                   PROGRESS TRACKER
                 </div>
                 <div className="flex items-start">
-                  {steps.map((step, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 flex flex-col items-center relative"
-                    >
-                      {/* Connector line left */}
-                      {i > 0 && (
-                        <div
-                          className={`absolute top-[11px] left-0 w-1/2 h-0.5 ${steps[i - 1].done
-                            ? "bg-orange-500"
-                            : "bg-[#2a2f3e]"
-                            }`}
-                        />
-                      )}
-                      {/* Connector line right */}
-                      {i < steps.length - 1 && (
-                        <div
-                          className={`absolute top-[11px] right-0 w-1/2 h-0.5 ${step.done ? "bg-orange-500" : "bg-[#2a2f3e]"
-                            }`}
-                        />
-                      )}
-                      {/* Node */}
+                  {steps.map((step, i) => {
+                    const isRejected = currentStatus === "rejected";
+                    
+                    if (step.label === "REJECTED" && !isRejected) {
+                      return null;
+                    }
+
+                    return (
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center relative z-10 box-border ${step.current
-                          ? "bg-orange-500 border-[3px] border-orange-500/30"
-                          : step.done
-                            ? "bg-orange-500"
-                            : "bg-[#2a2f3e]"
-                          }`}
+                        key={i}
+                        className="flex-1 flex flex-col items-center relative"
                       >
-                        {step.done && !step.current && (
-                          <CheckCircle2 size={12} color="#fff" strokeWidth={2.5} />
+                        {/* Connector line left */}
+                        {i > 0 && (
+                          <div
+                            className={`absolute top-[11px] left-0 w-1/2 h-0.5 ${steps[i - 1].done
+                              ? isRejected ? "bg-red-500" : "bg-orange-500"
+                              : "bg-[#2a2f3e]"
+                              }`}
+                          />
                         )}
-                        {step.current && (
-                          <Activity size={11} color="#fff" strokeWidth={2.5} />
+                        {/* Connector line right */}
+                        {i < steps.length - 1 && (
+                          <div
+                            className={`absolute top-[11px] right-0 w-1/2 h-0.5 ${step.done ? (isRejected ? "bg-red-500" : "bg-orange-500") : "bg-[#2a2f3e]"
+                              }`}
+                          />
                         )}
-                        {!step.done && (
-                          <Circle size={8} color="#4b5563" strokeWidth={2} />
-                        )}
+                        {/* Node */}
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center relative z-10 box-border ${step.current
+                            ? isRejected ? "bg-red-500 border-[3px] border-red-500/30" : "bg-orange-500 border-[3px] border-orange-500/30"
+                            : step.done
+                              ? isRejected ? "bg-red-500" : "bg-orange-500"
+                              : "bg-[#2a2f3e]"
+                            }`}
+                        >
+                          {step.done && !step.current && (
+                            <CheckCircle2 size={12} color="#fff" strokeWidth={2.5} />
+                          )}
+                          {step.current && (
+                            <Activity size={11} color="#fff" strokeWidth={2.5} />
+                          )}
+                          {!step.done && (
+                            <Circle size={8} color="#4b5563" strokeWidth={2} />
+                          )}
+                        </div>
+                        {/* Label */}
+                        <div
+                          className={`mt-2 text-[9px] text-center whitespace-pre-line tracking-wide leading-snug ${step.current
+                            ? isRejected ? "font-bold text-red-500" : "font-bold text-orange-500"
+                            : step.done
+                              ? "font-medium text-gray-400"
+                              : "font-medium text-gray-600"
+                            }`}
+                        >
+                          {step.label}
+                        </div>
                       </div>
-                      {/* Label */}
-                      <div
-                        className={`mt-2 text-[9px] text-center whitespace-pre-line tracking-wide leading-snug ${step.current
-                          ? "font-bold text-orange-500"
-                          : step.done
-                            ? "font-medium text-gray-400"
-                            : "font-medium text-gray-600"
-                          }`}
-                      >
-                        {step.label}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -395,18 +426,18 @@ export default function PantauServicePage() {
                   {
                     label: "TANGGAL MASUK",
                     value: new Date(
-                      wo.booking.tanggalBooking
+                      wo.tanggalBooking
                     ).toLocaleDateString("id-ID"),
                   },
-                  { label: "JENIS SERVICE", value: wo.booking.Keluhan },
+                  { label: "JENIS SERVICE", value: wo.Keluhan },
                   {
                     label: "ESTIMASI",
-                    value: wo.estimasiWaktu
-                      ? `${wo.estimasiWaktu} Menit`
+                    value: wo.workOrder?.estimasiWaktu
+                      ? `${wo.workOrder.estimasiWaktu} Menit`
                       : "-",
                     highlight: true
                   },
-                  { label: "MEKANIK", value: wo.mekanik?.nama },
+                  { label: "MEKANIK", value: wo.workOrder?.mekanik?.nama },
                 ].map((item) => (
                   <div key={item.label} className="bg-[#13161e] p-4 px-6">
                     <div className="text-[10px] text-gray-600 tracking-widest mb-1.5">

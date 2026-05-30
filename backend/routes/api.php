@@ -18,9 +18,7 @@ use App\Http\Controllers\DetailNotaJasaController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
-
-
-
+// User
 Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
@@ -32,6 +30,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::apiResource('booking', BookingController::class);
     Route::get('/bengkel', [BengkelController::class, 'index']);
     Route::get('/full-dates', [BookingController::class, 'fullDates']);
+    Route::get('/fetch-pantau', [BookingController::class, 'fetch_pantau']);
 
     Route::apiResource('work-order', WorkOrderController::class);
 
@@ -42,6 +41,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::get('/active-work-order', [WorkOrderController::class, 'active']);
 });
 
+// Admin
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/user', function (Request $request) {
         return response()->json($request->user());

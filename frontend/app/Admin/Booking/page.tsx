@@ -125,6 +125,13 @@ function DetailModal({ booking, onClose, onApprove, onReject }: {
               </button>
             </>
           )}
+          {booking.status === 'rejected' && (
+            <>
+              <button onClick={onClose} className="px-5 py-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[11px] font-bold text-[#6b7280] hover:text-white transition-all">
+              Tutup
+            </button>
+            </>
+          )}
           {booking.status !== 'pending' && (
             <button onClick={onClose} className="px-5 py-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[11px] font-bold text-[#6b7280] hover:text-white transition-all">
               Tutup
@@ -317,7 +324,7 @@ function KelolaBookingView({
                         .toUpperCase()
                       }
                       -
-                      {String(i + 1).padStart(3, '0')}
+                      {String(b.id).padStart(3, '0')}
 
                     </span>
                   </td>
@@ -383,37 +390,39 @@ function KelolaBookingView({
 
                   {/* Actions */}
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-1.5">
+                    {b.status !== 'rejected' && (
+                      <div className="flex items-center gap-1.5">
 
-                      {b.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => updateStatus(b.id, 'approved')}
-                            title="Approve"
-                            className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-green-500/40 hover:text-green-400 flex items-center justify-center text-[#6b7280] transition-all"
-                          >
-                            <CheckCircle size={13} />
-                          </button>
+                        {b.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => updateStatus(b.id, 'approved')}
+                              title="Approve"
+                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-green-500/40 hover:text-green-400 flex items-center justify-center text-[#6b7280] transition-all"
+                            >
+                              <CheckCircle size={13} />
+                            </button>
 
-                          <button
-                            onClick={() => updateStatus(b.id, 'rejected')}
-                            title="Reject"
-                            className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-red-500/40 hover:text-red-400 flex items-center justify-center text-[#6b7280] transition-all"
-                          >
-                            <XCircle size={13} />
-                          </button>
-                        </>
-                      )}
+                            <button
+                              onClick={() => updateStatus(b.id, 'rejected')}
+                              title="Reject"
+                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-red-500/40 hover:text-red-400 flex items-center justify-center text-[#6b7280] transition-all"
+                            >
+                              <XCircle size={13} />
+                            </button>
+                          </>
+                        )}
 
-                      <button
-                        onClick={() => onViewWO(b)}
-                        title="View Work Order"
-                        className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
-                      >
-                        <Eye size={13} />
-                      </button>
+                        <button
+                          onClick={() => onViewWO(b)}
+                          title="View Work Order"
+                          className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
+                        >
+                          <Eye size={13} />
+                        </button>
 
-                    </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

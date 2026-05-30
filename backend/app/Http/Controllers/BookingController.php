@@ -46,9 +46,8 @@ class BookingController extends Controller
         $bookings = Booking::where('bengkel_id', $request->bengkel_id)
             ->whereYear('jadwalService', $request->tahun)
             ->whereMonth('jadwalService', $request->bulan)
-            // ->whereHas('workOut', function ($q) {
-            //     $q->where('statusWO', '!=' , 'paid');
-            // }) // todo
+            ->where('status', '!=', 'rejected')
+            ->where('status', '!=', 'paid')
             ->get()
             ->groupBy(function ($booking) {
                 return \Carbon\Carbon::parse(
@@ -121,27 +120,6 @@ class BookingController extends Controller
             'jadwalService' => $request->jadwalService,
         ]);
 
-        $prefix = strtoupper(
-            substr($booking->bengkel->nama, 0, 3)
-        );
-        $kodeWO =
-            'WO-' .
-            $prefix .
-            '-' .
-            str_pad($booking->id, 5, '0', STR_PAD_LEFT);
-
-        // inih create work_order nya disini
-        $workOrder = work_order::create([
-            'booking_id' => $booking->id,
-            'statusWO' => 'pending',
-            'kodeWO' => $kodeWO,
-        ]);
-
-        // add logs
-        WorkOrderLog::create([
-            'work_order_id' => $workOrder->id,
-            'status' => 'pending',
-        ]);
 
         return response()->json([
             'message' => 'Booking berhasil dibuat',
@@ -198,4 +176,21 @@ class BookingController extends Controller
             'message' => 'Booking berhasil dihapus'
         ]);
     }
+
+    public function fetch_pantau(Request $request)
+    {
+        $bookings = Booking::with([
+            'kendaraan',
+            'bengkel',
+            'workOrder.mekanik',
+            'workOrder.logs'
+            ])
+            ->where('user_id', $request->user()->id)
+            ->get();
+
+        return response()->json([
+            'data' => $bookings
+        ]);
+    }
 }
+
