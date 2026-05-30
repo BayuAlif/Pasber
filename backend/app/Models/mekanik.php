@@ -7,7 +7,7 @@ use App\Models\work_order;
 
 class Mekanik extends Model
 {
-    protected $table = 'mekanik';
+    protected $table = 'Mekanik';
 
     protected $fillable = [
         'kodeMekanik',

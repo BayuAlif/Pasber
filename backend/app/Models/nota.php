@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Nota extends Model
 {
-    protected $table = 'nota';
+    protected $table = 'Nota';
 
     protected $fillable = [
         'WOID',
@@ -20,6 +20,13 @@ class Nota extends Model
         return $this->belongsTo(
             work_order::class,
             'WOID'
+        );
+    }
+    public function payment()
+    {
+        return $this->hasOne(
+            Payment::class,
+            'nota_id'
         );
     }
 }

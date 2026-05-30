@@ -109,6 +109,8 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
     setJasaRows(prev => [...prev, { deskripsi: '', biaya: '' }]);
   };
 
+
+
   const validJasaRows = jasaRows.filter(r => r.deskripsi.trim() && Number(r.biaya) > 0);
   const jasaEstimasi = jasaRows.reduce((acc, r) => acc + Number(r.biaya || 0), 0);
 
@@ -158,6 +160,8 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
     );
     onClose();
   };
+
+
 
   // ── Render ──
   return (
@@ -438,6 +442,8 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
   const [notaJasa, setNotaJasa] = useState<NotaJasa[]>([]);
   const [notaMaterial, setNotaMaterial] = useState<NotaMaterial[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [workOrders, setWorkOrders] = useState([]);
+  const [selectedWO, setSelectedWO] = useState<any>(null);
 
   // ── Derived totals ──
   const subtotalJasa = notaJasa.reduce((acc, j) => acc + j.biaya, 0);
@@ -450,6 +456,28 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
 
   const removeJasa = (id: number) => setNotaJasa(prev => prev.filter(j => j.id !== id));
   const removeMaterial = (id: number) => setNotaMaterial(prev => prev.filter(m => m.id !== id));
+
+  useEffect(() => {
+    const fetchWO = async () => {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        "http://localhost:8000/api/work-order-selesai",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      setWorkOrders(data);
+    };
+
+    fetchWO();
+  }, []);
 
   // ── Render ──
   return (
@@ -472,14 +500,36 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
             <Wrench size={17} className="text-orange-500" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Work Order</p>
-            <p className="text-base font-black text-white">—</p>
+            <select
+              onChange={(e) => {
+                const wo = workOrders.find(
+                  (item: any) => item.id === Number(e.target.value)
+                );
+
+                setSelectedWO(wo);
+              }}
+            >
+              <option>Pilih Work Order</option>
+
+              {workOrders.map((wo: any) => (
+                <option key={wo.id} value={wo.id}>
+                  WO-{wo.id}
+                </option>
+              ))}
+            </select>
+            <p className="text-sm font-bold text-white">  {selectedWO
+              ? selectedWO.booking.user.name
+              : "-"
+            }</p>
             <p className="text-[10px] text-gray-600">Nomor Referensi Work Order</p>
           </div>
         </div>
         <div className="border-l border-white/[0.08] pl-6">
           <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Customer & Unit</p>
-          <p className="text-sm font-bold text-white">—</p>
+          <p className="text-sm font-bold text-white">{selectedWO
+            ? selectedWO.mekanik.nama
+            : "-"
+          }</p>
         </div>
         <div className="border-l border-white/[0.08] pl-6">
           <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Tanggal Selesai</p>
@@ -491,7 +541,10 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({ inventoryItems, onBack 
           </div>
           <div>
             <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Mekanik</p>
-            <p className="text-sm font-bold text-white">—</p>
+            <p className="text-sm font-bold text-white">{selectedWO
+              ? selectedWO.mekanik.nama
+              : "-"
+            }</p>
           </div>
         </div>
       </div>
@@ -691,9 +744,44 @@ export default function InvoicePembayaran() {
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('All Status');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedNota, setSelectedNota] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
+
+  const handleDetailNota = async (id: number) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `http://localhost:8000/api/nota/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      console.log("STATUS =", response.status);
+
+      const result = await response.json();
+
+      console.log("RESULT =", result);
+
+      if (!result.nota) {
+        console.error("NOTA TIDAK ADA", result);
+        return;
+      }
+
+      setSelectedNota(result);
+      setShowDetailModal(true);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   // ── Derived ──
   const totalNota = invoices.length;
   const menungguPembayaran = invoices.filter(i => i.status === 'BELUM LUNAS').length;
@@ -720,6 +808,21 @@ export default function InvoicePembayaran() {
     setStatusFilter(val);
     setCurrentPage(1);
   };
+
+  interface DetailJasa {
+    id: number;
+    namaJasa: string;
+    hargaJasa: string;
+  }
+
+  interface DetailMaterial {
+    id: number;
+    qty: number;
+    material: {
+      namaMaterial: string;
+      harga: number;
+    };
+  }
 
   useEffect(() => {
     const loadData = async () => {
@@ -805,6 +908,8 @@ export default function InvoicePembayaran() {
       />
     );
   }
+
+
 
   // ── List view ──
   return shell(
@@ -976,8 +1081,14 @@ export default function InvoicePembayaran() {
                   {inv.status}
                 </span>
 
-                <button className="text-xs font-black uppercase tracking-widest text-white hover:text-orange-400 transition-colors">
-                  Detail
+                <button
+                  onClick={() => {
+                    console.log("ID =", inv.id);
+                    handleDetailNota(inv.id);
+                  }}
+                  className="text-white font-semibold hover:text-orange-400"
+                >
+                  DETAIL
                 </button>
               </div>
             ))
@@ -1023,6 +1134,199 @@ export default function InvoicePembayaran() {
           </div>
         </div>
       </div>
+      {showDetailModal && selectedNota && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-4xl bg-[#111827] border border-white/10 rounded-2xl overflow-hidden">
+
+            {/* HEADER */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <div>
+                <h2 className="text-3xl font-bold text-white">
+                  Detail Nota
+                </h2>
+
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-orange-500 font-semibold">
+
+                    NTA-{selectedNota.nota.id.toString().padStart(5, "0")}
+                  </span>
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedNota.nota.status === "lunas"
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-orange-500/20 text-orange-400"
+                      }`}
+                  >
+                    {selectedNota.nota.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-white text-2xl hover:text-orange-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* INFO */}
+            <div className="grid md:grid-cols-3 gap-6 p-6 border-b border-white/10">
+              <div>
+                <p className="text-gray-400 text-sm">Customer</p>
+                <p className="text-white font-semibold mt-1">
+                  {selectedNota.nota.work_order.booking.user.name}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-400 text-sm">Kendaraan</p>
+                <p className="text-white font-semibold mt-1">
+                  {selectedNota.nota.work_order.booking.kendaraan.merek}
+                  {" "}
+                  {selectedNota.nota.work_order.booking.kendaraan.model}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-400 text-sm">Tanggal</p>
+                <p className="text-white font-semibold mt-1">
+                  {selectedNota.nota.tanggal}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-8 max-h-[500px] overflow-y-auto">
+
+              {/* JASA */}
+              <div>
+                <h3 className="text-orange-500 font-bold mb-4">
+                  JASA / SERVICES
+                </h3>
+
+                <div className="space-y-3">
+                  {selectedNota.jasa.map((jasa: DetailJasa) => (
+                    <div
+                      key={jasa.id}
+                      className="flex justify-between border-b border-white/5 pb-2"
+                    >
+                      <span className="text-white">
+                        {jasa.namaJasa}
+                      </span>
+
+                      <span className="text-white">
+                        Rp {Number(jasa.hargaJasa).toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between mt-4 text-orange-400 font-bold">
+                  <span>Subtotal Jasa</span>
+
+                  <span>
+                    Rp{" "}
+                    {selectedNota.jasa
+                      .reduce(
+                        (sum: number, item: DetailJasa) =>
+                          sum + Number(item.hargaJasa),
+                        0
+                      )
+                      .toLocaleString("id-ID")}
+                  </span>
+                </div>
+              </div>
+
+              {/* MATERIAL */}
+              <div>
+                <h3 className="text-orange-500 font-bold mb-4">
+                  MATERIAL
+                </h3>
+
+                <div className="space-y-3">
+                  {selectedNota.material.map((item: DetailMaterial) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between border-b border-white/5 pb-2"
+                    >
+                      <div>
+                        <p className="text-white font-medium">
+                          {item.material.namaMaterial}
+                        </p>
+
+                        <p className="text-gray-400 text-sm">
+                          {item.qty} x Rp{" "}
+                          {Number(item.material.harga).toLocaleString(
+                            "id-ID"
+                          )}
+                        </p>
+                      </div>
+
+                      <span className="text-white">
+                        Rp{" "}
+                        {(
+                          item.qty *
+                          Number(item.material.harga)
+                        ).toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between mt-4 text-orange-400 font-bold">
+                  <span>Subtotal Material</span>
+
+                  <span>
+                    Rp{" "}
+                    {selectedNota.material
+                      .reduce(
+                        (sum: number, item: DetailMaterial) =>
+                          sum + item.qty * Number(item.material.harga),
+                        0
+                      )
+                      .toLocaleString("id-ID")}
+                  </span>
+                </div>
+              </div>
+
+              {/* TOTAL */}
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6">
+                <p className="text-center text-gray-400 text-sm">
+                  GRAND TOTAL
+                </p>
+
+                <h2 className="text-center text-4xl font-bold text-orange-500 mt-2">
+                  Rp{" "}
+                  {Number(
+                    selectedNota.nota.totalHarga
+                  ).toLocaleString("id-ID")}
+                </h2>
+              </div>
+            </div>
+
+            {/* FOOTER */}
+            <div className="p-6 border-t border-white/10 flex gap-3">
+              <button
+                className="flex-1 py-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold"
+              >
+                Bayar Sekarang
+              </button>
+              <button
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl"
+              >
+                Cetak Nota
+              </button>
+
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="flex-1 border border-white/20 text-white py-3 rounded-xl"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
