@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import {
   Bell,
@@ -18,10 +18,16 @@ import Script from "next/script";
 declare global {
   interface Window {
     snap: {
-      pay: (token: string) => void;
+      pay: (token: string, options?: {
+        onSuccess?: (result: Record<string, unknown>) => void;
+        onPending?: (result: Record<string, unknown>) => void;
+        onError?: (result: Record<string, unknown>) => void;
+        onClose?: () => void;
+      }) => void;
     };
   }
 }
+
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
 function fmt(n?: number) {
@@ -55,8 +61,28 @@ interface NotaSummary {
   work_order_id: number;
   tanggal: string;
   totalHarga: number;
-  status: "LUNAS" | "BELUM LUNAS";
+  status: "pending" | "belum_lunas" | "lunas";
   work_order: WorkOrder;
+}
+
+interface RawWorkOrder {
+  id: number;
+  nota?: {
+    id: number;
+    status: string;
+    tanggal: string;
+    totalHarga: number | string;
+  };
+
+}
+
+interface RawNota {
+  id: number;
+  work_order_id: number;
+  tanggal: string;
+  totalHarga: number | string;
+  status: string;
+  work_order: unknown;
 }
 
 // Detail Nota (dari endpoint /api/nota/{id})
@@ -111,7 +137,7 @@ function PaymentDetail({
     const fetchDetail = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:8000/api/nota/${notaId}`, {
+        const res = await fetch(`http://localhost:8000/api/user-nota/${notaId}`, {
           headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         const data = await res.json();
@@ -185,9 +211,9 @@ function PaymentDetail({
             </div>
           </div>
           <span className="px-2.5 py-0.5 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold rounded tracking-widest">
-            {detail.nota?.status === "pending"
-              ? "UNPAID"
-              : "PAID"}
+            {detail.nota?.status === "lunas"
+              ? "LUNAS"
+              : "BELUM LUNAS"}
           </span>
         </div>
 
@@ -304,114 +330,84 @@ export default function TagihanPage() {
   const [showBulkPanel, setShowBulkPanel] = useState(false);
 
   // Ambil data user & daftar nota
+  const fetchUserAndNotas = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      // 1. Ambil data user
+      const userRes = await fetch("http://localhost:8000/api/user", {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const userData = await userRes.json();
+      setUser(userData);
+
+      // 2. Ambil work order aktif (belum lunas) - gunakan RawWorkOrder[]
+      const activeRes = await fetch("http://localhost:8000/api/active-work-order", {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const activeWorkOrders = await activeRes.json() as RawWorkOrder[];
+
+      const unpaidInvoices: NotaSummary[] = activeWorkOrders
+        .filter(
+          (wo): wo is RawWorkOrder & { nota: NonNullable<RawWorkOrder["nota"]> } =>
+            wo.nota !== undefined && wo.nota.status === "belum_lunas"
+        )
+        .map((wo) => ({
+          id: wo.nota.id,
+          noNota: `NTA-${wo.nota.id.toString().padStart(5, "0")}`,
+          work_order_id: wo.id,
+          tanggal: wo.nota.tanggal,
+          totalHarga: Number(wo.nota.totalHarga),
+          status: "belum_lunas",
+          work_order: wo as unknown as WorkOrder,
+        }));
+      setUnpaidList(unpaidInvoices);
+
+      // 3. Ambil riwayat pembayaran (sudah lunas) - gunakan RawNota[]
+      const historyRes = await fetch("http://localhost:8000/api/payment-history", {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const paidNotas = await historyRes.json() as RawNota[];
+
+      const paidInvoices: NotaSummary[] = paidNotas.map((nota) => ({
+        id: nota.id,
+        noNota: `NTA-${nota.id.toString().padStart(5, "0")}`,
+        work_order_id: nota.work_order_id,
+        tanggal: nota.tanggal,
+        totalHarga: Number(nota.totalHarga),
+        status: "lunas",
+        work_order: nota.work_order as WorkOrder,
+      }));
+      setPaidList(paidInvoices);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+
+  };
+
   useEffect(() => {
-    const fetchUserAndNotas = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const [userRes, workOrderRes] = await Promise.all([
-          fetch("http://localhost:8000/api/user", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }),
-
-          fetch("http://localhost:8000/api/active-work-order", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }),
-        ]);
-
-        const userData = await userRes.json();
-        setUser(userData);
-
-        const workOrderData = await workOrderRes.json();
-        console.log(workOrderData);
-        // Asumsikan response berbentuk { data: [...] }
-        const invoices: NotaSummary[] = workOrderData
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .filter((wo: any) => wo.nota)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((wo: any) => ({
-            id: wo.nota.id,
-
-            noNota: `NTA-${wo.nota.id
-              .toString()
-              .padStart(5, "0")}`,
-
-            work_order_id: wo.id,
-
-            tanggal: wo.nota.tanggal,
-
-            totalHarga: Number(wo.nota.totalHarga),
-
-            status:
-              wo.nota.status === "paid"
-                ? "LUNAS"
-                : "BELUM LUNAS",
-
-            work_order: wo,
-          }));
-
-        console.log("INVOICES", invoices);
-
-        setUnpaidList(
-          invoices.filter(
-            (inv) => inv.status === "BELUM LUNAS"
-          )
-        );
-
-        setPaidList(
-          invoices.filter(
-            (inv) => inv.status === "LUNAS"
-          )
-
-        );
-
-        setUnpaidList(invoices.filter((inv) => inv.status === "BELUM LUNAS"));
-        console.log(
-          "UNPAID",
-          invoices.filter(
-            (inv) => inv.status === "BELUM LUNAS"
-          )
-        );
-        setPaidList(invoices.filter((inv) => inv.status === "LUNAS"));
-        console.log(
-          "PAID",
-          invoices.filter(
-            (inv) => inv.status === "LUNAS"
-          )
-        );
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUserAndNotas();
   }, []);
 
   const handlePayment = async (notaId: number) => {
     const token = localStorage.getItem("token");
-
-    const res = await fetch(
-      `http://localhost:8000/api/payment/create/${notaId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      }
-    );
-
+    const res = await fetch(`http://localhost:8000/api/payment/create/${notaId}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
     const data = await res.json();
 
-    console.log(data);
-
-    window.snap.pay(data.snap_token);
+    window.snap.pay(data.snap_token, {
+      onSuccess: (result: Record<string, unknown>) => {
+        console.log("Payment success", result);
+        alert("Pembayaran berhasil!!");
+        window.location.reload();
+      },
+      onPending: () => alert("Pembayaran pending"),
+      onError: () => alert("Pembayaran gagal"),
+    });
   };
 
   // Bulk selection helpers

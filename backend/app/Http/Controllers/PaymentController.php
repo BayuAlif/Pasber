@@ -101,7 +101,10 @@ class PaymentController extends Controller
     }
 
     public function notificationHandler(Request $request)
+
     {
+        Log::info('MIDTRANS CALLBACK MASUK');
+        Log::info($request->all());
         $payload = $request->all();
 
 
@@ -134,11 +137,16 @@ class PaymentController extends Controller
             $nota->update([
                 'status' => 'lunas'
             ]);
+
             Payment::where(
                 'nota_id',
                 $notaId
             )->update([
                 'status' => 'paid'
+            ]);
+
+            $nota->workOrder()->update([
+                'statusWO' => 'paid'
             ]);
         }
 

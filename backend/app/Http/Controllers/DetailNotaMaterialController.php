@@ -45,12 +45,6 @@ class DetailNotaMaterialController extends Controller
             $request->qty
         );
 
-        $detail = DetailNotaMaterial::create([
-            'WOID' => $request->WOID,
-            'materialID' => $request->materialID,
-            'qty' => $request->qty
-        ]);
-
         return response()->json([
             'message' => 'Material berhasil ditambahkan',
             'data' => $detail

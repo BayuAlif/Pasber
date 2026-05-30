@@ -99,11 +99,10 @@ class NotaController extends Controller
         //
     }
 
-    public function calculateTotal($id)
-    {
-        $nota = Nota::findOrFail($id);
 
-        $woid = $nota->WOID;
+    public function terbitkanNTA($woid)
+    {
+        $nota = Nota::where('WOID', $woid)->firstOrFail();
 
         $totalJasa = DetailNotaJasa::where(
             'WOID',
@@ -117,16 +116,13 @@ class NotaController extends Controller
         $totalMaterial = 0;
 
         foreach ($materials as $item) {
-
             if ($item->material) {
                 $totalMaterial +=
                     $item->material->harga * $item->qty;
             }
         }
 
-        $totalHarga =
-            $totalJasa +
-            $totalMaterial;
+        $totalHarga = $totalJasa + $totalMaterial;
 
         $nota->update([
             'totalHarga' => $totalHarga,
@@ -134,10 +130,20 @@ class NotaController extends Controller
         ]);
 
         return response()->json([
-            'nota' => $nota->fresh(),
-            'totalJasa' => $totalJasa,
-            'totalMaterial' => $totalMaterial,
+            'message' => 'NTA berhasil diterbitkan',
             'totalHarga' => $totalHarga
         ]);
+    }
+
+    public function userHistory()
+    {
+        $user = auth()->user();
+        $notas = Nota::with('workOrder.booking.kendaraan')
+            ->whereHas('workOrder.booking', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->where('status', 'lunas')
+            ->get();
+        return response()->json($notas);
     }
 }

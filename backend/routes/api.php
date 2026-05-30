@@ -52,9 +52,10 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
         [PaymentController::class, 'notificationHandler']
     );
     Route::get(
-        '/nota/{id}',
+        '/user-nota/{id}',
         [NotaController::class, 'show']
     );
+    Route::get('/payment-history', [NotaController::class, 'userHistory']);
 });
 
 // Admin
@@ -93,12 +94,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         PaymentController::class
     );
     Route::get('/nota/{id}', [NotaController::class, 'show']);
+    Route::get(
+        '/work-order-selesai',
+        [kelolaWorkOrderController::class, 'woSelesai']
+    );
+
+    Route::post(
+        '/nota/terbitkan/{woid}',
+        [NotaController::class, 'terbitkanNTA']
+    );
 });
 
-Route::get(
-    '/work-order-selesai',
-    [kelolaWorkOrderController::class, 'woSelesai']
-);
 
 
 //punya midtrans

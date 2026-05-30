@@ -12,7 +12,10 @@ import AuthPopup from "@/app/components/auth_popup/Auth_popup";
 // Types & Interfaces
 // ─────────────────────────────────────────────────────────────────────────────
 
-type InvoiceStatus = 'LUNAS' | 'BELUM LUNAS';
+type InvoiceStatus =
+  | "pending"
+  | "belum_lunas"
+  | "lunas";
 type ViewMode = 'list' | 'create';
 type ItemTab = 'jasa' | 'material';
 
@@ -34,7 +37,8 @@ interface NotaJasa {
 }
 
 interface NotaMaterial {
-  id: number;
+  id: number;          // id frontend
+  materialID: number;  // id database
   namaItem: string;
   qty: number;
   satuan: string;
@@ -154,6 +158,7 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
     onAddMaterial(
       cart.map(c => ({
         id: Date.now() + c.item.id,
+        materialID: c.item.id,
         namaItem: c.item.nama,
         qty: c.qty,
         satuan: c.item.satuan,
@@ -466,8 +471,93 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
   const totalTagihan = subtotalJasa + subtotalMaterial;
 
   // ── Handlers ──
-  const handleAddJasa = (items: NotaJasa[]) => setNotaJasa(prev => [...prev, ...items]);
-  const handleAddMaterial = (items: NotaMaterial[]) => setNotaMaterial(prev => [...prev, ...items]);
+  const handleAddJasa = async (items: NotaJasa[]) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      for (const item of items) {
+        const response = await fetch(
+          "http://localhost:8000/api/detail-nota-jasa",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              WOID: selectedWO?.id,
+              namaJasa: item.deskripsi,
+              hargaJasa: item.biaya,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Gagal menyimpan jasa");
+        }
+      }
+
+      setNotaJasa(prev => [...prev, ...items]);
+
+    } catch (error) {
+      console.error(error);
+
+      setPopupType("error");
+      setPopupTitle("Gagal");
+      setPopupMessage("Jasa gagal ditambahkan.");
+      setPopupOpen(true);
+    }
+  };
+  const handleAddMaterial = async (items: NotaMaterial[]) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      for (const item of items) {
+
+        console.log({
+          WOID: selectedWO?.id,
+          materialID: item.materialID,
+          qty: item.qty,
+        });
+
+        const response = await fetch(
+          "http://localhost:8000/api/detail-nota-material",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              WOID: selectedWO?.id,
+              materialID: item.materialID,
+              qty: item.qty,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.log(errorData);
+
+          throw new Error("Gagal menyimpan material");
+        }
+      }
+
+      setNotaMaterial(prev => [...prev, ...items]);
+      console.log("MATERIAL =", items);
+
+    } catch (error) {
+      console.error(error);
+
+      setPopupType("error");
+      setPopupTitle("Gagal");
+      setPopupMessage("Material gagal ditambahkan.");
+      setPopupOpen(true);
+    }
+  };
   const handleTerbitkanNTA = async () => {
     if (!selectedWO) {
       setPopupType("error");
@@ -488,7 +578,26 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
     }
 
     try {
-      // proses simpan nota
+      const token = localStorage.getItem("token");
+
+
+      const response = await fetch(
+        `http://localhost:8000/api/nota/terbitkan/${selectedWO.id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message);
+      }
 
       setPopupType("success");
       setPopupTitle("NTA Berhasil");
@@ -861,7 +970,13 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
         title={popupTitle}
         message={popupMessage}
         onClose={() => setPopupOpen(false)}
-        onContinue={() => setPopupOpen(false)}
+        onContinue={() => {
+          setPopupOpen(false);
+
+          if (popupType === "success") {
+            onBack();
+          }
+        }}
       />
     </div>
 
@@ -921,9 +1036,9 @@ export default function InvoicePembayaran() {
   };
   // ── Derived ──
   const totalNota = invoices.length;
-  const menungguPembayaran = invoices.filter(i => i.status === 'BELUM LUNAS').length;
-  const totalPemasukan = invoices.filter(i => i.status === 'LUNAS').reduce((acc, i) => acc + i.total, 0);
-  const belumLunas = invoices.filter(i => i.status === 'BELUM LUNAS').reduce((acc, i) => acc + i.total, 0);
+  const menungguPembayaran = invoices.filter(i => i.status === 'belum_lunas').length;
+  const totalPemasukan = invoices.filter(i => i.status === 'lunas').reduce((acc, i) => acc + i.total, 0);
+  const belumLunas = invoices.filter(i => i.status === 'belum_lunas').reduce((acc, i) => acc + i.total, 0);
 
   const filtered = invoices.filter(i => {
     const matchSearch =
@@ -1134,19 +1249,15 @@ export default function InvoicePembayaran() {
             <div className="shrink-0 w-44 relative">
               <select
                 value={statusFilter}
-                onChange={e => handleStatusFilter(e.target.value)}
-                className="w-full appearance-none bg-[#0d1117] border border-white/[0.08] rounded-lg px-3 py-2.5 pr-8 text-sm font-semibold text-white outline-none focus:border-orange-500/50 hover:border-white/20 transition-colors cursor-pointer"
+                onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="All Status">All Status</option>
-                <option value="LUNAS">Lunas</option>
-                <option value="BELUM LUNAS">Belum Lunas</option>
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="belum_lunas">Belum Lunas</option>
+                <option value="lunas">Lunas</option>
               </select>
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <ChevronDown size={12} />
-              </div>
-              {statusFilter !== 'All Status' && (
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-orange-500 border-2 border-[#161b22]" />
-              )}
+              
+              
             </div>
 
             {/* Apply Filters */}
@@ -1187,7 +1298,7 @@ export default function InvoicePembayaran() {
             paginated.map(inv => (
               <div
                 key={inv.id}
-                className={`grid grid-cols-[1.2fr_2fr_1.2fr_1.2fr_1fr_0.8fr] gap-4 px-6 py-4 items-center border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors ${inv.status === 'BELUM LUNAS' ? 'border-l-2 border-l-orange-500' : ''
+                className={`grid grid-cols-[1.2fr_2fr_1.2fr_1.2fr_1fr_0.8fr] gap-4 px-6 py-4 items-center border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors ${inv.status === 'belum_lunas' ? 'border-l-2 border-l-orange-500' : ''
                   }`}
               >
                 <p className="text-sm font-semibold text-white">{inv.noNota}</p>
@@ -1205,17 +1316,23 @@ export default function InvoicePembayaran() {
                   <p className="text-[11px] text-gray-500">{inv.jam}</p>
                 </div>
 
-                <p className={`text-sm font-bold ${inv.status === 'BELUM LUNAS' ? 'text-orange-400' : 'text-white'}`}>
+                <p className={`text-sm font-bold ${inv.status === 'belum_lunas' ? 'text-orange-400' : 'text-white'}`}>
                   {formatRpFull(inv.total)}
                 </p>
 
                 <span
-                  className={`inline-flex items-center px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest ${inv.status === 'LUNAS'
-                    ? 'bg-green-500/15 text-green-400 border border-green-500/20'
-                    : 'bg-orange-500/15 text-orange-400 border border-orange-500/20'
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest ${inv.status === "lunas"
+                    ? "bg-green-500/15 text-green-400 border border-green-500/20"
+                    : inv.status === "belum_lunas"
+                      ? "bg-red-500/15 text-red-400 border border-red-500/20"
+                      : "bg-orange-500/15 text-orange-400 border border-orange-500/20"
                     }`}
                 >
-                  {inv.status}
+                  {inv.status === "belum_lunas"
+                    ? "Belum Lunas"
+                    : inv.status === "lunas"
+                      ? "Lunas"
+                      : "Pending"}
                 </span>
 
                 <button
@@ -1443,11 +1560,6 @@ export default function InvoicePembayaran() {
 
             {/* FOOTER */}
             <div className="p-6 border-t border-white/10 flex gap-3">
-              <button
-                className="flex-1 py-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold"
-              >
-                Bayar Sekarang
-              </button>
               <button
                 className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl"
               >
