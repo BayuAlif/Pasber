@@ -113,4 +113,17 @@ class kelolaWorkOrderController extends Controller
     {
         //
     }
+
+    public function woSelesai()
+    {
+        $wo = work_order::with([
+            'booking.user',
+            'booking.kendaraan',
+            'mekanik'
+        ])
+            ->where('status', 'selesai')
+            ->get();
+
+        return response()->json($wo);
+    }
 }

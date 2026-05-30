@@ -43,7 +43,8 @@ class WorkOrderController extends Controller
         $user = $request->user();
 
         $workOrder = work_order::with([
-            'booking.kendaraan'
+            'booking.kendaraan',
+            'nota.payment'
         ])
             ->whereHas('booking', function ($q) use ($user) {
                 $q->where('user_id', $user->id);

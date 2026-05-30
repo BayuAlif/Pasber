@@ -115,7 +115,8 @@ class NotaController extends Controller
             $totalMaterial;
 
         $nota->update([
-            'totalHarga' => $totalHarga
+            'totalHarga' => $totalHarga,
+            'status' => 'belum_lunas'
         ]);
 
         return response()->json([
