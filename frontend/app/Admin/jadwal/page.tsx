@@ -430,15 +430,15 @@ export default function KelolaJadwalPage() {
         )
     );
 
-  const filteredDetailMechanics =
-    mekaniks.filter(m =>
+  // const filteredDetailMechanics =
+  //   mekaniks.filter(m =>
 
-      m.nama
-        .toLowerCase()
-        .includes(
-          detailMechSearch.toLowerCase()
-        )
-    );
+  //     m.nama
+  //       .toLowerCase()
+  //       .includes(
+  //         detailMechSearch.toLowerCase()
+  //       )
+  //   );
 
   const handleCreateWO = async () => {
 
@@ -499,9 +499,6 @@ export default function KelolaJadwalPage() {
             </button>
           </div>
         </div>
-
-
-
 
         {/* ══════════════════════════════════════
             VIEW: CREATE WO
@@ -726,7 +723,7 @@ export default function KelolaJadwalPage() {
 
                     </tr>
 
-                  ) : 
+                  ) :
 
                     paginated.map((w, i) => (
 
@@ -1358,14 +1355,17 @@ export default function KelolaJadwalPage() {
                         Estimasi
                       </p>
 
-                        <p className="text-[13px] font-semibold text-orange-400">
-                          {selectedWO.estimasiWaktu
-                            ? `${selectedWO.estimasiWaktu} Menit`
-                            : "-"
-                          }
-                        </p>
+                      <p className="text-[13px] font-semibold text-orange-400">
+                        {selectedWO.estimasiWaktu
+                          ? `${selectedWO.estimasiWaktu} Menit`
+                          : "-"
+                        }
+                      </p>
 
                     </div>
+                    <p className="text-[28px] text-[#9ca3af] mt-2">
+                      <span className="font-semibold text-[#d1d5db]">Mekanik:</span> {selectedWO?.mekanik?.nama ?? '-'}
+                    </p>
 
                   </div>
 

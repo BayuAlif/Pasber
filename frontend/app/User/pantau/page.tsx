@@ -78,7 +78,15 @@ export default function PantauServicePage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
+
+  const toggleCardExpansion = (id: number) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   useEffect(() => {
     const fetchWorkOrders = async () => {
@@ -320,38 +328,46 @@ export default function PantauServicePage() {
           const activityLog = getActivityLog(wo.workOrder?.logs, currentStatus);
 
           const steps = getProgressSteps(currentStatus);
+          const isExpanded = !!expandedCards[wo.id];
 
           return (
-            <div key={wo.id} className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden mb-7">
+            <div key={wo.id} className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden mb-7 transition-all duration-200">
               {/* WO Header */}
-              <div className="p-5 px-6 border-b border-[#1e2230] flex justify-between items-start">
+              <button
+                type="button"
+                onClick={() => toggleCardExpansion(wo.id)}
+                className="w-full text-left p-5 px-6 border-b border-[#1e2230] flex justify-between items-start gap-4 hover:bg-[#161923] focus:outline-none"
+              >
                 <div>
                   <div className="text-[10px] text-gray-600 tracking-[0.15em] mb-1">
                     BOOKING
                   </div>
-                  <div className="text-[22px] font-bold text-white leading-none">
+                  <div className="text-[20px] font-bold text-white leading-none">
                     BOOK-{String(wo.id).padStart(3, "0")}
                   </div>
-                  <div className="text-sm text-gray-400 mt-1">{wo.kendaraan?.merek} {wo.kendaraan?.model}</div>
-                  <div>
-                    <p>{wo.kendaraan?.nomorPolisi}</p>
-
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      {wo.bengkel?.nama}
-                    </p>
+                  <div className="text-sm text-gray-400 mt-1">
+                    {wo.kendaraan?.merek} {wo.kendaraan?.model} • {wo.kendaraan?.nomorPolisi}
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-2">
+                    {wo.bengkel?.nama} • {wo.Keluhan}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-2">
                   <span className="flex items-center gap-1.5 py-1 px-3 bg-orange-500/10 border border-orange-500/30 rounded-full text-[11px] font-bold text-orange-500 tracking-widest">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                     {(wo.workOrder?.statusWO || wo.status).toUpperCase()}
                   </span>
-                  <ChevronDown size={16} className="text-gray-600" />
+                  <ChevronDown
+                    size={16}
+                    className={`text-gray-600 transition-transform duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                  />
                 </div>
-              </div>
+              </button>
 
-              {/* Progress Tracker */}
-              <div className="p-5 px-6 border-b border-[#1e2230]">
+              {isExpanded && (
+                <div>
+                  {/* Progress Tracker */}
+                  <div className="p-5 px-6 border-b border-[#1e2230]">
                 <div className="text-[10px] text-gray-600 tracking-[0.15em] mb-4">
                   PROGRESS TRACKER
                 </div>
@@ -463,48 +479,37 @@ export default function PantauServicePage() {
                   {activityLog.map((item, i) => (
                     <div
                       key={i}
-                      className={`flex gap-3 relative ${i < activityLog.length - 1 ? "pb-4" : ""
-                        }`}
+                      className={`flex gap-3 relative ${i < activityLog.length - 1 ? "pb-4" : ""}`}
                     >
                       {/* Vertical line */}
                       {i < activityLog.length - 1 && (
                         <div className="absolute left-[13px] top-7 bottom-0 w-px bg-[#1e2230]" />
                       )}
                       <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 z-10 border ${i === 0
+                        className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border ${i === 0
                           ? "bg-orange-500/10 border-orange-500/25"
                           : "bg-[#1a1d28] border-[#2a2f3e]"
                           }`}
                       >
                         <Clock
                           size={13}
-                          className={
-                            item.active
-                              ? "text-orange-500"
-                              : "text-gray-600"
-                          }
+                          className={item.active ? "text-orange-500" : "text-gray-600"}
                         />
                       </div>
                       <div className="min-w-0">
-
-                        <div
-                          className={`text-sm font-semibold ${item.active
-                            ? "text-slate-200"
-                            : "text-gray-500"
-                            }`}
-                        >
+                        <div className={`text-sm font-semibold ${item.active ? "text-slate-200" : "text-gray-500"}`}>
                           {item.title}
                         </div>
-
                         <div className="text-[11px] text-gray-600 mt-0.5">
                           {item.time} • {item.source}
                         </div>
-
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
+              )}
             </div>
           );
         })}
