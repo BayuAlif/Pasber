@@ -21,12 +21,12 @@ class BookingController extends Controller
             'booking.bengkel',
             'workOrder'
         ])
-        ->where('user_id', $request->user()->id)
-        ->whereHas('workOrder', function ($query) {
-            $query->where('statusWO', '!=', 'paid');
-        })
-        ->latest()
-        ->get();
+            ->where('user_id', $request->user()->id)
+            ->whereHas('workOrder', function ($query) {
+                $query->where('statusWO', '!=', 'paid');
+            })
+            ->latest()
+            ->get();
 
         return response()->json([
             'data' => $bookings
@@ -43,41 +43,36 @@ class BookingController extends Controller
 
         $MAX_BOOKING = 5;
 
+        $activeStatuses = ['pending', 'approved', 'running', 'qc', 'done'];
+
         $bookings = Booking::where('bengkel_id', $request->bengkel_id)
             ->whereYear('jadwalService', $request->tahun)
             ->whereMonth('jadwalService', $request->bulan)
-            ->where('status', '!=', 'rejected')
-            ->where('status', '!=', 'paid')
+            ->where('status', 'approved')
+            ->where(function ($q) {
+                $q->whereDoesntHave('workOrder')
+                    ->orWhereHas('workOrder', function ($q2) {
+                        $q2->where('statusWO', '!=', 'paid');
+                    });
+            })
             ->get()
             ->groupBy(function ($booking) {
-                return \Carbon\Carbon::parse(
-                    $booking->jadwalService
-                )->format('Y-m-d');
+                return \Carbon\Carbon::parse($booking->jadwalService)->format('Y-m-d');
             });
 
-        $fullDates = [];
 
+        $fullDates = [];
         $quotaInfo = [];
 
         foreach ($bookings as $date => $items) {
-
             $count = $items->count();
+            $remaining = max(0, $MAX_BOOKING - $count);
+            $day = \Carbon\Carbon::parse($date)->day;
 
-            $remaining = max(
-                0,
-                $MAX_BOOKING - $count
-            );
-
-            $day =
-                \Carbon\Carbon::parse($date)->day;
-
-            // kalau full
             if ($count >= $MAX_BOOKING) {
-
                 $fullDates[] = $day;
             }
 
-            // info quota
             $quotaInfo[] = [
                 'date' => $date,
                 'day' => $day,
@@ -106,7 +101,7 @@ class BookingController extends Controller
             'jadwalService' => [
                 'required',
                 'after_or_equal:today'
-                ],
+            ],
         ]);
 
         // insert ke booking
@@ -132,7 +127,7 @@ class BookingController extends Controller
      */
     public function show(string $id)
     {
-         $booking = Booking::findOrFail($id);
+        $booking = Booking::findOrFail($id);
 
         // keamanan
         if ($booking->user_id !== Auth::id()) {
@@ -160,7 +155,7 @@ class BookingController extends Controller
      */
     public function destroy(string $id)
     {
-         $booking = Booking::findOrFail($id);
+        $booking = Booking::findOrFail($id);
 
         // keamanan
         if ($booking->user_id !== Auth::id()) {
@@ -184,7 +179,7 @@ class BookingController extends Controller
             'bengkel',
             'workOrder.mekanik',
             'workOrder.logs'
-            ])
+        ])
             ->where('user_id', $request->user()->id)
             ->get();
 
@@ -193,4 +188,3 @@ class BookingController extends Controller
         ]);
     }
 }
-

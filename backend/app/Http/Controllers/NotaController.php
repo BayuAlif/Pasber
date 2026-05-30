@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Nota;
 use App\Models\DetailNotaJasa;
 use App\Models\DetailNotaMaterial;
+use Illuminate\Support\Facades\Auth;
 
 
 class NotaController extends Controller
@@ -137,7 +138,7 @@ class NotaController extends Controller
 
     public function userHistory()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $notas = Nota::with('workOrder.booking.kendaraan')
             ->whereHas('workOrder.booking', function ($q) use ($user) {
                 $q->where('user_id', $user->id);

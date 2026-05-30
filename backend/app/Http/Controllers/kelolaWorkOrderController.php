@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\work_order;
 use App\Models\WorkOrderLog;
+use App\Models\Mekanik;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Nota;
@@ -62,6 +63,9 @@ class kelolaWorkOrderController extends Controller
     {
         $workOrder = work_order::findOrFail($id);
 
+        $oldMekanikId = $workOrder->mekanik_id;
+        $oldStatus = $workOrder->statusWO;
+
         // =========================
         // UPDATE DATA
         // =========================
@@ -74,11 +78,52 @@ class kelolaWorkOrderController extends Controller
 
             'statusWO' => $request->statusWO
                 ?? $workOrder->statusWO,
-
         ]);
 
-        if ($request->statusWO === 'done') {
+        $newMekanikId = $workOrder->mekanik_id;
+        $newStatus = $workOrder->statusWO;
 
+        if ($request->statusWO === 'paid' && $workOrder->booking) {
+            $workOrder->booking->update(['status' => 'paid']);
+        }
+
+        // =========================
+        // UPDATE STATUS MEKANIK (AVAILABLE/UNAVAILABLE)
+        // =========================
+        // Jika mekanik berubah
+        if ($oldMekanikId != $newMekanikId) {
+            if ($oldMekanikId) {
+                $oldMek =Mekanik::find($oldMekanikId);
+                if ($oldMek && $oldMek->status !== 'available') {
+                    $oldMek->update(['status' => 'available']);
+                }
+            }
+            if ($newMekanikId && in_array($newStatus, ['assigned', 'running'])) {
+                $newMek = Mekanik::find($newMekanikId);
+                if ($newMek && $newMek->status !== 'unavailable') {
+                    $newMek->update(['status' => 'unavailable']);
+                }
+            }
+        } else {
+            if ($newMekanikId) {
+                if (in_array($newStatus, ['done', 'paid', 'rejected'])) {
+                    $mek = Mekanik::find($newMekanikId);
+                    if ($mek && $mek->status !== 'available') {
+                        $mek->update(['status' => 'available']);
+                    }
+                } elseif (in_array($newStatus, ['assigned', 'running']) && $oldStatus !== $newStatus) {
+                    $mek = Mekanik::find($newMekanikId);
+                    if ($mek && $mek->status !== 'unavailable') {
+                        $mek->update(['status' => 'unavailable']);
+                    }
+                }
+            }
+        }
+
+        // =========================
+        // BUAT NOTA JIKA STATUS = DONE
+        // =========================
+        if ($request->statusWO === 'done') {
             Nota::firstOrCreate(
                 ['WOID' => $workOrder->id],
                 [
@@ -93,7 +138,6 @@ class kelolaWorkOrderController extends Controller
         // CREATE LOG
         // =========================
         if ($request->statusWO) {
-
             WorkOrderLog::create([
                 'work_order_id' => $workOrder->id,
                 'status' => $request->statusWO,
