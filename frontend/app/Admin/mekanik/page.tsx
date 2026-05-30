@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import SidebarAdmin from '../../components/sidebar-admin/page';
 import axios from "axios";
+import AuthPopup from '../../components/auth_popup/Auth_popup';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type StatusType = 'available' | 'unavailable';
@@ -49,7 +50,14 @@ export default function KelolaMekanikPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'Semua' | StatusType>('Semua');
   const [page, setPage] = useState(1);
-
+  // State untuk popup
+  const [popup, setPopup] = useState<{
+    open: boolean;
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+  } | null>(null);
+  const [onSuccessCallback, setOnSuccessCallback] = useState<(() => void) | null>(null);
 
   // modals
   const [showAdd, setShowAdd] = useState(false);
@@ -65,6 +73,37 @@ export default function KelolaMekanikPage() {
     telepon: '',
     spesialisasi: ''
   };
+
+  const showError = (message: string) => {
+    setPopup({
+      open: true,
+      type: 'error',
+      title: 'Validasi Gagal',
+      message,
+    });
+  };
+
+  const showSuccess = (message: string, onContinue?: () => void) => {
+    setPopup({
+      open: true,
+      type: 'success',
+      title: 'Berhasil!',
+      message,
+    });
+    if (onContinue) setOnSuccessCallback(() => onContinue);
+  };
+
+  const handlePopupClose = () => {
+    setPopup(null);
+    setOnSuccessCallback(null);
+  };
+
+  const handlePopupContinue = () => {
+    if (onSuccessCallback) onSuccessCallback();
+    setPopup(null);
+    setOnSuccessCallback(null);
+  };
+  const closePopup = () => setPopup(null);
 
   const [selectedFile, setSelectedFile] =
     useState<File | null>(null);
@@ -117,118 +156,111 @@ export default function KelolaMekanikPage() {
   }, []);
   // ── CRUD handlers ──────────────────────────────────────────────────────
   const handleAddSubmit = async () => {
+    if (!form.nama.trim() || form.nama.trim().length < 3) {
+      showError("Nama lengkap minimal 3 karakter");
+      return;
+    }
+    if (!form.email.trim()) {
+      showError("Email harus diisi");
+      return;
+    }
+    if (!emailRegex.test(form.email)) {
+      showError("Format email tidak valid");
+      return;
+    }
+    if (form.telepon && !phoneRegex.test(form.telepon)) {
+      showError("Nomor telepon tidak valid (contoh: 081234567890)");
+      return;
+    }
+    if (!form.spesialisasi) {
+      showError("Pilih spesialisasi mekanik");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-
       const formData = new FormData();
-
       formData.append("nama", form.nama);
       formData.append("email", form.email);
-      formData.append("telepon", form.telepon);
+      formData.append("telepon", form.telepon || "");
       formData.append("spesialisasi", form.spesialisasi);
+      if (selectedFile) formData.append("foto", selectedFile);
 
-
-      if (selectedFile) {
-        formData.append("foto", selectedFile);
-      }
-
-      await axios.post(
-        "http://127.0.0.1:8000/api/mekanik",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-            Accept: "application/json"
-          }
+      await axios.post("http://127.0.0.1:8000/api/mekanik", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json"
         }
-      );
+      });
 
-      if (selectedFile) {
-        formData.append("foto", selectedFile);
-      }
-
-      if (form.nama.trim().length < 3) {
-        alert("Nama minimal 3 karakter");
-        return;
-      }
-
-      if (!emailRegex.test(form.email)) {
-        alert("Format email tidak valid");
-        return;
-      }
-
-      if (!phoneRegex.test(form.telepon)) {
-        alert("Nomor telepon tidak valid");
-        return;
-      }
-
-      fetchMekanik();
-
-      setShowAdd(false);
-      setForm(emptyForm);
-
-    } catch (error) {
-      console.error(error);
+      showSuccess("Mekanik berhasil ditambahkan!", () => {
+        setShowAdd(false);
+        setForm({ ...emptyForm });
+        setSelectedFile(null);
+        fetchMekanik();
+      });
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Gagal menambahkan mekanik";
+      showError(message);
     }
   };
 
   const handleEditSubmit = async () => {
     if (!showEdit) return;
 
-    try {
+    if (!form.nama.trim() || form.nama.trim().length < 3) {
+      showError("Nama lengkap minimal 3 karakter");
+      return;
+    }
+    if (!form.email.trim()) {
+      showError("Email harus diisi");
+      return;
+    }
+    if (!emailRegex.test(form.email)) {
+      showError("Format email tidak valid");
+      return;
+    }
+    if (form.telepon && !phoneRegex.test(form.telepon)) {
+      showError("Nomor telepon tidak valid");
+      return;
+    }
+    if (!form.spesialisasi) {
+      showError("Pilih spesialisasi mekanik");
+      return;
+    }
 
+    try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
-
       formData.append("_method", "PUT");
       formData.append("nama", form.nama);
       formData.append("email", form.email);
-      formData.append("telepon", form.telepon);
+      formData.append("telepon", form.telepon || "");
       formData.append("spesialisasi", form.spesialisasi);
       formData.append("status", showEdit.status);
+      if (selectedFile) formData.append("foto", selectedFile);
 
-      if (selectedFile) {
-        formData.append("foto", selectedFile);
-      }
-      await axios.post(
-        `http://127.0.0.1:8000/api/mekanik/${showEdit.id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data"
-          }
+      await axios.post(`http://127.0.0.1:8000/api/mekanik/${showEdit.id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
         }
-      );
+      });
 
-      if (form.nama.trim().length < 3) {
-        alert("Nama minimal 3 karakter");
-        return;
-      }
-
-      if (!emailRegex.test(form.email)) {
-        alert("Format email tidak valid");
-        return;
-      }
-
-      if (!phoneRegex.test(form.telepon)) {
-        alert("Nomor telepon tidak valid");
-        return;
-      }
-
-      fetchMekanik();
-
-      setShowEdit(null);
-
-    } catch (error) {
-      console.error(error);
+      showSuccess("Data mekanik berhasil diperbarui!", () => {
+        setShowEdit(null);
+        setSelectedFile(null);
+        fetchMekanik();
+      });
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Gagal mengupdate mekanik";
+      showError(message);
     }
   };
 
   const handleStatusUpdate = async () => {
     if (!showStatus) return;
-
     try {
       const token = localStorage.getItem("token");
       await axios.put(
@@ -240,42 +272,30 @@ export default function KelolaMekanikPage() {
           spesialisasi: showStatus.spesialisasi,
           status: newStatus
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      await fetchMekanik();
-
-      setShowStatus(null);
-    } catch (error) {
-      console.error(error);
+      showSuccess("Status mekanik berhasil diubah!", () => {
+        setShowStatus(null);
+        fetchMekanik();
+      });
+    } catch (error: any) {
+      showError(error.response?.data?.message || "Gagal mengubah status");
     }
   };
 
   const handleDelete = async () => {
     if (!showDelete) return;
-
     try {
       const token = localStorage.getItem("token");
-
-      await axios.delete(
-        `http://127.0.0.1:8000/api/mekanik/${showDelete.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      fetchMekanik();
-
-      setShowDelete(null);
-
-    } catch (error) {
-      console.error(error);
+      await axios.delete(`http://127.0.0.1:8000/api/mekanik/${showDelete.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showSuccess("Mekanik berhasil dihapus!", () => {
+        setShowDelete(null);
+        fetchMekanik();
+      });
+    } catch (error: any) {
+      showError(error.response?.data?.message || "Gagal menghapus mekanik");
     }
   };
 
@@ -284,7 +304,7 @@ export default function KelolaMekanikPage() {
       foto: m.foto ?? '',
       nama: m.nama,
       email: m.email,
-      telepon: m.telepon,
+      telepon: m.telepon ?? '',
       spesialisasi: m.spesialisasi
     });
     setShowEdit(m);
@@ -318,6 +338,8 @@ export default function KelolaMekanikPage() {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex =
     /^(\+62|62|08)[0-9]{8,13}$/;
+
+
 
   // ── Shared input style ─────────────────────────────────────────────────
   const inputCls = "w-full bg-[#0f1117] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[13px] text-[#e2e8f0] placeholder:text-[#374151] outline-none focus:border-orange-500/50 transition-colors";
@@ -535,8 +557,14 @@ export default function KelolaMekanikPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">No. Telepon</p>
-                    <input className={inputCls} placeholder="+62 8..."
-                      value={form.telepon} onChange={e => setForm(f => ({ ...f, telepon: e.target.value }))} />
+                    <input
+                      className={inputCls}
+                      placeholder="+62 8..."
+                      value={form.telepon ?? ''}
+                      onChange={e => setForm(f => ({ ...f, telepon: e.target.value }))}
+                    />
+
+
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-1.5">Spesialisasi</p>
@@ -740,6 +768,17 @@ export default function KelolaMekanikPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {popup && (
+        <AuthPopup
+          open={popup.open}
+          type={popup.type}
+          title={popup.title}
+          message={popup.message}
+          onClose={handlePopupClose}
+          onContinue={handlePopupContinue}
+        />
       )}
     </div>
   );

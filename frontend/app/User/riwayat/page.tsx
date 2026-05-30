@@ -48,7 +48,7 @@ type WorkOrderApiItem = {
     nama?: string;
   };
   nota?: {
-    total?: string | number;
+    totalHarga?: string | number;
   };
 };
 
@@ -77,20 +77,20 @@ const normalizeVehicleType = (jenis?: string): "motor" | "mobil" => {
 
 const formatTotal = (value?: string | number | null) => {
   if (value == null || value === "") return null;
-  return typeof value === "number" ? `Rp ${value.toLocaleString("id-ID")}` : String(value);
+  const numeric = typeof value === "number" ? value : parseFloat(value);
+  if (isNaN(numeric)) return String(value);
+  return `Rp ${numeric.toLocaleString("id-ID")}`;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RiwayatServicePage() {
-  const [search,        setSearch]        = useState("");
-  const [statusFilter,  setStatusFilter]  = useState("Semua Status");
+  const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("Semua Kendaraan");
-  const [statusOpen,    setStatusOpen]    = useState(false);
-  const [vehicleOpen,   setVehicleOpen]   = useState(false);
-  const [detailRow,     setDetailRow]     = useState<ServiceRecord | null>(null);
-  const [page,          setPage]          = useState(1);
-  const [records,       setRecords]       = useState<ServiceRecord[]>([]);
-  const [loading,       setLoading]       = useState(true);
+  const [vehicleOpen, setVehicleOpen] = useState(false);
+  const [detailRow, setDetailRow] = useState<ServiceRecord | null>(null);
+  const [page, setPage] = useState(1);
+  const [records, setRecords] = useState<ServiceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const PER_PAGE = 5;
 
   useEffect(() => {
@@ -119,13 +119,13 @@ export default function RiwayatServicePage() {
           service: wo.booking?.Keluhan ?? "-",
           date: wo.booking?.tanggalBooking
             ? new Date(wo.booking.tanggalBooking).toLocaleDateString("id-ID", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })
             : "-",
           mechanic: wo.mekanik?.nama ?? "-",
-          total: formatTotal(wo.nota?.total),
+          total: formatTotal(wo.nota?.totalHarga),
           status: normalizeWorkOrderStatus(wo.statusWO),
         }));
 
@@ -141,19 +141,18 @@ export default function RiwayatServicePage() {
   }, []);
 
   const uniqueVehicles = Array.from(new Set(records.map((r) => r.vehicle)));
-
   const filtered = records.filter(r => {
-    const matchSearch  = r.wo.toLowerCase().includes(search.toLowerCase()) || r.vehicle.toLowerCase().includes(search.toLowerCase());
-    const matchStatus  = statusFilter  === "Semua Status"    || r.status  === statusFilter.toLowerCase();
+    const matchSearch = r.wo.toLowerCase().includes(search.toLowerCase()) ||
+      r.vehicle.toLowerCase().includes(search.toLowerCase());
     const matchVehicle = vehicleFilter === "Semua Kendaraan" || r.vehicle === vehicleFilter;
-    return matchSearch && matchStatus && matchVehicle;
+    return matchSearch && matchVehicle;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
-    <div className="flex min-h-screen bg-[#0f1117] text-[#e2e8f0]" style={{ fontFamily:"'DM Sans','Segoe UI',sans-serif" }}>
+    <div className="flex min-h-screen bg-[#0f1117] text-[#e2e8f0]" style={{ fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
 
       {/* ── SIDEBAR ── */}
       <Sidebar activeHref="/User/riwayat" />
@@ -189,34 +188,10 @@ export default function RiwayatServicePage() {
             />
           </div>
 
-          {/* Status filter */}
+          {/* Vehicle Filter */}
           <div className="relative">
             <button
-              onClick={() => { setStatusOpen(o => !o); setVehicleOpen(false); }}
-              className="flex items-center gap-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[13px] text-[#9ca3af] cursor-pointer"
-            >
-              {statusFilter} <ChevronDown size={13} />
-            </button>
-            {statusOpen && (
-              <div className="absolute top-[calc(100%+6px)] left-0 bg-[#1e2230] border border-[#2a2f3e] rounded-lg min-w-[180px] z-20 overflow-hidden">
-                {["Semua Status", "Pending", "Approved", "Assigned", "Running", "QC", "Done", "Paid"].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setStatusFilter(s); setStatusOpen(false); setPage(1); }}
-                    className={`block w-full px-3.5 py-2.5 text-left text-[13px] bg-transparent border-none cursor-pointer
-                      ${statusFilter === s ? "text-[#f97316]" : "text-[#9ca3af]"}`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Vehicle filter */}
-          <div className="relative">
-            <button
-              onClick={() => { setVehicleOpen(o => !o); setStatusOpen(false); }}
+              onClick={() => setVehicleOpen(prev => !prev)}
               className="flex items-center gap-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg px-3.5 py-2.5 text-[13px] text-[#9ca3af] cursor-pointer"
             >
               {vehicleFilter} <ChevronDown size={13} />
@@ -228,7 +203,7 @@ export default function RiwayatServicePage() {
                     key={v}
                     onClick={() => { setVehicleFilter(v); setVehicleOpen(false); setPage(1); }}
                     className={`block w-full px-3.5 py-2.5 text-left text-[13px] bg-transparent border-none cursor-pointer
-                      ${vehicleFilter === v ? "text-[#f97316]" : "text-[#9ca3af]"}`}
+              ${vehicleFilter === v ? "text-[#f97316]" : "text-[#9ca3af]"}`}
                   >
                     {v}
                   </button>
@@ -242,8 +217,8 @@ export default function RiwayatServicePage() {
         <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden mb-4">
           {/* Table head */}
           <div className="grid px-5 py-3 border-b border-[#1e2230] bg-[#0f1117]"
-            style={{ gridTemplateColumns:"140px 1fr 1fr 110px 1fr 110px 110px 48px" }}>
-            {["NO. WO","KENDARAAN","JENIS SERVICE","TANGGAL","MEKANIK","TOTAL","STATUS","AKSI"].map(h => (
+            style={{ gridTemplateColumns: "140px 1fr 1fr 110px 1fr 110px 110px 48px" }}>
+            {["NO. WO", "KENDARAAN", "JENIS SERVICE", "TANGGAL", "MEKANIK", "TOTAL", "STATUS", "AKSI"].map(h => (
               <div key={h} className="text-[10px] font-bold text-[#4b5563] tracking-[1.2px]">{h}</div>
             ))}
           </div>
@@ -260,7 +235,7 @@ export default function RiwayatServicePage() {
               <div
                 key={row.wo}
                 className={`grid px-5 py-3.5 items-center ${i < paginated.length - 1 ? "border-b border-[#1a1d28]" : ""}`}
-                style={{ gridTemplateColumns:"140px 1fr 1fr 110px 1fr 110px 110px 48px" }}
+                style={{ gridTemplateColumns: "140px 1fr 1fr 110px 1fr 110px 110px 48px" }}
               >
                 {/* WO */}
                 <div className="text-[12px] font-bold text-[#9ca3af] font-mono tracking-[0.5px]">{row.wo}</div>
@@ -327,8 +302,8 @@ export default function RiwayatServicePage() {
           </p>
           <div className="flex gap-1.5">
             {[
-              { icon: <ChevronLeft size={13} />,  action: () => setPage(p => Math.max(1, p - 1)),           disabled: page === 1          },
-              { icon: <ChevronRight size={13} />, action: () => setPage(p => Math.min(totalPages, p + 1)),  disabled: page === totalPages  },
+              { icon: <ChevronLeft size={13} />, action: () => setPage(p => Math.max(1, p - 1)), disabled: page === 1 },
+              { icon: <ChevronRight size={13} />, action: () => setPage(p => Math.min(totalPages, p + 1)), disabled: page === totalPages },
             ].map((btn, i) => (
               <button
                 key={i}
@@ -405,10 +380,10 @@ export default function RiwayatServicePage() {
             {/* Info grid */}
             <div className="grid grid-cols-2 gap-2.5 mb-5">
               {[
-                { label:"Jenis Service", value: detailRow.service,       icon: <Wrench   size={13} color="#f97316" /> },
-                { label:"Tanggal",       value: detailRow.date,          icon: <Clock    size={13} color="#f97316" /> },
-                { label:"Mekanik",       value: detailRow.mechanic,      icon: <Activity size={13} color="#f97316" /> },
-                { label:"Total Biaya",   value: detailRow.total ?? "—",  icon: <Receipt  size={13} color="#f97316" /> },
+                { label: "Jenis Service", value: detailRow.service, icon: <Wrench size={13} color="#f97316" /> },
+                { label: "Tanggal", value: detailRow.date, icon: <Clock size={13} color="#f97316" /> },
+                { label: "Mekanik", value: detailRow.mechanic, icon: <Activity size={13} color="#f97316" /> },
+                { label: "Total Biaya", value: detailRow.total ?? "—", icon: <Receipt size={13} color="#f97316" /> },
               ].map(item => (
                 <div key={item.label} className="bg-[#0f1117] border border-[#1e2230] rounded-lg px-3.5 py-3">
                   <div className="flex items-center gap-1.5 mb-1.5">

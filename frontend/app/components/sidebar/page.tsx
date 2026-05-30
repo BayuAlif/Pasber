@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -27,36 +28,70 @@ type SidebarProps = {
   } | null;
 };
 
-export default function Sidebar({ activeHref, user }: SidebarProps) {
+export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState(propUser ?? null);
+  const [loading, setLoading] = useState(!propUser);
+
+  useEffect(() => {
+    if (propUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser(propUser);
+      setLoading(false);
+      return;
+    }
+
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        const res = await fetch("http://127.0.0.1:8000/api/user", {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setUser(data);
+        }
+      } catch (error) {
+        console.error("Gagal fetch user di sidebar:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [propUser]);
 
   const handleLogout = async () => {
-    console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
-
     const token = localStorage.getItem('token');
-
-    const res = await fetch('http://127.0.0.1:8000/api/logout', {
+    await fetch('http://127.0.0.1:8000/api/logout', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("STATUS LOGOUT:", res.status);
-
     localStorage.removeItem('token');
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
-    console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
-    console.log("COOKIE SETELAH LOGOUT:", document.cookie);
-
     router.push('/auth/login');
   };
 
+  if (loading) {
+    return (
+      <aside className="fixed top-0 left-0 bottom-0 w-[200px] bg-[#13161e] border-r border-[#1e2230] flex flex-col py-6 z-10">
+        <div className="px-5 pb-7">
+          <div className="font-extrabold text-[18px] text-white">PASBER</div>
+        </div>
+        <div className="flex-1 animate-pulse space-y-2 px-5">
+          {[1,2,3,4,5].map(i => <div key={i} className="h-9 bg-[#1e2230] rounded" />)}
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="fixed top-0 left-0 bottom-0 w-[200px] bg-[#13161e] border-r border-[#1e2230] flex flex-col py-6 z-10">
-
       {/* Logo */}
       <div className="px-5 pb-7">
         <div className="font-extrabold text-[18px] tracking-[2px] text-white">PASBER</div>
@@ -87,27 +122,29 @@ export default function Sidebar({ activeHref, user }: SidebarProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="px-5 pt-3.5 border-t border-[#1e2230] flex items-center gap-2.5">
-        <div className="w-[30px] h-[30px] rounded-full overflow-hidden shrink-0 bg-[#1e2230] flex items-center justify-center">
-          {user?.fotoProfile ? (
-            <img
-              src={`http://127.0.0.1:8000/storage/${user.fotoProfile}`}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-[11px] font-bold text-white">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </span>
-          )}
-        </div>
-        <div>
-          <div className="text-[11px] font-semibold text-[#e2e8f0]">
-            {user?.name || "Loading..."}
+      {user && (
+        <div className="px-5 pt-3.5 border-t border-[#1e2230] flex items-center gap-2.5">
+          <div className="w-[30px] h-[30px] rounded-full overflow-hidden shrink-0 bg-[#1e2230] flex items-center justify-center">
+            {user.fotoProfile ? (
+              <img
+                src={`http://127.0.0.1:8000/storage/${user.fotoProfile}`}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-[11px] font-bold text-white">
+                {user.name?.charAt(0).toUpperCase() || "U"}
+              </span>
+            )}
           </div>
-          <div className="text-[10px] text-[#4b5563]">Pelanggan Terdaftar</div>
+          <div>
+            <div className="text-[11px] font-semibold text-[#e2e8f0]">
+              {user.name || "User"}
+            </div>
+            <div className="text-[10px] text-[#4b5563]">Pelanggan Terdaftar</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Logout */}
       <button
@@ -126,7 +163,6 @@ export default function Sidebar({ activeHref, user }: SidebarProps) {
           © 2026 PASBER AUTOMOTIVE ENGINEERING | CUSTOMER PORTAL
         </div>
       </div>
-
     </aside>
   );
 }

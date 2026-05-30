@@ -57,6 +57,7 @@ export default function DashboardPage() {
     useState<ActiveWO[]>([]);
 
   const [currentWO, setCurrentWO] = useState(0);
+  const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
 
 
 
@@ -72,7 +73,7 @@ export default function DashboardPage() {
 
   const currentWorkOrder = activeWO[currentWO] || activeWO[0];
 
-  const activeServiceCount = activeWO.filter( (wo) => wo.statusWO !== 'done' && wo.statusWO !== 'pending' ).length;
+  const activeServiceCount = activeWO.filter((wo) => wo.statusWO !== 'done' && wo.statusWO !== 'pending').length;
 
   const stats = [
     {
@@ -94,7 +95,7 @@ export default function DashboardPage() {
 
     {
       label: "Menunggu Pembayaran",
-      value: "0",
+      value: pendingPaymentCount.toString(),
       color: "#eab308",
       borderClass: "border-l-yellow-600"
     },
@@ -110,6 +111,19 @@ export default function DashboardPage() {
         });
         const data = await response.json();
         setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const fetchUnpaidNotaCount = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://127.0.0.1:8000/api/user/unpaid-nota-count", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setPendingPaymentCount(data.count);
       } catch (error) {
         console.error(error);
       }
@@ -171,9 +185,10 @@ export default function DashboardPage() {
         console.error(error);
       }
     };
-
-    fetchVehicles();
     fetchUser();
+    fetchActiveWO();
+    fetchVehicles();
+    fetchUnpaidNotaCount();
   }, []);
 
   return (
