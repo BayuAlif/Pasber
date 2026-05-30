@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import Sidebar from "@/app/components/sidebar/page";
+import AuthPopup from "@/app/components/auth_popup/Auth_popup";
 import Script from "next/script";
 
 declare global {
@@ -53,6 +54,7 @@ interface WorkOrder {
   tanggal_selesai?: string;
   created_at?: string;
   updated_at?: string;
+  kodeWO: string;
 }
 
 interface NotaSummary {
@@ -328,6 +330,10 @@ export default function TagihanPage() {
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
   const [bulkMethod, setBulkMethod] = useState<"tunai" | "transfer" | "qris">("transfer");
   const [showBulkPanel, setShowBulkPanel] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupType, setPopupType] = useState<'success' | 'error'>('success');
+  const [popupTitle, setPopupTitle] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
 
   // Ambil data user & daftar nota
   const fetchUserAndNotas = async () => {
@@ -399,27 +405,40 @@ const handlePayment = async (notaId: number) => {
   window.snap.pay(data.snap_token, {
     onSuccess: (result: Record<string, unknown>) => {
       console.log("Payment success", result);
-      alert("Pembayaran berhasil!!");
-      window.location.reload();
+      setPopupType("success");
+      setPopupTitle("Pembayaran Berhasil");
+      setPopupMessage("Pembayaran berhasil diproses. Terima kasih sudah melakukan pembayaran.");
+      setPopupOpen(true);
     },
-    onPending: () => alert("Pembayaran pending"),
-    onError: () => alert("Pembayaran gagal"),
+    onPending: () => {
+      setPopupType("error");
+      setPopupTitle("Pembayaran Pending");
+      setPopupMessage("Pembayaran sedang menunggu konfirmasi. Silakan cek kembali nanti.");
+      setPopupOpen(true);
+    },
+    onError: () => {
+      setPopupType("error");
+      setPopupTitle("Pembayaran Gagal");
+      setPopupMessage("Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.");
+      setPopupOpen(true);
+    },
   });
 };
 
-// Bulk selection helpers
+const totalChecked = unpaidList
+  .filter((b) => checkedIds.includes(b.id))
+  .reduce((sum, b) => sum + b.totalHarga, 0);
+const checkedCount = checkedIds.length;
 const allChecked = checkedIds.length === unpaidList.length && unpaidList.length > 0;
 const toggleAll = () => {
   if (allChecked) setCheckedIds([]);
   else setCheckedIds(unpaidList.map((b) => b.id));
 };
 const toggleOne = (id: number) => {
-  setCheckedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  setCheckedIds((prev) =>
+    prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+  );
 };
-const totalChecked = unpaidList
-  .filter((b) => checkedIds.includes(b.id))
-  .reduce((sum, b) => sum + b.totalHarga, 0);
-const checkedCount = checkedIds.length;
 
 const bulkMethods = [
   // { id: "tunai" as const, icon: Banknote, label: "Tunai (Cash)", sub: "BAYAR DI KASIR BENGKEL" },
@@ -431,7 +450,10 @@ const handleBulkPay = () => {
   if (!showBulkPanel) {
     setShowBulkPanel(true);
   } else {
-    alert(`Pembayaran ${checkedCount} tagihan via ${bulkMethods.find((m) => m.id === bulkMethod)?.label} berhasil dikonfirmasi!`);
+    setPopupType('success');
+    setPopupTitle('Pembayaran Bulk Berhasil');
+    setPopupMessage(`Pembayaran ${checkedCount} tagihan via ${bulkMethods.find((m) => m.id === bulkMethod)?.label} berhasil dikonfirmasi.`);
+    setPopupOpen(true);
     // Di sini nanti bisa panggil API untuk bulk payment
   }
 };
@@ -729,7 +751,7 @@ return (
                     style={{ gridTemplateColumns: "1fr 1fr 1.4fr 1fr 1fr 1fr 0.8fr" }}
                   >
                     <div className="text-sm font-semibold text-slate-200">{bill.noNota}</div>
-                    <div className="text-xs text-gray-500">WO-{bill.work_order_id}</div>
+                    <div className="text-xs text-gray-500">{bill.work_order.kodeWO}</div>
                     <div>
                       <div className="text-sm font-medium text-slate-200">{namaKendaraan}</div>
                       <div className="text-xs text-gray-600">{plat}</div>
@@ -771,7 +793,18 @@ return (
           </div>
         </div>
       </main>
-    </div>
-  </>
+    </div>    <AuthPopup
+      open={popupOpen}
+      type={popupType}
+      title={popupTitle}
+      message={popupMessage}
+      onClose={() => setPopupOpen(false)}
+      onContinue={() => {
+        setPopupOpen(false);
+        if (popupType === 'success') {
+          window.location.reload();
+        }
+      }}
+    />  </>
 );
 }

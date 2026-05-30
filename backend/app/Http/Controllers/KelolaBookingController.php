@@ -68,33 +68,34 @@ class KelolaBookingController extends Controller
             $booking->id
         )->first();
 
-        $prefix = strtoupper(
-            substr($booking->bengkel->nama, 0, 3)
-        );
-        $kodeWO =
-            'WO-' .
-            $prefix .
-            '-' .
-            str_pad($booking->id, 5, '0', STR_PAD_LEFT);
+        if ($request->status !== 'rejected') {
+            $prefix = strtoupper(
+                substr($booking->bengkel->nama, 0, 3)
+            );
+            $kodeWO =
+                'WO-' .
+                $prefix .
+                '-' .
+                str_pad($booking->id, 5, '0', STR_PAD_LEFT);
 
-        // inih create work_order nya disini
-        $workOrder = work_order::create([
-            'booking_id' => $booking->id,
-            'statusWO' => 'pending',
-            'kodeWO' => $kodeWO,
-        ]);
+            // create work_order only for non-rejected bookings
+            if (!$workOrder) {
+                $workOrder = work_order::create([
+                    'booking_id' => $booking->id,
+                    'statusWO' => 'pending',
+                    'kodeWO' => $kodeWO,
+                ]);
+            }
 
-        // kalau ada WO, update juga
-        if ($workOrder) {
+            if ($workOrder) {
+                $workOrder->statusWO = $request->status;
+                $workOrder->save();
 
-            $workOrder->statusWO = $request->status;
-            $workOrder->save();
-
-            // insert log
-            WorkOrderLog::create([
-                'work_order_id' => $workOrder->id,
-                'status' => $request->status,
-            ]);
+                WorkOrderLog::create([
+                    'work_order_id' => $workOrder->id,
+                    'status' => $request->status,
+                ]);
+            }
         }
 
         return response()->json([
