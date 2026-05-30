@@ -65,7 +65,59 @@ interface JasaRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// CustomSelect Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CustomSelectProps {
+  value: string | number;
+  onChange: (value: string | number) => void;
+  options: Array<{ value: string | number; label: string }>;
+  placeholder?: string;
+}
+
+const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = options.find(opt => opt.value === value);
+
+  return (
+    <div className="relative w-full">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between bg-[#0d1117] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/40 transition-colors hover:border-white/[0.15]"
+      >
+        <span className={selected ? 'text-white' : 'text-gray-600'}>
+          {selected?.label || placeholder || 'Select option'}
+        </span>
+        <ChevronDown size={14} className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-[#161b22] border border-white/[0.08] rounded-lg shadow-xl z-50 overflow-hidden">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                  value === option.value
+                    ? 'bg-orange-600 text-white font-semibold'
+                    : 'text-white hover:bg-white/[0.05]'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatRp(val: number): string {
@@ -146,6 +198,7 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
       const found = prev.find(c => c.item.id === item.id);
       const newQty = (found?.qty ?? 0) + delta;
       if (newQty <= 0) return prev.filter(c => c.item.id !== item.id);
+      if (newQty > item.stok) return prev; // Don't exceed available stock
       if (found) return prev.map(c => (c.item.id === item.id ? { ...c, qty: newQty } : c));
       return [...prev, { item, qty: 1 }];
     });
@@ -365,7 +418,8 @@ const TambahItemModal: FC<TambahItemModalProps> = ({
                             </span>
                             <button
                               onClick={() => adjustQty(item, 1)}
-                              className="w-8 h-8 rounded-lg bg-orange-600 hover:bg-orange-500 flex items-center justify-center transition-all"
+                              disabled={qty >= item.stok}
+                              className="w-8 h-8 rounded-lg bg-orange-600 hover:bg-orange-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all"
                             >
                               <Plus size={12} />
                             </button>
@@ -659,7 +713,17 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
 
         console.log(data);
 
-        setInventoryItems(data.data || data);
+        // Map API response to InventoryItem interface
+        const mapped = (data.data || data).map((item: any) => ({
+          id: item.id,
+          sku: item.kodeMaterial,
+          nama: item.namaMaterial,
+          harga: item.harga,
+          stok: item.stok,
+          satuan: item.satuan,
+        }));
+
+        setInventoryItems(mapped);
       } catch (error) {
         console.error(error);
       }
@@ -711,25 +775,22 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
           <div className="w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-500/20 flex items-center justify-center shrink-0">
             <Wrench size={17} className="text-orange-500" />
           </div>
-          <div>
-            <select
-              onChange={(e) => {
-                const wo = workOrders.find(
-                  (item) => item.id === Number(e.target.value)
-                );
-
-                setSelectedWO(wo ?? null);;
-              }}
-            >
-              <option>Pilih Work Order</option>
-
-              {workOrders.map((wo) => (
-                <option key={wo.id} value={wo.id}>
-                  WO-{wo.id}
-                </option>
-              ))}
-            </select>
-            <p className="text-sm font-bold text-white">  {selectedWO
+          <div className="flex-1">
+            <div className="relative mb-2">
+              <CustomSelect
+                value={selectedWO?.id || ""}
+                onChange={(value) => {
+                  const wo = workOrders.find((item) => item.id === Number(value));
+                  setSelectedWO(wo ?? null);
+                }}
+                options={workOrders.map(wo => ({
+                  value: wo.id,
+                  label: `WO-${wo.id}`
+                }))}
+                placeholder="Pilih Work Order"
+              />
+            </div>
+            <p className="text-sm font-bold text-white">{selectedWO
               ? selectedWO.booking.user.name
               : "-"
             }</p>
@@ -1246,18 +1307,17 @@ export default function InvoicePembayaran() {
             </div>
 
             {/* Status select */}
-            <div className="shrink-0 w-44 relative">
-              <select
+            <div className="shrink-0 w-44">
+              <CustomSelect
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="belum_lunas">Belum Lunas</option>
-                <option value="lunas">Lunas</option>
-              </select>
-              
-              
+                onChange={(value) => handleStatusFilter(String(value))}
+                options={[
+                  { value: 'All Status', label: 'All Status' },
+                  { value: 'pending', label: 'Pending' },
+                  { value: 'belum_lunas', label: 'Belum Lunas' },
+                  { value: 'lunas', label: 'Lunas' }
+                ]}
+              />
             </div>
 
             {/* Apply Filters */}
