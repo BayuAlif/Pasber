@@ -31,6 +31,11 @@ type Booking = {
   jadwalService: string;
 
   status: StatusType;
+
+    bengkel?: {
+    id: number;
+    nama: string;
+  };
 };
 
 // ── Styles ─────────────────────────────────────────────────────────────────
@@ -118,6 +123,13 @@ function DetailModal({ booking, onClose, onApprove, onReject }: {
               <button onClick={onApprove} className="flex items-center gap-1.5 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-[11px] font-bold text-green-400 transition-all">
                 <CheckCircle size={13} /> Approve
               </button>
+            </>
+          )}
+          {booking.status === 'rejected' && (
+            <>
+              <button onClick={onClose} className="px-5 py-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[11px] font-bold text-[#6b7280] hover:text-white transition-all">
+              Tutup
+            </button>
             </>
           )}
           {booking.status !== 'pending' && (
@@ -276,10 +288,6 @@ function KelolaBookingView({
                 className="bg-[#0f1117] border border-[#1e2230] rounded-lg px-3 py-2.5 text-[12px] text-[#e2e8f0] outline-none focus:border-orange-500/50 cursor-pointer"
               />
             </div>
-
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap">
-              <Filter size={13} /> Apply Filters
-            </button>
           </div>
         </div>
 
@@ -309,7 +317,15 @@ function KelolaBookingView({
                   {/* Booking ID */}
                   <td className="px-5 py-4">
                     <span className="text-[11px] font-mono font-bold text-orange-400">
-                      #{b.id}
+
+                      BOOK-
+                      {b.bengkel?.nama
+                        ?.substring(0, 3)
+                        .toUpperCase()
+                      }
+                      -
+                      {String(b.id).padStart(3, '0')}
+
                     </span>
                   </td>
 
@@ -374,37 +390,39 @@ function KelolaBookingView({
 
                   {/* Actions */}
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-1.5">
+                    {b.status !== 'rejected' && (
+                      <div className="flex items-center gap-1.5">
 
-                      {b.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => updateStatus(b.id, 'approved')}
-                            title="Approve"
-                            className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-green-500/40 hover:text-green-400 flex items-center justify-center text-[#6b7280] transition-all"
-                          >
-                            <CheckCircle size={13} />
-                          </button>
+                        {b.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => updateStatus(b.id, 'approved')}
+                              title="Approve"
+                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-green-500/40 hover:text-green-400 flex items-center justify-center text-[#6b7280] transition-all"
+                            >
+                              <CheckCircle size={13} />
+                            </button>
 
-                          <button
-                            onClick={() => updateStatus(b.id, 'rejected')}
-                            title="Reject"
-                            className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-red-500/40 hover:text-red-400 flex items-center justify-center text-[#6b7280] transition-all"
-                          >
-                            <XCircle size={13} />
-                          </button>
-                        </>
-                      )}
+                            <button
+                              onClick={() => updateStatus(b.id, 'rejected')}
+                              title="Reject"
+                              className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-red-500/40 hover:text-red-400 flex items-center justify-center text-[#6b7280] transition-all"
+                            >
+                              <XCircle size={13} />
+                            </button>
+                          </>
+                        )}
 
-                      <button
-                        onClick={() => onViewWO(b)}
-                        title="View Work Order"
-                        className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
-                      >
-                        <Eye size={13} />
-                      </button>
+                        <button
+                          onClick={() => onViewWO(b)}
+                          title="View Work Order"
+                          className="w-7 h-7 rounded-lg bg-[#1a1d28] border border-[#2a2f3e] hover:border-orange-500/40 hover:text-orange-400 flex items-center justify-center text-[#6b7280] transition-all"
+                        >
+                          <Eye size={13} />
+                        </button>
 
-                    </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

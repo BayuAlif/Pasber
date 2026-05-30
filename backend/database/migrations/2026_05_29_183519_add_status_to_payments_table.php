@@ -11,18 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('work_order_logs', function (Blueprint $table) {
+        Schema::table('payments', function (Blueprint $table) {
 
-            $table->id();
-
-
-            $table->foreignId('work_order_id')
-                ->constrained('work_order')
-                ->onDelete('cascade');
-
-            $table->string('status');
-
-            $table->timestamps();
+            $table->string('status')
+                ->default('pending');
         });
     }
 
@@ -31,6 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('work_order_logs');
+        Schema::table('payments', function (Blueprint $table) {
+            //
+        });
     }
 };

@@ -22,4 +22,12 @@ class Bengkel extends Model
         return $this->hasMany(User::class);
     }
 
+     public function mekanik()
+    {
+        return $this->hasMany(
+            Mekanik::class,
+            'bengkel_id'
+        );
+    }
+
 }

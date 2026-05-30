@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import {
   Bell,
@@ -10,124 +10,185 @@ import {
   ShieldCheck,
   Info,
   ExternalLink,
+  X,
 } from "lucide-react";
 import Sidebar from "@/app/components/sidebar/page";
+import Script from "next/script";
 
-// ─── Data ───────────────────────────────────────────────────────────────────
-
-const unpaidBills = [
-  {
-    id: "WO-2025-0042",
-    vehicle: "HONDA VARIO 150",
-    plate: "D 4821 XY",
-    wo: "WO-2025-0042",
-    selesai: "SELESAI 7 MEI 2025",
-    services: "Tune Up Berkala • Busi • Filter • Oli",
-    jasa: 110000,
-    sparepart: 63000,
-    material: 42000,
-    total: 215000,
-    nota: {
-      jasa: [
-        { name: "Tune Up Berkala", price: 75000 },
-        { name: "Setel Karburator", price: 35000 },
-      ],
-      sparepart: [
-        { name: "Busi NGK CR7HSA", qty: 1, price: 18000 },
-        { name: "Filter Udara Honda", qty: 1, price: 45000 },
-      ],
-      material: [{ name: "Oli Mesin Shell 0.8L", qty: 1, price: 42000 }],
-    },
-  },
-  {
-    id: "WO-2025-0043",
-    vehicle: "HONDA BEAT STREET",
-    plate: "D 1234 AB",
-    wo: "WO-2025-0043",
-    selesai: "SELESAI 7 MEI 2025",
-    services: "Ganti Oli • Filter Udara",
-    jasa: 35000,
-    sparepart: 28000,
-    material: 22000,
-    total: 85000,
-    nota: {
-      jasa: [{ name: "Ganti Oli", price: 35000 }],
-      sparepart: [{ name: "Filter Udara", qty: 1, price: 28000 }],
-      material: [{ name: "Oli Mesin Pertamina 0.8L", qty: 1, price: 22000 }],
-    },
-  },
-  {
-    id: "WO-2025-0044",
-    vehicle: "YAMAHA NMAX 155",
-    plate: "D 0198 ZZ",
-    wo: "WO-2025-0044",
-    selesai: "SELESAI 7 MEI 2025",
-    services: "Ganti Ban Belakang • Rem",
-    jasa: 60000,
-    sparepart: 195000,
-    material: 15000,
-    total: 270000,
-    nota: {
-      jasa: [
-        { name: "Ganti Ban Belakang", price: 45000 },
-        { name: "Setel Rem", price: 15000 },
-      ],
-      sparepart: [{ name: "Ban IRC NR79", qty: 1, price: 195000 }],
-      material: [{ name: "Cairan Rem", qty: 1, price: 15000 }],
-    },
-  },
-];
-
-const paidBills = [
-  {
-    nota: "NTA-2025-035",
-    wo: "U O-2025-0035",
-    vehicle: "Honda Beat Street",
-    plate: "D 1234 AB",
-    date: "12 Apr 2025",
-    method: "tunai",
-    total: 85000,
-  },
-  {
-    nota: "NTA-2025-028",
-    wo: "U O-2025-0028",
-    vehicle: "Honda Vario 150",
-    plate: "D 4821 XY",
-    date: "20 Mar 2025",
-    method: "qris",
-    total: 175000,
-  },
-  {
-    nota: "NTA-2025-021",
-    wo: "U O-2025-0021",
-    vehicle: "Honda Beat Street",
-    plate: "D 1234 AB",
-    date: "5 Feb 2025",
-    method: "transfer",
-    total: 220000,
-  },
-];
-
-const methodLabel: Record<string, { label: string; color: string; bg: string }> = {
-  tunai: { label: "Tunai", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
-  qris: { label: "QRIS", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
-  transfer: { label: "Transfer", color: "#60a5fa", bg: "rgba(96,165,250,0.12)" },
-};
-
-function fmt(n: number) {
-  return "Rp " + n.toLocaleString("id-ID");
+declare global {
+  interface Window {
+    snap: {
+      pay: (token: string, options?: {
+        onSuccess?: (result: Record<string, unknown>) => void;
+        onPending?: (result: Record<string, unknown>) => void;
+        onError?: (result: Record<string, unknown>) => void;
+        onClose?: () => void;
+      }) => void;
+    };
+  }
 }
 
-// ─── Payment Detail Sub-component ────────────────────────────────────────────
 
+// ─── Helper ─────────────────────────────────────────────────────────────────
+function fmt(n?: number) {
+  return "Rp " + (n ?? 0).toLocaleString("id-ID");
+}
+
+// ─── Tipe Data ─────────────────────────────────────────────────────────────
+interface Kendaraan {
+  id: number;
+  merek: string;
+  model: string;
+  nomorPolisi: string;
+}
+
+interface Booking {
+  user: { name: string };
+  kendaraan: Kendaraan;
+}
+
+interface WorkOrder {
+  id: number;
+  booking: Booking;
+  tanggal_selesai?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface NotaSummary {
+  id: number;
+  noNota: string;
+  work_order_id: number;
+  tanggal: string;
+  totalHarga: number;
+  status: "pending" | "belum_lunas" | "lunas";
+  work_order: WorkOrder;
+}
+
+interface RawWorkOrder {
+  id: number;
+  nota?: {
+    id: number;
+    status: string;
+    tanggal: string;
+    totalHarga: number | string;
+  };
+
+}
+
+interface RawNota {
+  id: number;
+  work_order_id: number;
+  tanggal: string;
+  totalHarga: number | string;
+  status: string;
+  work_order: unknown;
+}
+
+// Detail Nota (dari endpoint /api/nota/{id})
+interface NotaDetail {
+  nota: {
+    id: number;
+    totalHarga: number;
+    status: string;
+  };
+
+  jasa: Array<{
+    id: number;
+    namaJasa: string;
+    hargaJasa: number | string;
+  }>;
+
+  material: Array<{
+    id: number;
+    qty: number;
+
+    material: {
+      id: number;
+      namaMaterial: string;
+      harga: number | string;
+    };
+  }>;
+}
+
+// ─── Komponen Detail Pembayaran (Modal) ─────────────────────────────────────
 function PaymentDetail({
-  bill,
+  notaId,
   onBack,
+  handlePayment,
 }: {
-  bill: (typeof unpaidBills)[0];
+  notaId: number;
   onBack: () => void;
+  handlePayment: (notaId: number) => void;
 }) {
-  const [selected, setSelected] = useState<"tunai" | "transfer" | "qris">("tunai");
+  const [detail, setDetail] = useState<NotaDetail>({
+    nota: {
+      id: 0,
+      totalHarga: 0,
+      status: "",
+    },
+    jasa: [],
+    material: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedMethod, setSelectedMethod] = useState<"tunai" | "transfer" | "qris">("tunai");
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:8000/api/user-nota/${notaId}`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        });
+        const data = await res.json();
+
+        console.log("DETAIL API", data);
+
+        setDetail(data);
+        console.log("DETAIL API", data);
+        console.log("JASA", data.jasa);
+        console.log("MATERIAL", data.material);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetail();
+  }, [notaId]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="text-gray-400">Memuat detail nota...</div>
+      </div>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="text-red-400">Gagal memuat detail nota.</div>
+      </div>
+    );
+  }
+
+  // Ambil array jasa dan material (sesuaikan dengan struktur backend)
+  const jasaList = detail?.jasa || [];
+  const materialList = detail?.material || [];
+
+  const subtotalJasa = jasaList.reduce(
+    (sum, j) => sum + Number(j.hargaJasa),
+    0
+  );
+
+  const subtotalMaterial = materialList.reduce(
+    (sum, m) => sum + Number(m.material?.harga || 0) * Number(m.qty),
+    0
+  );
+  const total = Number(
+    detail.nota?.totalHarga || 0
+  );
 
   const methods = [
     { id: "tunai" as const, icon: Banknote, label: "Tunai (Cash)", sub: "BAYAR DI KASIR BENGKEL" },
@@ -135,13 +196,10 @@ function PaymentDetail({
     { id: "qris" as const, icon: QrCode, label: "QRIS", sub: "GOPAY / OVO / KASIR BENGKEL" },
   ];
 
-  const subtotalJasa = bill.nota.jasa.reduce((a, b) => a + b.price, 0);
-  const subtotalSparepart = bill.nota.sparepart.reduce((a, b) => a + b.price, 0);
-  const subtotalMaterial = bill.nota.material.reduce((a, b) => a + b.price, 0);
 
   return (
     <div className="grid gap-5 items-start" style={{ gridTemplateColumns: "1fr 280px" }}>
-      {/* Nota */}
+      {/* Nota Detail Card */}
       <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden">
         <div className="px-6 py-5 border-b border-[#1e2230] flex justify-between items-start">
           <div>
@@ -149,21 +207,25 @@ function PaymentDetail({
               🧾 NOTA TAGIHAN
             </div>
             <div className="text-xs text-gray-500">
-              {bill.wo} • {bill.vehicle}
+              ID Nota: {detail.nota?.id} • {detail.nota?.status}
             </div>
           </div>
           <span className="px-2.5 py-0.5 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold rounded tracking-widest">
-            UNPAID
+            {detail.nota?.status === "lunas"
+              ? "LUNAS"
+              : "BELUM LUNAS"}
           </span>
         </div>
 
         {/* Jasa */}
         <div className="px-6 py-5 border-b border-[#1e2230]">
           <div className="text-orange-500 text-[10px] font-bold tracking-widest mb-3">NOTA JASA</div>
-          {bill.nota.jasa.map((j) => (
-            <div key={j.name} className="flex justify-between text-sm text-gray-300 mb-2">
-              <span>{j.name}</span>
-              <span>{fmt(j.price)}</span>
+          {jasaList.map((j, idx) => (
+            <div key={idx}>
+              <div className="flex justify-between">
+                <span>{j.namaJasa}</span>
+                <span>{fmt(Number(j.hargaJasa))}</span>
+              </div>
             </div>
           ))}
           <div className="flex justify-between text-sm font-bold text-slate-200 mt-3 pt-3 border-t border-[#1e2230]">
@@ -172,33 +234,18 @@ function PaymentDetail({
           </div>
         </div>
 
-        {/* Sparepart */}
-        <div className="px-6 py-5 border-b border-[#1e2230]">
-          <div className="text-orange-500 text-[10px] font-bold tracking-widest mb-3">NOTA SPAREPART</div>
-          {bill.nota.sparepart.map((s) => (
-            <div key={s.name} className="flex justify-between text-sm text-gray-300 mb-2">
-              <span>{s.name}</span>
-              <div className="flex items-center gap-6">
-                <span className="text-gray-600">{s.qty}</span>
-                <span>{fmt(s.price)}</span>
-              </div>
-            </div>
-          ))}
-          <div className="flex justify-between text-sm font-bold text-slate-200 mt-3 pt-3 border-t border-[#1e2230]">
-            <span>Subtotal Sparepart</span>
-            <span>{fmt(subtotalSparepart)}</span>
-          </div>
-        </div>
-
         {/* Material */}
         <div className="px-6 py-5 border-b border-[#1e2230]">
           <div className="text-orange-500 text-[10px] font-bold tracking-widest mb-3">NOTA MATERIAL</div>
-          {bill.nota.material.map((m) => (
-            <div key={m.name} className="flex justify-between text-sm text-gray-300 mb-2">
-              <span>{m.name}</span>
-              <div className="flex items-center gap-6">
-                <span className="text-gray-600">{m.qty}</span>
-                <span>{fmt(m.price)}</span>
+          {materialList.map((m, idx) => (
+            <div key={idx}>
+              <div className="flex justify-between">
+                <span>
+                  {m.material?.namaMaterial} ({m.qty}x)
+                </span>
+                <span>
+                  {fmt(m.qty * Number(m.material?.harga || 0))}
+                </span>
               </div>
             </div>
           ))}
@@ -212,42 +259,30 @@ function PaymentDetail({
         <div className="px-6 py-5 bg-[#1a1d28]">
           <div className="flex justify-between items-center">
             <span className="text-sm font-bold text-slate-300">TOTAL</span>
-            <span className="text-xl font-bold text-orange-500">{fmt(bill.total)}</span>
+            <span className="text-xl font-bold text-orange-500">{fmt(total)}</span>
           </div>
         </div>
       </div>
 
-      {/* Metode + Konfirmasi */}
+      {/* Metode Pembayaran */}
       <div className="flex flex-col gap-4">
         <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5">
-          <div className="text-[10px] text-gray-500 tracking-widest mb-3 font-bold">
-            PILIH METODE BAYAR
-          </div>
+          <div className="text-[10px] text-gray-500 tracking-widest mb-3 font-bold">PILIH METODE BAYAR</div>
           <div className="flex flex-col gap-2">
             {methods.map((m) => (
               <button
                 key={m.id}
-                onClick={() => setSelected(m.id)}
-                className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
-                  selected === m.id
-                    ? "border-orange-500/50 bg-[rgba(249,115,22,0.08)]"
-                    : "border-[#2a2f3e] bg-[#1a1d28] hover:border-[#3a3f50]"
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    selected === m.id ? "bg-orange-500/15" : "bg-[#252836]"
+                onClick={() => setSelectedMethod(m.id)}
+                className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${selectedMethod === m.id
+                  ? "border-orange-500/50 bg-[rgba(249,115,22,0.08)]"
+                  : "border-[#2a2f3e] bg-[#1a1d28] hover:border-[#3a3f50]"
                   }`}
-                >
-                  <m.icon
-                    size={15}
-                    color={selected === m.id ? "#f97316" : "#6b7280"}
-                  />
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedMethod === m.id ? "bg-orange-500/15" : "bg-[#252836]"}`}>
+                  <m.icon size={15} color={selectedMethod === m.id ? "#f97316" : "#6b7280"} />
                 </div>
                 <div>
-                  <div className={`text-xs font-semibold ${selected === m.id ? "text-slate-200" : "text-gray-400"}`}>
-                    {m.label}
-                  </div>
+                  <div className={`text-xs font-semibold ${selectedMethod === m.id ? "text-slate-200" : "text-gray-400"}`}>{m.label}</div>
                   <div className="text-[10px] text-gray-600 tracking-wide">{m.sub}</div>
                 </div>
               </button>
@@ -258,9 +293,9 @@ function PaymentDetail({
         <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5">
           <div className="flex justify-between items-center mb-4">
             <div className="text-[10px] text-gray-500 tracking-widest font-bold">TOTAL TAGIHAN</div>
-            <span className="text-lg font-bold text-orange-500">{fmt(bill.total)}</span>
+            <span className="text-lg font-bold text-orange-500">{fmt(total)}</span>
           </div>
-          <button className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 transition-colors text-white font-bold text-sm py-3 rounded-lg">
+          <button onClick={() => handlePayment(notaId)} className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 transition-colors text-white font-bold text-sm py-3 rounded-lg">
             <ShieldCheck size={15} />
             KONFIRMASI PEMBAYARAN
           </button>
@@ -270,32 +305,123 @@ function PaymentDetail({
           </div>
         </div>
 
-        <button
-          onClick={onBack}
-          className="text-xs text-gray-600 hover:text-gray-400 transition-colors text-center"
-        >
+        <button onClick={onBack} className="text-xs text-gray-600 hover:text-gray-400 transition-colors text-center">
           ← Kembali ke daftar tagihan
         </button>
       </div>
     </div>
   );
+
+  console.log("NOTA ID", notaId);
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// ─── Halaman Utama ──────────────────────────────────────────────────────────
 export default function TagihanPage() {
   const [tab, setTab] = useState<"belum" | "sudah">("belum");
-  const [selectedBill, setSelectedBill] = useState<(typeof unpaidBills)[0] | null>(null);
-  const [checkedIds, setCheckedIds] = useState<string[]>([]);
-  const [bulkMethod, setBulkMethod] = useState<"tunai" | "transfer" | "qris">("tunai");
-  const [showBulkPanel, setShowBulkPanel] = useState(false);
+  const [selectedNotaId, setSelectedNotaId] = useState<number | null>(null);
+  const [unpaidList, setUnpaidList] = useState<NotaSummary[]>([]);
+  const [paidList, setPaidList] = useState<NotaSummary[]>([]);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ name: string; fotoProfile?: string } | null>(null);
 
-  const allChecked = checkedIds.length === unpaidBills.length;
-  const toggleAll = () => setCheckedIds(allChecked ? [] : unpaidBills.map((b) => b.id));
-  const toggleOne = (id: string) =>
-    setCheckedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  const totalChecked = unpaidBills.filter((b) => checkedIds.includes(b.id)).reduce((s, b) => s + b.total, 0);
+  // Bulk payment state
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
+  const [bulkMethod, setBulkMethod] = useState<"tunai" | "transfer" | "qris">("tunai");
+  const [showBulkPanel, setShowBulkPanel] = useState(false);
+
+  // Ambil data user & daftar nota
+  const fetchUserAndNotas = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      // 1. Ambil data user
+      const userRes = await fetch("http://localhost:8000/api/user", {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const userData = await userRes.json();
+      setUser(userData);
+
+      // 2. Ambil work order aktif (belum lunas) - gunakan RawWorkOrder[]
+      const activeRes = await fetch("http://localhost:8000/api/active-work-order", {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const activeWorkOrders = await activeRes.json() as RawWorkOrder[];
+
+      const unpaidInvoices: NotaSummary[] = activeWorkOrders
+        .filter(
+          (wo): wo is RawWorkOrder & { nota: NonNullable<RawWorkOrder["nota"]> } =>
+            wo.nota !== undefined && wo.nota.status === "belum_lunas"
+        )
+        .map((wo) => ({
+          id: wo.nota.id,
+          noNota: `NTA-${wo.nota.id.toString().padStart(5, "0")}`,
+          work_order_id: wo.id,
+          tanggal: wo.nota.tanggal,
+          totalHarga: Number(wo.nota.totalHarga),
+          status: "belum_lunas",
+          work_order: wo as unknown as WorkOrder,
+        }));
+      setUnpaidList(unpaidInvoices);
+
+      // 3. Ambil riwayat pembayaran (sudah lunas) - gunakan RawNota[]
+      const historyRes = await fetch("http://localhost:8000/api/payment-history", {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const paidNotas = await historyRes.json() as RawNota[];
+
+      const paidInvoices: NotaSummary[] = paidNotas.map((nota) => ({
+        id: nota.id,
+        noNota: `NTA-${nota.id.toString().padStart(5, "0")}`,
+        work_order_id: nota.work_order_id,
+        tanggal: nota.tanggal,
+        totalHarga: Number(nota.totalHarga),
+        status: "lunas",
+        work_order: nota.work_order as WorkOrder,
+      }));
+      setPaidList(paidInvoices);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+
+  };
+
+  useEffect(() => {
+    fetchUserAndNotas();
+  }, []);
+
+  const handlePayment = async (notaId: number) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:8000/api/payment/create/${notaId}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const data = await res.json();
+
+    window.snap.pay(data.snap_token, {
+      onSuccess: (result: Record<string, unknown>) => {
+        console.log("Payment success", result);
+        alert("Pembayaran berhasil!!");
+        window.location.reload();
+      },
+      onPending: () => alert("Pembayaran pending"),
+      onError: () => alert("Pembayaran gagal"),
+    });
+  };
+
+  // Bulk selection helpers
+  const allChecked = checkedIds.length === unpaidList.length && unpaidList.length > 0;
+  const toggleAll = () => {
+    if (allChecked) setCheckedIds([]);
+    else setCheckedIds(unpaidList.map((b) => b.id));
+  };
+  const toggleOne = (id: number) => {
+    setCheckedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+  const totalChecked = unpaidList
+    .filter((b) => checkedIds.includes(b.id))
+    .reduce((sum, b) => sum + b.totalHarga, 0);
   const checkedCount = checkedIds.length;
 
   const bulkMethods = [
@@ -304,318 +430,351 @@ export default function TagihanPage() {
     { id: "qris" as const, icon: QrCode, label: "QRIS", sub: "GOPAY / OVO / KASIR BENGKEL" },
   ];
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/api/user", {
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        });
-        const data = await response.json();
-        setUser(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchUser();
-  }, []);
+  const handleBulkPay = () => {
+    if (!showBulkPanel) {
+      setShowBulkPanel(true);
+    } else {
+      alert(`Pembayaran ${checkedCount} tagihan via ${bulkMethods.find((m) => m.id === bulkMethod)?.label} berhasil dikonfirmasi!`);
+      // Di sini nanti bisa panggil API untuk bulk payment
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-[#0f1117] text-slate-200">
+        <Sidebar activeHref="/User/tagihan" user={user} />
+        <main className="ml-[200px] flex-1 p-8 flex items-center justify-center">
+          <div className="text-gray-400">Memuat data tagihan...</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="flex min-h-screen bg-[#0f1117] text-slate-200"
-      style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}
-    >
-      <Sidebar activeHref="/User/tagihan" user={user} />
+    <>
+      <Script
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        strategy="afterInteractive"
+      />
+      <div className="flex min-h-screen bg-[#0f1117] text-slate-200">
+        <Sidebar activeHref="/User/tagihan" user={user} />
 
-      <main className="ml-[200px] flex-1 p-8 px-9">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-7">
-          <div>
-            <h1 className="text-2xl font-bold m-0">
-              Tagihan &amp; <span className="text-orange-500">Pembayaran</span>
-            </h1>
-            <p className="text-sm text-gray-500 mt-1 mb-0">
-              Lihat tagihan dan lakukan pembayaran service kendaraan Anda dengan transparansi teknis penuh.
-            </p>
-          </div>
-          <div className="relative w-9 h-9 bg-[#1e2230] rounded-lg flex items-center justify-center cursor-pointer border border-[#2a2f3e]">
-            <Bell size={16} color="#9ca3af" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border-2 border-[#0f1117]" />
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-[#13161e] border border-[#1e2230] rounded-lg p-1 w-fit">
-          <button
-            onClick={() => { setTab("belum"); setSelectedBill(null); }}
-            className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${
-              tab === "belum" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            Belum dibayar
-          </button>
-          <button
-            onClick={() => { setTab("sudah"); setSelectedBill(null); }}
-            className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${
-              tab === "sudah" ? "bg-[#1e2230] text-slate-200" : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            Sudah dibayar
-          </button>
-        </div>
-
-        {/* ── Belum dibayar: list ── */}
-        {tab === "belum" && !selectedBill && (
-          <div className="flex flex-col gap-3">
-            {/* Banner */}
-            <div className="flex items-center gap-3 px-4 py-3 bg-[rgba(249,115,22,0.08)] border border-[rgba(249,115,22,0.25)] rounded-lg mb-1">
-              <Info size={14} color="#f97316" className="flex-shrink-0" />
-              <p className="text-sm text-gray-300 m-0">
-                Kamu memiliki{" "}
-                <span className="text-orange-500 font-bold">{unpaidBills.length} tagihan aktif</span>{" "}
-                yang belum dibayar. Pilih satu atau beberapa tagihan untuk dibayar sekaligus.
+        <main className="ml-[200px] flex-1 p-8 px-9">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-7">
+            <div>
+              <h1 className="text-2xl font-bold m-0">
+                Tagihan &amp; <span className="text-orange-500">Pembayaran</span>
+              </h1>
+              <p className="text-sm text-gray-500 mt-1 mb-0">
+                Lihat tagihan dan lakukan pembayaran service kendaraan Anda dengan transparansi teknis penuh.
               </p>
             </div>
-
-            {/* Select all bar */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-[#13161e] border border-[#1e2230] rounded-lg">
-              <button onClick={toggleAll} className="flex items-center gap-2.5 cursor-pointer bg-transparent border-none p-0">
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0
-                  ${allChecked ? "bg-orange-500 border-orange-500" : checkedIds.length > 0 ? "border-orange-500 bg-transparent" : "border-[#3a3f50] bg-transparent"}`}>
-                  {allChecked && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                  {!allChecked && checkedIds.length > 0 && (
-                    <div className="w-2.5 h-0.5 bg-orange-500 rounded" />
-                  )}
-                </div>
-                <span className="text-xs font-semibold text-gray-400">Pilih Semua</span>
-              </button>
-              {checkedCount > 0 && (
-                <span className="text-xs text-orange-500 font-semibold">{checkedCount} dipilih</span>
-              )}
+            <div className="relative w-9 h-9 bg-[#1e2230] rounded-lg flex items-center justify-center cursor-pointer border border-[#2a2f3e]">
+              <Bell size={16} color="#9ca3af" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border-2 border-[#0f1117]" />
             </div>
+          </div>
 
-            {unpaidBills.map((bill) => {
-              const isChecked = checkedIds.includes(bill.id);
-              return (
-                <div
-                  key={bill.id}
-                  onClick={() => toggleOne(bill.id)}
-                  className={`bg-[#13161e] border rounded-xl flex items-center gap-5 px-6 py-5 cursor-pointer transition-all
-                    ${isChecked ? "border-orange-500/50 bg-[rgba(249,115,22,0.04)]" : "border-[#1e2230] hover:border-[#2a2f3e]"}`}
-                >
-                  {/* Checkbox */}
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 bg-[#13161e] border border-[#1e2230] rounded-lg p-1 w-fit">
+            <button
+              onClick={() => {
+                setTab("belum");
+                setSelectedNotaId(null);
+              }}
+              className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${tab === "belum" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-gray-300"
+                }`}
+            >
+              Belum dibayar
+            </button>
+            <button
+              onClick={() => {
+                setTab("sudah");
+                setSelectedNotaId(null);
+              }}
+              className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${tab === "sudah" ? "bg-[#1e2230] text-slate-200" : "text-gray-500 hover:text-gray-300"
+                }`}
+            >
+              Sudah dibayar
+            </button>
+          </div>
+
+          {/* ── Tab Belum Dibayar ── */}
+          {tab === "belum" && !selectedNotaId && (
+            <div className="flex flex-col gap-3">
+              {/* Banner */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-[rgba(249,115,22,0.08)] border border-[rgba(249,115,22,0.25)] rounded-lg mb-1">
+                <Info size={14} color="#f97316" className="flex-shrink-0" />
+                <p className="text-sm text-gray-300 m-0">
+                  Kamu memiliki{" "}
+                  <span className="text-orange-500 font-bold">{unpaidList.length} tagihan aktif</span>{" "}
+                  yang belum dibayar. Pilih satu atau beberapa tagihan untuk dibayar sekaligus.
+                </p>
+              </div>
+
+              {/* Select all bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#13161e] border border-[#1e2230] rounded-lg">
+                <button onClick={toggleAll} className="flex items-center gap-2.5 cursor-pointer bg-transparent border-none p-0">
                   <div
-                    onClick={(e) => { e.stopPropagation(); toggleOne(bill.id); }}
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0
-                      ${isChecked ? "bg-orange-500 border-orange-500" : "border-[#3a3f50] bg-transparent"}`}
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${allChecked
+                      ? "bg-orange-500 border-orange-500"
+                      : checkedIds.length > 0
+                        ? "border-orange-500 bg-transparent"
+                        : "border-[#3a3f50] bg-transparent"
+                      }`}
                   >
-                    {isChecked && (
+                    {allChecked && (
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
+                    )}
+                    {!allChecked && checkedIds.length > 0 && <div className="w-2.5 h-0.5 bg-orange-500 rounded" />}
+                  </div>
+                  <span className="text-xs font-semibold text-gray-400">Pilih Semua</span>
+                </button>
+                {checkedCount > 0 && <span className="text-xs text-orange-500 font-semibold">{checkedCount} dipilih</span>}
+              </div>
+
+              {/* Daftar Tagihan */}
+              {unpaidList.length === 0 ? (
+                <div className="bg-[#13161e] border border-[#1e2230] rounded-xl py-12 text-center text-gray-500">
+                  Tidak ada tagihan yang belum dibayar.
+                </div>
+              ) : (
+                unpaidList.map((bill) => {
+                  const isChecked = checkedIds.includes(bill.id);
+                  const kendaraan = bill.work_order?.booking?.kendaraan;
+                  const plat = kendaraan?.nomorPolisi || "-";
+                  const namaKendaraan = kendaraan ? `${kendaraan.merek} ${kendaraan.model}` : "Kendaraan";
+                  const woId = bill.work_order_id;
+                  const tglSelesai =
+                    bill.work_order?.updated_at
+                      ? new Date(
+                        bill.work_order.updated_at
+                      ).toLocaleDateString("id-ID")
+                      : bill.tanggal;
+                  console.log("BILL", bill);
+                  return (
+                    <div
+                      key={bill.id}
+                      onClick={() => toggleOne(bill.id)}
+                      className={`bg-[#13161e] border rounded-xl flex items-center gap-5 px-6 py-5 cursor-pointer transition-all ${isChecked ? "border-orange-500/50 bg-[rgba(249,115,22,0.04)]" : "border-[#1e2230] hover:border-[#2a2f3e]"
+                        }`}
+                    >
+                      {/* Checkbox */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOne(bill.id);
+                        }}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isChecked ? "bg-orange-500 border-orange-500" : "border-[#3a3f50] bg-transparent"
+                          }`}
+                      >
+                        {isChecked && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+
+                      <div
+                        className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${isChecked
+                          ? "bg-[rgba(249,115,22,0.2)] border border-orange-500/40"
+                          : "bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.2)]"
+                          }`}
+                      >
+                        <Bike size={20} color="#f97316" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-white">{namaKendaraan}</div>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-xs text-orange-500 font-medium">{plat}</span>
+                          <span className="text-gray-600 text-xs">•</span>
+                          <span className="text-xs text-gray-600">WO-{woId}</span>
+                          <span className="text-gray-600 text-xs">•</span>
+                          <span className="text-xs text-gray-600">SELESAI {tglSelesai}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-[10px] text-gray-600 tracking-wide mb-1">TOTAL</div>
+                        <div className={`text-base font-bold transition-colors ${isChecked ? "text-orange-400" : "text-orange-500"}`}>
+                          {fmt(bill.totalHarga)}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedNotaId(bill.id);
+                        }}
+                        className="flex-shrink-0 px-4 py-2 bg-transparent border border-[#2a2f3e] hover:border-[#3a3f50] text-gray-400 hover:text-gray-200 text-xs font-semibold rounded-lg transition-all"
+                      >
+                        DETAIL
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+
+              {/* Bulk Payment Bar */}
+              {checkedCount > 0 && (
+                <div className="sticky bottom-0 mt-2 bg-[#13161e] border border-orange-500/30 rounded-xl overflow-hidden shadow-2xl shadow-black/40">
+                  <div className="px-6 py-4 border-b border-[#1e2230]">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="text-[10px] text-gray-500 tracking-widest font-bold mb-0.5">BAYAR SEKALIGUS</div>
+                        <div className="text-xs text-gray-400">
+                          {checkedCount} tagihan dipilih •{" "}
+                          <span className="text-orange-500 font-bold">{fmt(totalChecked)}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowBulkPanel((v) => !v)}
+                        className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2"
+                      >
+                        {showBulkPanel ? "Sembunyikan" : "Pilih Metode Bayar"}
+                      </button>
+                    </div>
+
+                    {showBulkPanel && (
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        {bulkMethods.map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => setBulkMethod(m.id)}
+                            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${bulkMethod === m.id
+                              ? "border-orange-500/50 bg-[rgba(249,115,22,0.08)]"
+                              : "border-[#2a2f3e] bg-[#0f1117] hover:border-[#3a3f50]"
+                              }`}
+                          >
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${bulkMethod === m.id ? "bg-orange-500/15" : "bg-[#1a1d28]"
+                                }`}
+                            >
+                              <m.icon size={14} color={bulkMethod === m.id ? "#f97316" : "#6b7280"} />
+                            </div>
+                            <div>
+                              <div className={`text-[11px] font-semibold ${bulkMethod === m.id ? "text-slate-200" : "text-gray-400"}`}>
+                                {m.label}
+                              </div>
+                              <div className="text-[9px] text-gray-600 tracking-wide leading-tight">{m.sub}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
 
-                  <div className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-all
-                    ${isChecked ? "bg-[rgba(249,115,22,0.2)] border border-orange-500/40" : "bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.2)]"}`}>
-                    <Bike size={20} color="#f97316" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-white">{bill.vehicle}</div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-xs text-orange-500 font-medium">{bill.plate}</span>
-                      <span className="text-gray-600 text-xs">•</span>
-                      <span className="text-xs text-gray-600">{bill.wo}</span>
-                      <span className="text-gray-600 text-xs">•</span>
-                      <span className="text-xs text-gray-600">{bill.selesai}</span>
-                    </div>
-                    <div className="text-xs text-gray-600 mt-1">{bill.services}</div>
-                  </div>
-
-                  <div className="flex items-center gap-6 flex-shrink-0">
-                    {[
-                      { label: "JASA", value: bill.jasa },
-                      { label: "SPAREPART", value: bill.sparepart },
-                      { label: "MATERIAL", value: bill.material },
-                    ].map((item) => (
-                      <div key={item.label} className="text-center">
-                        <div className="text-[10px] text-gray-600 tracking-wide mb-1">{item.label}</div>
-                        <div className="text-xs font-semibold text-gray-400">{fmt(item.value)}</div>
-                      </div>
-                    ))}
-                    <div className="text-center">
-                      <div className="text-[10px] text-gray-600 tracking-wide mb-1">TOTAL</div>
-                      <div className={`text-base font-bold transition-colors ${isChecked ? "text-orange-400" : "text-orange-500"}`}>{fmt(bill.total)}</div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setSelectedBill(bill); }}
-                    className="flex-shrink-0 px-4 py-2 bg-transparent border border-[#2a2f3e] hover:border-[#3a3f50] text-gray-400 hover:text-gray-200 text-xs font-semibold rounded-lg transition-all"
-                  >
-                    DETAIL
-                  </button>
-                </div>
-              );
-            })}
-
-            {/* ── Sticky bulk payment bar ── */}
-            {checkedCount > 0 && (
-              <div className="sticky bottom-0 mt-2 bg-[#13161e] border border-orange-500/30 rounded-xl overflow-hidden shadow-2xl shadow-black/40">
-                <div className="px-6 py-4 border-b border-[#1e2230]">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="px-6 py-4 flex items-center justify-between gap-4">
                     <div>
-                      <div className="text-[10px] text-gray-500 tracking-widest font-bold mb-0.5">BAYAR SEKALIGUS</div>
-                      <div className="text-xs text-gray-400">
-                        {checkedCount} tagihan dipilih •{" "}
-                        <span className="text-orange-500 font-bold">{fmt(totalChecked)}</span>
+                      <div className="text-[10px] text-gray-600 tracking-widest">TOTAL PEMBAYARAN</div>
+                      <div className="text-xl font-bold text-orange-500">{fmt(totalChecked)}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <ShieldCheck size={12} color="#6b7280" />
+                        <span className="text-[10px] text-gray-600">Transaksi aman &amp; terenkripsi</span>
+                      </div>
+                      <button
+                        onClick={handleBulkPay}
+                        className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 transition-colors text-white font-bold text-sm rounded-lg flex-shrink-0"
+                      >
+                        <ShieldCheck size={15} />
+                        BAYAR SEKARANG →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Tab Belum Dibayar: Detail Nota ── */}
+          {tab === "belum" && selectedNotaId && (
+            <PaymentDetail
+              notaId={selectedNotaId}
+              onBack={() => setSelectedNotaId(null)}
+              handlePayment={handlePayment}
+            />
+
+          )}
+
+          {/* ── Tab Sudah Dibayar ── */}
+          {tab === "sudah" && (
+            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden">
+              <div
+                className="grid px-6 py-3 border-b border-[#1e2230]"
+                style={{ gridTemplateColumns: "1fr 1fr 1.4fr 1fr 1fr 1fr 0.8fr" }}
+              >
+                {["NO. NOTA", "WORK ORDER", "KENDARAAN", "TANGGAL", "METODE", "TOTAL", "AKSI"].map((h) => (
+                  <div key={h} className="text-[10px] text-gray-600 font-bold tracking-widest">
+                    {h}
+                  </div>
+                ))}
+              </div>
+
+              {paidList.length === 0 ? (
+                <div className="py-12 text-center text-gray-500">Belum ada riwayat pembayaran.</div>
+              ) : (
+                paidList.map((bill, idx) => {
+                  const kendaraan = bill.work_order?.booking?.kendaraan;
+                  const namaKendaraan = kendaraan ? `${kendaraan.merek} ${kendaraan.model}` : "Kendaraan";
+                  const plat =
+                    kendaraan?.nomorPolisi || "-";
+                  return (
+                    <div
+                      key={bill.id}
+                      className={`grid px-6 py-4 items-center ${idx < paidList.length - 1 ? "border-b border-[#1e2230]" : ""}`}
+                      style={{ gridTemplateColumns: "1fr 1fr 1.4fr 1fr 1fr 1fr 0.8fr" }}
+                    >
+                      <div className="text-sm font-semibold text-slate-200">{bill.noNota}</div>
+                      <div className="text-xs text-gray-500">WO-{bill.work_order_id}</div>
+                      <div>
+                        <div className="text-sm font-medium text-slate-200">{namaKendaraan}</div>
+                        <div className="text-xs text-gray-600">{plat}</div>
+                      </div>
+                      <div className="text-xs text-gray-400">{bill.tanggal}</div>
+                      <div>
+                        <span className="px-2.5 py-1 rounded text-[10px] font-bold tracking-wide bg-green-500/10 text-green-400 border border-green-500/20">
+                          Lunas
+                        </span>
+                      </div>
+                      <div className="text-sm font-bold text-slate-200">{fmt(bill.totalHarga)}</div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedNotaId(bill.id)}
+                          className="flex items-center gap-0.5 text-[11px] text-gray-500 hover:text-gray-300 transition-colors"
+                        >
+                          <ExternalLink size={12} />
+                          Detail
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowBulkPanel((v) => !v)}
-                      className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2"
-                    >
-                      {showBulkPanel ? "Sembunyikan" : "Pilih Metode Bayar"}
-                    </button>
-                  </div>
+                  );
+                })
+              )}
+            </div>
+          )}
 
-                  {showBulkPanel && (
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      {bulkMethods.map((m) => (
-                        <button
-                          key={m.id}
-                          onClick={() => setBulkMethod(m.id)}
-                          className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all
-                            ${bulkMethod === m.id
-                              ? "border-orange-500/50 bg-[rgba(249,115,22,0.08)]"
-                              : "border-[#2a2f3e] bg-[#0f1117] hover:border-[#3a3f50]"}`}
-                        >
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0
-                            ${bulkMethod === m.id ? "bg-orange-500/15" : "bg-[#1a1d28]"}`}>
-                            <m.icon size={14} color={bulkMethod === m.id ? "#f97316" : "#6b7280"} />
-                          </div>
-                          <div>
-                            <div className={`text-[11px] font-semibold ${bulkMethod === m.id ? "text-slate-200" : "text-gray-400"}`}>{m.label}</div>
-                            <div className="text-[9px] text-gray-600 tracking-wide leading-tight">{m.sub}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="px-6 py-4 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-[10px] text-gray-600 tracking-widest">TOTAL PEMBAYARAN</div>
-                    <div className="text-xl font-bold text-orange-500">{fmt(totalChecked)}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                      <ShieldCheck size={12} color="#6b7280" />
-                      <span className="text-[10px] text-gray-600">Transaksi aman &amp; terenkripsi</span>
-                    </div>
-                    <button
-                      onClick={() => { if (!showBulkPanel) { setShowBulkPanel(true); } else { alert(`Pembayaran ${checkedCount} tagihan via ${bulkMethods.find(m=>m.id===bulkMethod)?.label} berhasil dikonfirmasi!`); } }}
-                      className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 transition-colors text-white font-bold text-sm rounded-lg flex-shrink-0"
-                    >
-                      <ShieldCheck size={15} />
-                      BAYAR SEKARANG →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Belum dibayar: detail nota ── */}
-        {tab === "belum" && selectedBill && (
-          <PaymentDetail bill={selectedBill} onBack={() => setSelectedBill(null)} />
-        )}
-
-        {/* ── Sudah dibayar: tabel ── */}
-        {tab === "sudah" && (
-          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden">
-            {/* Header row */}
-            <div
-              className="grid px-6 py-3 border-b border-[#1e2230]"
-              style={{ gridTemplateColumns: "1fr 1fr 1.4fr 1fr 1fr 1fr 0.8fr" }}
-            >
-              {["NO. NOTA", "WORK ORDER", "KENDARAAN", "TANGGAL", "METODE", "TOTAL", "AKSI"].map((h) => (
-                <div key={h} className="text-[10px] text-gray-600 font-bold tracking-widest">
-                  {h}
-                </div>
+          {/* Footer */}
+          <div className="mt-12 pt-5 border-t border-[#1e2230] flex justify-between items-center">
+            <div className="text-[10px] text-gray-700 tracking-wide">
+              © 2024 PASBER AUTOMOTIVE ENGINEERING | CUSTOMER PORTAL
+            </div>
+            <div className="flex gap-6">
+              {["PANDUAN BANTUAN", "KEBIJAKAN PRIVASI", "SYARAT & KETENTUAN"].map((f) => (
+                <span key={f} className="text-[10px] text-gray-700 hover:text-gray-500 cursor-pointer tracking-wide">
+                  {f}
+                </span>
               ))}
             </div>
-
-            {paidBills.map((bill, i) => {
-              const m = methodLabel[bill.method];
-              return (
-                <div
-                  key={bill.nota}
-                  className={`grid px-6 py-4 items-center ${
-                    i < paidBills.length - 1 ? "border-b border-[#1e2230]" : ""
-                  }`}
-                  style={{ gridTemplateColumns: "1fr 1fr 1.4fr 1fr 1fr 1fr 0.8fr" }}
-                >
-                  <div className="text-sm font-semibold text-slate-200">{bill.nota}</div>
-                  <div className="text-xs text-gray-500">{bill.wo}</div>
-                  <div>
-                    <div className="text-sm font-medium text-slate-200">{bill.vehicle}</div>
-                    <div className="text-xs text-gray-600">{bill.plate}</div>
-                  </div>
-                  <div className="text-xs text-gray-400">{bill.date}</div>
-                  <div>
-                    <span
-                      className="px-2.5 py-1 rounded text-[10px] font-bold tracking-wide"
-                      style={{ color: m.color, background: m.bg }}
-                    >
-                      {m.label}
-                    </span>
-                  </div>
-                  <div className="text-sm font-bold text-slate-200">{fmt(bill.total)}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/25 text-green-400 text-[10px] font-bold rounded tracking-wide">
-                      Lunas
-                    </span>
-                    <button className="flex items-center gap-0.5 text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
-                      <ExternalLink size={12} />
-                      Detail
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
           </div>
-        )}
-
-        {/* Footer */}
-        <div className="mt-12 pt-5 border-t border-[#1e2230] flex justify-between items-center">
-          <div className="text-[10px] text-gray-700 tracking-wide">
-            © 2024 PASBER AUTOMOTIVE ENGINEERING | CUSTOMER PORTAL
-          </div>
-          <div className="flex gap-6">
-            {["PANDUAN BANTUAN", "KEBIJAKAN PRIVASI", "SYARAT & KETENTUAN"].map((f) => (
-              <span
-                key={f}
-                className="text-[10px] text-gray-700 hover:text-gray-500 cursor-pointer tracking-wide"
-              >
-                {f}
-              </span>
-            ))}
-          </div>
-        </div>
-      </main>
-
-      <style>{`
-        * { box-sizing: border-box; }
-        input::placeholder { color: #4b5563; }
-      `}</style>
-    </div>
+        </main>
+      </div>
+    </>
   );
 }

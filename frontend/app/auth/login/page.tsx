@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import AuthPopup from '../../components/auth_popup/Auth_popup';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,48 +11,102 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [popupType, setPopupType] =
+    useState<'success' | 'error'>('success');
+
+  const [popupTitle, setPopupTitle] =
+    useState('');
+
+  const [popupMessage, setPopupMessage] =
+    useState('');
+
 
   const handleLogin = async (e: React.FormEvent) => {
+
     e.preventDefault();
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
       const data = await res.json();
 
-      console.log("STATUS:", res.status);
-      console.log("LOGIN RESPONSE:", data);
-
       if (!res.ok) {
-        setErrorMessage(data.debug || data.message || 'Terjadi kesalahan');
-        setShowErrorModal(true);
+
+        setPopupType("error");
+
+        setPopupTitle("Login Gagal");
+
+        setPopupMessage(
+          data.message || "Email atau password salah."
+        );
+
+        setShowPopup(true);
+
         return;
       }
 
-      localStorage.setItem('token', data.token);
 
-      document.cookie = `token=${data.token}; path=/`;
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("is_profile_complete", data.user.is_profile_complete);
+
+      document.cookie = `token = ${data.token}; path =/`;
       document.cookie = `role=${data.role}; path=/`;
 
-      if (data.role === "admin") {
-        router.push("/Admin/admin-dashboard");
-        return;
-      }
+      setPopupType("success");
+      if (data.role === "admin") { router.push("/Admin/admin-dashboard"); return; }
+      setPopupTitle("Login Berhasil");
 
-      // CUSTOMER
-      if (data.user.is_profile_complete) {
-        router.push("/User/dashboard");
-      } else {
-        router.push("/onboarding");
-      }
+      setPopupMessage(
+        "Selamat datang kembali di PASBER."
+      );
+
+      setShowPopup(true);
 
     } catch (error) {
-      console.log("ERROR:", error);
-      setShowErrorModal(true);
+
+      setPopupType("error");
+
+      setPopupTitle("Server Error");
+
+      setPopupMessage(
+        "Terjadi kesalahan pada server."
+      );
+
+      setShowPopup(true);
+    }
+  };
+
+
+
+  const handleContinue = () => {
+
+    setShowPopup(false);
+
+    const isProfileComplete =
+      localStorage.getItem("is_profile_complete");
+
+    if (isProfileComplete === "1") {
+
+      router.push("/User/dashboard");
+
+    } else {
+
+      router.push("/onboarding");
     }
   };
 
@@ -157,7 +212,6 @@ export default function LoginPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Kata Sandi</label>
-                  <a href="#" className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-widest">Lupa?</a>
                 </div>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
@@ -201,12 +255,7 @@ export default function LoginPage() {
                   Daftar Sekarang
                 </Link>
               </p>
-              <Link
-                href="/auth/forgot-password"
-                className="text-[11px] text-gray-600 hover:text-orange-400 uppercase font-bold tracking-widest transition-colors"
-              >
-                Forgot Password?
-              </Link>
+              
             </div>
 
             {/* Mobile contact info */}
@@ -235,7 +284,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-8 sm:mt-10 lg:mt-20 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+            <div className="mt-2 sm:mt-3 lg:mt-7 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
               <span>© Pasti Beres.</span>
             </div>
           </div>
@@ -263,6 +312,14 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+      <AuthPopup
+        open={showPopup}
+        type={popupType}
+        title={popupTitle}
+        message={popupMessage}
+        onClose={() => setShowPopup(false)}
+        onContinue={handleContinue}
+      />
     </div>
   );
 }

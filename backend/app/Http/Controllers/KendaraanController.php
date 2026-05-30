@@ -79,4 +79,13 @@ class KendaraanController extends Controller
             'message' => 'Kendaraan berhasil dihapus'
         ]);
     }
+
+    public function myVehicle(Request $request) {
+        $user = $request->user();
+
+        $kendaraan = Kendaraan::where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        return response()->json($kendaraan); }
 }

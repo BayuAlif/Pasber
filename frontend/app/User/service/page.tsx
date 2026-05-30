@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { useRouter } from 'next/navigation'
+
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
 import BookingSuccessPopup, { BookingSuccessData } from "@/app/components/popUp/BookingSuccessPopup";
@@ -52,10 +53,6 @@ const sessions = [
   "13:00", "14:00", "15:00", "16:00",
 ];
 
-const YEAR = 2026;
-
-
-
 type Bengkel = {
   id: number;
   nama: string;
@@ -63,9 +60,6 @@ type Bengkel = {
   lat: number;
   lng: number;
 };
-
-
-
 
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function BookingServicePage() {
@@ -106,6 +100,83 @@ export default function BookingServicePage() {
   const [selectedTime, setSelectedTime] = useState("09:00");
   const [selectedBengkel, setSelectedBengkel] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear()
+  );
+
+  // apakah tanggal full atau tidak
+  const [fullDates, setFullDates] = useState<number[]>([]);
+  const [quotaInfo, setQuotaInfo] = useState<any[]>([]);
+  useEffect(() => {
+
+    if (!selectedBengkel) return;
+
+    const fetchFullDates = async () => {
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/full-dates?bulan=${selectedMonth + 1}&tahun=${selectedYear}&bengkel_id=${selectedBengkel}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const data = await res.json();
+      setFullDates(data.fullDates || []);
+      setQuotaInfo(data.quotaInfo || []);
+    };
+
+    fetchFullDates();
+
+  }, [
+    selectedMonth,
+    selectedYear,
+    selectedBengkel
+  ]);
+
+  // auto update set selected sesi
+  useEffect(() => {
+
+    const currentDate = new Date();
+
+    const totalDays = getDays(selectedMonth);
+
+    for (let d = 1; d <= totalDays; d++) {
+
+      const cellDate = new Date(
+        selectedYear,
+        selectedMonth,
+        d
+      );
+
+      const isPast =
+        cellDate < new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate()
+        );
+
+      const isFull =
+        fullDates.includes(d);
+
+      if (!isPast && !isFull) {
+
+        setSelectedDate(d);
+
+        return;
+      }
+    }
+
+  }, [
+    fullDates,
+    selectedMonth,
+    selectedYear
+  ]);
+
+
 
   // ─── Get User Location API Browser Geolocation API. ──────────────────────────────────────────────────
   useEffect(() => {
@@ -164,27 +235,57 @@ export default function BookingServicePage() {
     return (R * c).toFixed(1);
   };
 
+  const [vehicleLoading, setVehicleLoading] = useState(true);
   const fetchVehicles = async () => {
+
     try {
+
+      setVehicleLoading(true);
+
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/kendaraan`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
+
+      const response = await fetch(
+        `${API_URL}/kendaraan`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+          },
+        }
+      );
+
       const result = await response.json();
-      console.log(result);
-      const formattedVehicles: Vehicle[] = (result.data || []).map((v: {
-        id: number; merek: string; model: string;
-        nomorPolisi: string; tahun: string; jenisKendaraan: "motor" | "mobil";
-      }) => ({
-        id: v.id.toString(),
-        type: v.jenisKendaraan,
-        brand: v.merek,
-        model: v.model,
-        plate: v.nomorPolisi,
-        year: v.tahun,
-      }));
+
+      const formattedVehicles: Vehicle[] =
+        (result.data || []).map((v: {
+          id: number;
+          merek: string;
+          model: string;
+          nomorPolisi: string;
+          tahun: string;
+          jenisKendaraan: "motor" | "mobil";
+        }) => ({
+
+          id: v.id.toString(),
+          type: v.jenisKendaraan,
+          brand: v.merek,
+          model: v.model,
+          plate: v.nomorPolisi,
+          year: v.tahun,
+
+        }));
+
       setVehicles(formattedVehicles);
-    } catch (error) { console.error(error); }
+
+    } catch (error) {
+
+      console.error(error);
+
+    } finally {
+
+      setVehicleLoading(false);
+
+    }
   };
 
   const fetchBengkels = async () => {
@@ -229,11 +330,11 @@ export default function BookingServicePage() {
 
   }, []);
 
-  console.log(bengkels);
+  // console.log(bengkels);
 
   // ─── Helpers ────────────────────────────────────────────────────────────
-  const getDays = (m: number) => new Date(YEAR, m + 1, 0).getDate();
-  const getFirstDay = (m: number) => { const d = new Date(YEAR, m, 1).getDay(); return d === 0 ? 6 : d - 1; };
+  const getDays = (m: number) => new Date(selectedYear, m + 1, 0).getDate();
+  const getFirstDay = (m: number) => { const d = new Date(selectedYear, m, 1).getDay(); return d === 0 ? 6 : d - 1; };
 
   // ─── Modal ──────────────────────────────────────────────────────────────
   const openModal = () => {
@@ -291,7 +392,7 @@ export default function BookingServicePage() {
   const handleBooking = async () => {
     try {
       const token = localStorage.getItem("token");
-      const bookingDate = new Date(YEAR, selectedMonth, selectedDate);
+      const bookingDate = new Date(selectedYear, selectedMonth, selectedDate);
       const formattedDate =
         `${bookingDate.getFullYear()}-` +
         `${String(bookingDate.getMonth() + 1).padStart(2, "0")}-` +
@@ -433,56 +534,141 @@ export default function BookingServicePage() {
 
             {/* Pilih Kendaraan */}
             <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-6 flex flex-col">
+
               <div className="flex justify-between items-center mb-5">
-                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">PILIH KENDARAAN</div>
-                <button onClick={openModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-md text-[11px] font-bold text-[#f97316] cursor-pointer">
+                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">
+                  PILIH KENDARAAN
+                </div>
+
+                <button
+                  onClick={openModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-md text-[11px] font-bold text-[#f97316] cursor-pointer"
+                >
                   <Plus size={12} /> Tambah
                 </button>
               </div>
 
-              {vehicles.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-2.5 py-8 text-center">
-                  <div className="p-4 bg-[#1a1d28] rounded-xl"><Car size={28} color="#374151" /></div>
-                  <p className="text-[12px] font-bold text-[#4b5563] tracking-[1px] uppercase">Belum ada kendaraan</p>
-                  <p className="text-[11px] text-[#374151]">Tambahkan kendaraan untuk melanjutkan</p>
+              {vehicleLoading ? (
+
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 py-10">
+
+                  <div className="w-8 h-8 border-2 border-[#2a2f3e] border-t-[#f97316] rounded-full animate-spin" />
+
+                  <p className="text-[11px] text-[#4b5563] tracking-[1px] uppercase">
+                    Memuat Kendaraan...
+                  </p>
+
                 </div>
+
+              ) : vehicles.length === 0 ? (
+
+                <div className="flex-1 flex flex-col items-center justify-center gap-2.5 py-8 text-center">
+
+                  <div className="p-4 bg-[#1a1d28] rounded-xl">
+                    <Car size={28} color="#374151" />
+                  </div>
+
+                  <p className="text-[12px] font-bold text-[#4b5563] tracking-[1px] uppercase">
+                    Belum ada kendaraan
+                  </p>
+
+                  <p className="text-[11px] text-[#374151]">
+                    Tambahkan kendaraan untuk melanjutkan
+                  </p>
+
+                </div>
+
               ) : (
+
                 <div className="flex flex-col gap-2.5">
+
                   {vehicles.map((v) => {
+
                     const isSel = selectedVehicleIds.includes(v.id);
+
                     return (
-                      <div key={v.id} onClick={() => setSelectedVehicleIds((prev) => isSel ? prev.filter((id) => id !== v.id) : [...prev, v.id])}
+
+                      <div
+                        key={v.id}
+                        onClick={() =>
+                          setSelectedVehicleIds((prev) =>
+                            isSel
+                              ? prev.filter((id) => id !== v.id)
+                              : [...prev, v.id]
+                          )
+                        }
                         className={`px-4 py-3.5 rounded-[10px] border-2 cursor-pointer flex justify-between items-center
-                          ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]" : "border-[#1e2230] bg-[#0f1117]"}`}>
+            ${isSel
+                            ? "border-[#f97316] bg-[rgba(249,115,22,0.05)]"
+                            : "border-[#1e2230] bg-[#0f1117]"
+                          }`}
+                      >
+
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${isSel ? "bg-[#f97316] text-white" : "bg-[#1a1d28] text-[#4b5563]"}`}>
-                            {v.type === "motor" ? <Bike size={16} /> : <Car size={16} />}
+
+                          <div
+                            className={`p-2 rounded-lg ${isSel
+                                ? "bg-[#f97316] text-white"
+                                : "bg-[#1a1d28] text-[#4b5563]"
+                              }`}
+                          >
+                            {v.type === "motor"
+                              ? <Bike size={16} />
+                              : <Car size={16} />
+                            }
                           </div>
+
                           <div>
                             <p className="text-[13px] font-bold text-white uppercase m-0">
-                              {v.brand} {v.model}{v.year ? ` (${v.year})` : ""}
+                              {v.brand} {v.model}
+                              {v.year ? ` (${v.year})` : ""}
                             </p>
-                            <p className="text-[10px] text-[#4b5563] font-mono tracking-[1px] m-0">{v.plate}</p>
+
+                            <p className="text-[10px] text-[#4b5563] font-mono tracking-[1px] m-0">
+                              {v.plate}
+                            </p>
                           </div>
+
                         </div>
+
                         <div className="flex items-center gap-2">
-                          <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all
-                            ${isSel ? "bg-[#f97316] border-[#f97316]" : "bg-transparent border-[#2a2f3e]"}`}>
+
+                          <div
+                            className={`w-5 h-5 rounded flex items-center justify-center border transition-all
+                ${isSel
+                                ? "bg-[#f97316] border-[#f97316]"
+                                : "bg-transparent border-[#2a2f3e]"
+                              }`}
+                          >
                             {isSel && (
                               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path
+                                  d="M2 5l2.5 2.5L8 3"
+                                  stroke="white"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
                               </svg>
                             )}
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); deleteVehicle(v.id); }}
-                            className="p-1.5 bg-transparent border-none cursor-pointer text-[#374151]">
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteVehicle(v.id);
+                            }}
+                            className="p-1.5 bg-transparent border-none cursor-pointer text-[#374151]"
+                          >
                             <Trash2 size={14} />
                           </button>
+
                         </div>
+
                       </div>
                     );
                   })}
+
                 </div>
               )}
             </div>
@@ -543,7 +729,7 @@ export default function BookingServicePage() {
                     <ChevronLeft size={14} />
                   </button>
                   <span className="text-[13px] font-semibold text-[#e2e8f0] min-w-[120px] text-center">
-                    {months[selectedMonth]} {YEAR}
+                    {months[selectedMonth]} {selectedYear}
                   </span>
                   <button onClick={() => setSelectedMonth((m) => Math.min(11, m + 1))}
                     className="w-7 h-7 bg-[#1a1d28] border border-[#2a2f3e] rounded-md flex items-center justify-center cursor-pointer text-[#9ca3af]">
@@ -561,14 +747,58 @@ export default function BookingServicePage() {
 
               {/* Calendar */}
               <div className="grid grid-cols-7 gap-1.5 mb-7">
-                {Array.from({ length: getFirstDay(selectedMonth) }).map((_, i) => <div key={`e${i}`} />)}
+
+                {Array.from({ length: getFirstDay(selectedMonth) }).map((_, i) => (
+                  <div key={`e${i}`} />
+                ))}
+
                 {Array.from({ length: getDays(selectedMonth) }).map((_, i) => {
+
                   const d = i + 1;
-                  const isSel = selectedDate === d;
+
+                  const currentDate = new Date();
+
+                  const cellDate = new Date(
+                    selectedYear,
+                    selectedMonth,
+                    d
+                  );
+
+                  const isPast =
+                    cellDate < new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth(),
+                      currentDate.getDate()
+                    );
+
+                  const isFull =
+                    fullDates.includes(d);
+
+                  const isDisabled =
+                    isPast || isFull;
+
+                  const isSel =
+                    selectedDate === d;
+
                   return (
-                    <button key={d} onClick={() => setSelectedDate(d)}
-                      className={`py-2.5 rounded-lg border text-[13px] font-semibold cursor-pointer
-                        ${isSel ? "border-[#f97316] bg-[#f97316] text-white" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
+                    <button
+                      key={d}
+
+                      disabled={isDisabled}
+
+                      onClick={() => !isDisabled && setSelectedDate(d)}
+
+                      className={`py-2.5 rounded-lg border text-[13px] font-semibold
+
+        ${isDisabled
+                          ? "border-[#1a1d28] bg-[#111827] text-[#374151] opacity-50 cursor-not-allowed"
+
+                          : isSel
+                            ? "border-[#f97316] bg-[#f97316] text-white"
+
+                            : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"
+                        }`}
+                    >
                       {d}
                     </button>
                   );
@@ -576,21 +806,72 @@ export default function BookingServicePage() {
               </div>
 
               {/* Time slots */}
-              <div className="flex items-center gap-2 mb-3.5">
-                <Clock size={13} color="#f97316" />
-                <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">SESI TERSEDIA</div>
-              </div>
-              <div className="grid grid-cols-4 gap-2 mb-7">
-                {sessions.map((t) => {
-                  const isSel = selectedTime === t;
+              <div className="flex items-center justify-between mb-3.5">
+
+                <div className="flex items-center gap-2">
+                  <Clock size={13} color="#f97316" />
+
+                  <div className="text-[10px] text-[#4b5563] tracking-[1.5px] font-bold">
+                    SESI TERSEDIA
+                  </div>
+                </div>
+
+                {/* quota info */}
+                {(() => {
+
+                  const quota =
+                    quotaInfo.find(
+                      (q) => q.day === selectedDate
+                    ) || {
+                      remaining: 5,
+                      booked: 0,
+                      isFull: false,
+                    };
+
                   return (
-                    <button key={t} onClick={() => setSelectedTime(t)}
-                      className={`py-2.5 rounded-lg border text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5
-                        ${isSel ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]" : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"}`}>
+                    <div
+                      className={`text-[10px] font-bold px-2 py-1 rounded-md border
+
+                          ${quota.remaining <= 1
+                          ? "text-[#ef4444] border-[#7f1d1d] bg-[rgba(239,68,68,0.08)]"
+
+                          : quota.remaining <= 2
+                            ? "text-[#f59e0b] border-[#78350f] bg-[rgba(245,158,11,0.08)]"
+
+                            : "text-[#10b981] border-[#064e3b] bg-[rgba(16,185,129,0.08)]"
+                        }`}
+                    >
+                      Sisa {quota.remaining} / 5 slot
+                    </div>
+                  );
+                })()}
+
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 mb-7">
+
+                {sessions.map((t) => {
+
+                  const isSel = selectedTime === t;
+
+                  return (
+                    <button
+                      key={t}
+
+                      onClick={() => setSelectedTime(t)}
+
+                      className={`py-2.5 rounded-lg border text-[12px] font-semibold flex items-center justify-center gap-1.5
+
+        ${isSel
+                          ? "border-[#f97316] bg-[rgba(249,115,22,0.1)] text-[#f97316]"
+                          : "border-[#1e2230] bg-[#0f1117] text-[#6b7280]"
+                        }`}
+                    >
                       {t}
                     </button>
                   );
                 })}
+
               </div>
 
               <div className="flex gap-3">
@@ -642,7 +923,7 @@ export default function BookingServicePage() {
                       <span>{dist} km</span>
                     )
                   }
-                  console.log("Bengkel:", b);
+                  // console.log("Bengkel:", b);
                   return (
 
                     <div
@@ -814,7 +1095,7 @@ export default function BookingServicePage() {
                           })()
                           : null
                     },
-                    { label: "Tanggal", value: `${selectedDate} ${months[selectedMonth]} ${YEAR}` },
+                    { label: "Tanggal", value: `${selectedDate} ${months[selectedMonth]} ${selectedYear}` },
                     { label: "Sesi Waktu", value: `${selectedTime} WIB` },
                   ].map((item, i) => (
                     <div key={item.label}

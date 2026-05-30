@@ -15,7 +15,7 @@ class KelolaBookingController extends Controller
      */
     public function index(Request $request)
     {
-         $user = Auth::user();
+        $user = Auth::user();
 
         $bookings = Booking::with([
             'user',
@@ -58,39 +58,43 @@ class KelolaBookingController extends Controller
 
         $booking = Booking::findOrFail($id);
 
-        // =========================
-        // UPDATE STATUS BOOKING
-        // =========================
+        // update booking
         $booking->status = $request->status;
         $booking->save();
 
-        // =========================
-        // JIKA APPROVED
-        // BUAT WORK ORDER
-        // =========================
-        if ($request->status === 'approved') {
+        // cari work order terkait
+        $workOrder = work_order::where(
+            'booking_id',
+            $booking->id
+        )->first();
 
-            $existingWO = work_order::where(
-                'booking_id',
-                $booking->id
-            )->first();
+        $prefix = strtoupper(
+            substr($booking->bengkel->nama, 0, 3)
+        );
+        $kodeWO =
+            'WO-' .
+            $prefix .
+            '-' .
+            str_pad($booking->id, 5, '0', STR_PAD_LEFT);
 
-            // supaya tidak duplicate
-            if (!$existingWO) {
+        // inih create work_order nya disini
+        $workOrder = work_order::create([
+            'booking_id' => $booking->id,
+            'statusWO' => 'pending',
+            'kodeWO' => $kodeWO,
+        ]);
 
-                $workOrder = work_order::create([
-                    'booking_id' => $booking->id,
-                    'statusWO' => 'approved',
-                ]);
+        // kalau ada WO, update juga
+        if ($workOrder) {
 
-                // =========================
-                // CREATE FIRST LOG
-                // =========================
-                WorkOrderLog::create([
-                    'work_order_id' => $workOrder->id,
-                    'status' => 'approved',
-                ]);
-            }
+            $workOrder->statusWO = $request->status;
+            $workOrder->save();
+
+            // insert log
+            WorkOrderLog::create([
+                'work_order_id' => $workOrder->id,
+                'status' => $request->status,
+            ]);
         }
 
         return response()->json([

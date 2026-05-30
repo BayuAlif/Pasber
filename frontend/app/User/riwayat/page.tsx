@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell, Search, ChevronDown, FileText, ChevronLeft, ChevronRight,
   Car, Bike, Wrench, CheckCircle2, Clock, AlertCircle, X,
@@ -9,7 +9,15 @@ import {
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
 
-// ─── Dummy data ───────────────────────────────────────────────────────────────
+type ServiceRecordStatus =
+  | "pending"
+  | "approved"
+  | "assigned"
+  | "running"
+  | "qc"
+  | "done"
+  | "paid";
+
 type ServiceRecord = {
   wo: string;
   vehicle: string;
@@ -19,21 +27,57 @@ type ServiceRecord = {
   date: string;
   mechanic: string;
   total: string | null;
-  status: "running" | "selesai" | "ditolak";
+  status: ServiceRecordStatus;
 };
 
-const records: ServiceRecord[] = [
-  { wo:"WO-2025-0042", vehicle:"Legenda Astrea",    plate:"D 4621 XY", vehicleType:"motor", service:"Ganti Oli",            date:"7 Mei 2025",  mechanic:"Ahmad Budi", total:null,         status:"running"  },
-  { wo:"WO-2025-0035", vehicle:"Honda Beat Street", plate:"D 1234 AB", vehicleType:"motor", service:"Ganti Oli + Filter",   date:"12 Apr 2025", mechanic:"Deni S.",    total:"Rp 85.000",  status:"selesai"  },
-  { wo:"WO-2025-0028", vehicle:"Honda Vario 150",   plate:"D 4321 YY", vehicleType:"motor", service:"Tune Up + Karburator", date:"20 Mar 2025", mechanic:"Ahmad Budi", total:"Rp 175.000", status:"selesai"  },
-  { wo:"WO-2025-0021", vehicle:"Honda Beat Street", plate:"D 1234 AB", vehicleType:"motor", service:"Ganti Ban Belakang",   date:"5 Feb 2025",  mechanic:"Wahyu P.",   total:"Rp 220.000", status:"selesai"  },
-  { wo:"BK-2025-0018", vehicle:"Honda Vario 150",   plate:"D 4321 YY", vehicleType:"motor", service:"Servis Rem",           date:"15 Jan 2025", mechanic:"—",          total:null,         status:"ditolak"  },
-];
+type WorkOrderApiItem = {
+  id: number;
+  kodeWO?: string;
+  statusWO?: string;
+  booking?: {
+    tanggalBooking?: string;
+    Keluhan?: string;
+    kendaraan?: {
+      merek?: string;
+      model?: string;
+      nomorPolisi?: string;
+      jenisKendaraan?: string;
+    };
+  };
+  mekanik?: {
+    nama?: string;
+  };
+  nota?: {
+    total?: string | number;
+  };
+};
 
-const STATUS_CONFIG = {
-  running: { label:"RUNNING", bg:"rgba(249,115,22,0.12)", border:"rgba(249,115,22,0.3)",  color:"#f97316", icon: Activity     },
-  selesai: { label:"SELESAI", bg:"rgba(34,197,94,0.10)",  border:"rgba(34,197,94,0.3)",   color:"#22c55e", icon: CheckCircle2 },
-  ditolak: { label:"DITOLAK", bg:"rgba(239,68,68,0.10)",  border:"rgba(239,68,68,0.25)",  color:"#ef4444", icon: AlertCircle  },
+const STATUS_CONFIG: Record<ServiceRecordStatus, { label: string; bg: string; border: string; color: string; icon: any }> = {
+  pending: { label: "PENDING", bg: "rgba(234,179,8,0.12)", border: "rgba(234,179,8,0.3)", color: "#f59e0b", icon: Clock },
+  approved: { label: "APPROVED", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.25)", color: "#22c55e", icon: CheckCircle2 },
+  assigned: { label: "ASSIGNED", bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.3)", color: "#f97316", icon: Activity },
+  running: { label: "RUNNING", bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.3)", color: "#f97316", icon: Activity },
+  qc: { label: "QC", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.3)", color: "#a855f7", icon: Activity },
+  done: { label: "DONE", bg: "rgba(34,197,94,0.10)", border: "rgba(34,197,94,0.3)", color: "#22c55e", icon: CheckCircle2 },
+  paid: { label: "PAID", bg: "rgba(34,197,94,0.10)", border: "rgba(34,197,94,0.3)", color: "#22c55e", icon: Receipt },
+};
+
+const normalizeWorkOrderStatus = (status?: string): ServiceRecordStatus => {
+  const normalized = (status ?? "").toLowerCase();
+  const allowed: ServiceRecordStatus[] = ["pending", "approved", "assigned", "running", "qc", "done", "paid"];
+  return allowed.includes(normalized as ServiceRecordStatus)
+    ? (normalized as ServiceRecordStatus)
+    : "pending";
+};
+
+const normalizeVehicleType = (jenis?: string): "motor" | "mobil" => {
+  const lower = (jenis ?? "").toLowerCase();
+  return lower.includes("mobil") ? "mobil" : "motor";
+};
+
+const formatTotal = (value?: string | number | null) => {
+  if (value == null || value === "") return null;
+  return typeof value === "number" ? `Rp ${value.toLocaleString("id-ID")}` : String(value);
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -45,9 +89,58 @@ export default function RiwayatServicePage() {
   const [vehicleOpen,   setVehicleOpen]   = useState(false);
   const [detailRow,     setDetailRow]     = useState<ServiceRecord | null>(null);
   const [page,          setPage]          = useState(1);
+  const [records,       setRecords]       = useState<ServiceRecord[]>([]);
+  const [loading,       setLoading]       = useState(true);
   const PER_PAGE = 5;
 
-  const uniqueVehicles = Array.from(new Set(records.map(r => r.vehicle)));
+  useEffect(() => {
+    const fetchWorkOrders = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://127.0.0.1:8000/api/work-order", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Gagal fetch work order");
+        }
+
+        const result = await response.json();
+        const workOrders: WorkOrderApiItem[] = result.data ?? [];
+
+        const normalized = workOrders.map((wo) => ({
+          wo: wo.kodeWO || `WO-${String(wo.id).padStart(4, "0")}`,
+          vehicle: `${wo.booking?.kendaraan?.merek ?? ""} ${wo.booking?.kendaraan?.model ?? ""}`.trim() || "-",
+          plate: wo.booking?.kendaraan?.nomorPolisi ?? "-",
+          vehicleType: normalizeVehicleType(wo.booking?.kendaraan?.jenisKendaraan),
+          service: wo.booking?.Keluhan ?? "-",
+          date: wo.booking?.tanggalBooking
+            ? new Date(wo.booking.tanggalBooking).toLocaleDateString("id-ID", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })
+            : "-",
+          mechanic: wo.mekanik?.nama ?? "-",
+          total: formatTotal(wo.nota?.total),
+          status: normalizeWorkOrderStatus(wo.statusWO),
+        }));
+
+        setRecords(normalized);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkOrders();
+  }, []);
+
+  const uniqueVehicles = Array.from(new Set(records.map((r) => r.vehicle)));
 
   const filtered = records.filter(r => {
     const matchSearch  = r.wo.toLowerCase().includes(search.toLowerCase()) || r.vehicle.toLowerCase().includes(search.toLowerCase());
@@ -105,8 +198,8 @@ export default function RiwayatServicePage() {
               {statusFilter} <ChevronDown size={13} />
             </button>
             {statusOpen && (
-              <div className="absolute top-[calc(100%+6px)] left-0 bg-[#1e2230] border border-[#2a2f3e] rounded-lg min-w-[160px] z-20 overflow-hidden">
-                {["Semua Status", "Running", "Selesai", "Ditolak"].map(s => (
+              <div className="absolute top-[calc(100%+6px)] left-0 bg-[#1e2230] border border-[#2a2f3e] rounded-lg min-w-[180px] z-20 overflow-hidden">
+                {["Semua Status", "Pending", "Approved", "Assigned", "Running", "QC", "Done", "Paid"].map(s => (
                   <button
                     key={s}
                     onClick={() => { setStatusFilter(s); setStatusOpen(false); setPage(1); }}
@@ -330,7 +423,7 @@ export default function RiwayatServicePage() {
             {/* Actions */}
             <div className="flex gap-2.5">
               {detailRow.status === "running" && (
-                <Link href="/user/pantau" className="flex-1 no-underline">
+                <Link href="/User/pantau" className="flex-1 no-underline">
                   <button className="w-full py-[11px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.3)] rounded-lg text-[12px] font-bold text-[#f97316] cursor-pointer tracking-[1px]">
                     Pantau Service →
                   </button>

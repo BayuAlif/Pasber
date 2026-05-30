@@ -26,7 +26,6 @@ const navItems = [
   { label: 'Invoice & Pembayaran',       href: '/Admin/pembayaran',      icon: CreditCard      },
   { label: 'Inventory',                  href: '/Admin/inventory',       icon: Package         },
   { label: 'Riwayat & Log',              href: '/Admin/riwayat',         icon: History         },
-  { label: 'Laporan Keuangan',           href: '/Admin/laporan',         icon: BarChart3       },
   { label: 'Pengaturan Sistem',          href: '/Admin/pengaturan',      icon: Settings        },
 ];
 

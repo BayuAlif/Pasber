@@ -6,31 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('work_order_logs', function (Blueprint $table) {
+        Schema::create('detail_nota_jasa', function (Blueprint $table) {
 
             $table->id();
 
-
-            $table->foreignId('work_order_id')
+            $table->foreignId('WOID')
                 ->constrained('work_order')
                 ->onDelete('cascade');
 
-            $table->string('status');
+            $table->string('namaJasa');
+
+            $table->decimal('hargaJasa', 15, 2);
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('work_order_logs');
+        Schema::dropIfExists('detail_nota_jasa');
     }
 };

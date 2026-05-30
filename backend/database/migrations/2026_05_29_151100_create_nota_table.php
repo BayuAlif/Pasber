@@ -11,16 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('work_order_logs', function (Blueprint $table) {
+        Schema::create('nota', function (Blueprint $table) {
 
             $table->id();
 
-
-            $table->foreignId('work_order_id')
+            $table->foreignId('WOID')
                 ->constrained('work_order')
                 ->onDelete('cascade');
 
-            $table->string('status');
+            $table->date('tanggal');
+
+            $table->decimal('totalHarga', 15, 2)
+                ->default(0);
+
+            $table->enum('status', [
+                'pending',
+                'belum_lunas',
+                'lunas'
+            ])->default('pending');
 
             $table->timestamps();
         });
@@ -31,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('work_order_logs');
+        Schema::dropIfExists('nota');
     }
 };

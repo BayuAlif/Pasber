@@ -14,6 +14,8 @@ return new class extends Migration
        Schema::create('work_order', function (Blueprint $table) {
 
             $table->id();
+             $table->string('kodeWO')
+                ->unique();
 
             $table->foreignId('booking_id')
                 ->constrained('booking')
@@ -25,13 +27,14 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             $table->enum('statusWO', [
+                'pending', //
                 'approved',
                 'assigned',
                 'running',
                 'qc',
                 'done',
                 'paid'
-            ])->default('approved');
+            ])->default('pending'); //
 
             $table->integer('estimasiWaktu')->nullable();
 

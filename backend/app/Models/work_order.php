@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Booking;
 use App\Models\Mekanik;
+use App\Models\DetailNotaJasa;
+use App\Models\DetailNotaMaterial;
+use App\Models\Nota;
 
 class work_order extends Model
 {
@@ -15,6 +18,7 @@ class work_order extends Model
         'mekanik_id',
         'statusWO',
         'estimasiWaktu',
+        'kodeWO',
     ];
 
     public function booking()
@@ -31,5 +35,27 @@ class work_order extends Model
     {
         return $this->hasMany(WorkOrderLog::class);
     }
+    public function detailMaterial()
+    {
+        return $this->hasMany(
+            DetailNotaMaterial::class,
+            'WOID'
+        );
+    }
 
+    public function detailJasa()
+    {
+        return $this->hasMany(
+            DetailNotaJasa::class,
+            'WOID'
+        );
+    }
+
+    public function nota()
+    {
+        return $this->hasOne(
+            Nota::class,
+            'WOID'
+        );
+    }
 }
