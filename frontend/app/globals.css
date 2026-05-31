@@ -25,15 +25,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-<<<<<<< HEAD
-/* Make native date-picker icon visible on dark backgrounds */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(200%);
-  opacity: 0.95;
-}
-
-/* Note: do not invert the entire input background — only the icon above. */
-=======
 @keyframes popup {
   0% {
     opacity: 0;
@@ -49,4 +40,3 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .animate-popup {
   animation: popup 0.25s ease-out;
 }
->>>>>>> d6eabe7e14a5aeeef47247f64475557bdb8ab7b8

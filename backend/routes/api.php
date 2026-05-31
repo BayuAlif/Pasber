@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
         [NotaController::class, 'show']
     );
     Route::get('/payment-history', [NotaController::class, 'userHistory']);
+    Route::get('/user/unpaid-nota-count', [NotaController::class, 'userUnpaidCount']);
 });
 
 // Admin
