@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Search, Bell, Eye, CheckCircle, XCircle, X,
+  Search, Eye, CheckCircle, XCircle, X,
   CalendarDays, Car, User, Wrench, Clock, ChevronFirst,
   ChevronLast, ChevronLeft, ChevronRight, Filter,
   RotateCcw, ClipboardList, Info,
@@ -816,11 +816,6 @@ export default function KelolaBookingPage() {
                 : 'Kelola Jadwal Booking'}
             </p>
           </div>
-
-          <button className="w-9 h-9 bg-[#13161e] border border-[#1e2230] rounded-lg flex items-center justify-center text-[#4b5563] hover:text-white transition-colors relative">
-            <Bell size={15} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full" />
-          </button>
 
         </div>
 

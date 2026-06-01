@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import {
-  Bell, Search, Filter, Settings, BarChart2,
+  Search, Filter, Settings, BarChart2,
   Plus, AlertTriangle, ChevronFirst, ChevronLast,
   ChevronLeft, ChevronRight, X, Zap, Minus,
   Package, Wrench, ChevronDown, ShieldCheck,
@@ -889,10 +889,6 @@ export default function InventoryPage() {
               <h2 className="text-[20px] font-bold text-white leading-none">Inventory</h2>
               <p className="text-[11px] text-[#4b5563] mt-1">Kelola Inventory</p>
             </div>
-            <button className="w-9 h-9 bg-[#13161e] border border-[#1e2230] rounded-lg flex items-center justify-center text-[#4b5563] hover:text-white transition-colors relative">
-              <Bell size={15} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full" />
-            </button>
           </div>
 
           {/* Content */}

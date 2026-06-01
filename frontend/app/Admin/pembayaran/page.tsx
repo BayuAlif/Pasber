@@ -1204,9 +1204,6 @@ export default function InvoicePembayaran() {
             <h1 className="text-2xl font-bold tracking-tight">Invoice &amp; Pembayaran</h1>
             <p className="text-gray-500 text-xs mt-0.5">Kelola Jadwal Booking</p>
           </div>
-          <button className="w-9 h-9 rounded-lg bg-[#161b22] border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-            <Bell size={16} />
-          </button>
         </div>
         {children}
       </main>
