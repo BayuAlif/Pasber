@@ -419,7 +419,7 @@ export default function BookingServicePage() {
 
       setSuccessData({
         bengkel: bengkels.find((b) => b.id === selectedBengkel)?.nama ?? "-",
-        tanggal: `${selectedDate} ${months[selectedMonth]} ${YEAR}`,
+        tanggal: `${selectedDate} ${months[selectedMonth]} ${selectedYear}`,
         waktu: selectedTime,
         kendaraan: selectedVehicleList.map((v) => `${v.brand} ${v.model}`).join(", "),
         layanan: keluhanLabel,
