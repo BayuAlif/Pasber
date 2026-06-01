@@ -50,7 +50,11 @@ class AdminWorkOrderController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $workOrder = $this->findWorkOrderForBengkel($id);
+
+        return response()->json([
+            'data' => $workOrder
+        ]);
     }
 
     /**
@@ -64,18 +68,14 @@ class AdminWorkOrderController extends Controller
             'statusWO' => 'required',
         ]);
 
-        $workOrder = work_order::findOrFail($id);
+        $workOrder = $this->findWorkOrderForBengkel($id);
 
         $workOrder->update([
-
             'mekanik_id' => $request->mekanik_id,
-
             'estimasiWaktu' => $request->estimasiWaktu,
-
             'statusWO' => $request->statusWO,
         ]);
 
-        // log status
         WorkOrderLog::create([
             'work_order_id' => $workOrder->id,
             'status' => $request->statusWO,
@@ -92,6 +92,29 @@ class AdminWorkOrderController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $workOrder = $this->findWorkOrderForBengkel($id);
+        $workOrder->delete();
+
+        return response()->json([
+            'message' => 'Work order berhasil dihapus'
+        ]);
+    }
+
+    protected function findWorkOrderForBengkel(string $id)
+    {
+        $user = Auth::user();
+
+        return work_order::with([
+            'booking.user',
+            'booking.kendaraan',
+            'booking.bengkel',
+            'mekanik',
+            'logs'
+        ])
+        ->where('id', $id)
+        ->whereHas('booking', function ($query) use ($user) {
+            $query->where('bengkel_id', $user->bengkel_id);
+        })
+        ->firstOrFail();
     }
 }

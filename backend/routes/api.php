@@ -8,6 +8,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\KendaraanController;
 use App\Http\Controllers\BengkelController;
 use App\Http\Controllers\WorkOrderController;
+use App\Http\Controllers\AdminWorkOrderController;
 use App\Http\Controllers\KelolaBookingController;
 use App\Http\Controllers\MekanikController;
 use App\Http\Controllers\kelolaWorkOrderController;
@@ -69,6 +70,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         return response()->json($request->user());
     });
 
+    Route::apiResource('admin/work-order', AdminWorkOrderController::class);
     Route::apiResource('kelola-booking', KelolaBookingController::class);
     Route::apiResource('kelola-work-order', kelolaWorkOrderController::class);
     Route::apiResource('mekanik', MekanikController::class);
