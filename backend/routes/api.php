@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\KendaraanController;
@@ -22,6 +23,9 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 // User
 Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/profile', [UserController::class, 'show']);
+    Route::patch('/profile', [UserController::class, 'update']);
+    Route::delete('/account', [UserController::class, 'destroy']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
     Route::get('/dahsboard', [AuthController::class, 'dashboard']);
 
