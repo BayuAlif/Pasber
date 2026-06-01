@@ -244,7 +244,7 @@ export default function EditProfilePage() {
       });
       if (!res.ok) throw new Error("Gagal menghapus akun");
       localStorage.removeItem("token");
-      window.location.href = "/login";
+      window.location.href = "/auth/login";
     } catch (err) {
       console.error(err);
       setToast({ message: "Gagal menghapus akun.", type: "error" });
@@ -299,7 +299,7 @@ export default function EditProfilePage() {
           <div className="grid gap-6" style={{ gridTemplateColumns: "260px 1fr" }}>
 
             {/* ── Profile Card ── */}
-            <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-7 flex flex-col items-center h-fit">
+          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-7 flex flex-col items-center h-fit">
               {/* Avatar */}
               <div className="relative mb-4">
                 <div className="w-24 h-24 rounded-full bg-[#1a1d28] border-2 border-[#2a2f3e] flex items-center justify-center overflow-hidden">
