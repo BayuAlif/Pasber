@@ -129,6 +129,19 @@ export default function FinalStepPage() {
             alamat: data.errors?.alamat?.[0],
           });
 
+          // Format error messages for popup
+          const errorMessages = Object.entries(data.errors)
+            .map(([field, messages]: [string, any]) => {
+              const msg = Array.isArray(messages) ? messages[0] : messages;
+              return msg;
+            })
+            .join('\n');
+
+          setPopupType('error');
+          setPopupTitle('Validasi Gagal');
+          setPopupMessage(errorMessages || 'Terjadi kesalahan validasi.');
+          setShowPopup(true);
+
         } else {
 
           setPopupType('error');
