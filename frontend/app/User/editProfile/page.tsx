@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import {
   Bell, Save, X, Eye, EyeOff, Camera, AlertTriangle, Loader2,
 } from "lucide-react";
@@ -303,7 +304,14 @@ export default function EditProfilePage() {
               <div className="relative mb-4">
                 <div className="w-24 h-24 rounded-full bg-[#1a1d28] border-2 border-[#2a2f3e] flex items-center justify-center overflow-hidden">
                   {profile.avatarUrl ? (
-                    <img src={profile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                    <Image
+                      src={`http://localhost:8000/storage/${profile.avatarUrl}`}
+                      alt="avatar"
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
                   ) : (
                     <span className="text-[28px] font-bold text-[#6b7280]">{initials || "--"}</span>
                   )}
