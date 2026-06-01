@@ -10,6 +10,7 @@ import {
   History,
   Receipt,
   LogOut,
+  User,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { label: "Booking Service",      icon: CalendarPlus,    href: "/User/service"   },
   { label: "Riwayat Service",      icon: History,         href: "/User/riwayat"   },
   { label: "Tagihan & Pembayaran", icon: Receipt,         href: "/User/tagihan"   },
+  { label: "Edit Profile",         icon: User,            href: "/User/editProfile"},
 ];
 
 type SidebarProps = {

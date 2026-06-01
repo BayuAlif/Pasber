@@ -110,10 +110,10 @@ function DetailModal({ booking, onClose, onApprove, onReject }: {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
-            <p>{booking.status}</p>
-          </span>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
+                <p>{booking.status}</p>
+              </span>
           <div className="flex-1" />
           {booking.status === 'pending' && (
             <>

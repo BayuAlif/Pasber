@@ -416,11 +416,19 @@ export default function BookingServicePage() {
         const result = await response.json();
         console.log(result);
       }
-      alert("Booking berhasil dibuat!");
 
-      setStep(1);
-      router.refresh();
-    } catch (error) { console.error(error); alert("Booking gagal"); }
+      setSuccessData({
+        bengkel: bengkels.find((b) => b.id === selectedBengkel)?.nama ?? "-",
+        tanggal: `${selectedDate} ${months[selectedMonth]} ${YEAR}`,
+        waktu: selectedTime,
+        kendaraan: selectedVehicleList.map((v) => `${v.brand} ${v.model}`).join(", "),
+        layanan: keluhanLabel,
+      });
+      setShowSuccess(true);
+    } catch (error) {
+      console.error(error);
+      alert("Booking gagal");
+    }
   };
   const filteredBengkels = bengkels.filter((b) =>
 
@@ -1150,7 +1158,10 @@ export default function BookingServicePage() {
           show={showSuccess}
           data={successData}
           onClose={() => setShowSuccess(false)}
-          onViewBooking={() => setShowSuccess(false)}
+          onViewBooking={() => {
+            setShowSuccess(false);
+            router.push("/User/riwayat");
+          }}
         />
       )}
       {showFailed && (
