@@ -11,6 +11,7 @@ import AuthPopup from "@/app/components/auth_popup/Auth_popup";
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Interfaces
 // ─────────────────────────────────────────────────────────────────────────────
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 type InvoiceStatus =
   | "pending"
@@ -531,7 +532,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
 
       for (const item of items) {
         const response = await fetch(
-          "http://localhost:8000/api/detail-nota-jasa",
+          `${API_BASE}/detail-nota-jasa`,
           {
             method: "POST",
             headers: {
@@ -576,7 +577,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
         });
 
         const response = await fetch(
-          "http://localhost:8000/api/detail-nota-material",
+          `${API_BASE}/detail-nota-material`,
           {
             method: "POST",
             headers: {
@@ -636,7 +637,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
 
 
       const response = await fetch(
-        `http://localhost:8000/api/nota/terbitkan/${selectedWO.id}`,
+        `${API_BASE}/nota/terbitkan/${selectedWO.id}`,
         {
           method: "POST",
           headers: {
@@ -700,7 +701,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://localhost:8000/api/material",
+          `${API_BASE}/material`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -737,7 +738,7 @@ const CreateInvoiceView: FC<CreateInvoiceViewProps> = ({
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:8000/api/work-order-selesai",
+        `${API_BASE}/work-order-selesai`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1069,7 +1070,7 @@ export default function InvoicePembayaran() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:8000/api/nota/${id}`,
+        `${API_BASE}/nota/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1143,7 +1144,7 @@ export default function InvoicePembayaran() {
         const token = localStorage.getItem('token');
 
         const response = await fetch(
-          'http://localhost:8000/api/nota',
+          `${API_BASE}/nota`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

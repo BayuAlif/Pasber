@@ -16,16 +16,16 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 // ── Nav items ──────────────────────────────────────────────────────────────
 const navItems = [
-  { label: 'Dashboard',                  href: '/Admin/admin-dashboard', icon: LayoutDashboard },
-  { label: 'Kelola Booking',             href: '/Admin/Booking',         icon: CalendarCheck   },
-  { label: 'Work Order',                 href: '/Admin/jadwal',          icon: CalendarClock   },
-  { label: 'Kelola Mekanik',             href: '/Admin/mekanik',         icon: Users           },
-  { label: 'Invoice & Pembayaran',       href: '/Admin/pembayaran',      icon: CreditCard      },
-  { label: 'Inventory',                  href: '/Admin/inventory',       icon: Package         },
-  { label: 'Riwayat & Log',              href: '/Admin/riwayat',         icon: History         },
+  { label: 'Dashboard', href: '/Admin/admin-dashboard', icon: LayoutDashboard },
+  { label: 'Kelola Booking', href: '/Admin/Booking', icon: CalendarCheck },
+  { label: 'Work Order', href: '/Admin/jadwal', icon: CalendarClock },
+  { label: 'Kelola Mekanik', href: '/Admin/mekanik', icon: Users },
+  { label: 'Invoice & Pembayaran', href: '/Admin/pembayaran', icon: CreditCard },
+  { label: 'Inventory', href: '/Admin/inventory', icon: Package },
+  { label: 'Riwayat & Log', href: '/Admin/riwayat', icon: History },
 ];
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ export default function SidebarAdmin() {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://127.0.0.1:8000/api/admin/user', {
+        const res = await fetch(`${API_BASE}/admin/user`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -49,7 +49,7 @@ export default function SidebarAdmin() {
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
-    await fetch('http://127.0.0.1:8000/api/logout', {
+    await fetch(`${API_BASE}/logout`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -103,12 +103,25 @@ export default function SidebarAdmin() {
       {/* User + Logout */}
       <div className="border-t border-[#1e2230] px-3 py-4 space-y-3">
         <div className="flex items-center gap-2.5 px-1">
-          <div className="w-8 h-8 rounded-full bg-orange-500 overflow-hidden border border-white/10 flex-shrink-0">
-            <img
-              src={user?.fotoProfile ? `http://127.0.0.1:8000/storage/${user.fotoProfile}` : '/images/avatar.jpg'}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-9 h-9 rounded-full bg-[#1a1d28] border border-[#2a2f3e] overflow-hidden flex items-center justify-center flex-shrink-0">
+            {user?.fotoProfile ? (
+              <img
+                src={`${process.env.NEXT_PUBLIC_API_URL?.replace(
+                  "/api",
+                  ""
+                )}/storage/${user.fotoProfile}`}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <UserCircle
+                size={22}
+                className="text-[#9ca3af]"
+              />
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-[12px] font-bold text-white truncate leading-none">{user?.name || 'Admin'}</p>

@@ -17,7 +17,7 @@ import Sidebar from "@/app/components/sidebar/page";
 
 type User = { name: string; fotoProfile?: string };
 
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 const getProgressSteps = (status: string) => {
   const steps = [
@@ -92,7 +92,7 @@ export default function PantauServicePage() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://127.0.0.1:8000/api/fetch-pantau",
+          `${API_BASE}/fetch-pantau`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -128,7 +128,7 @@ export default function PantauServicePage() {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/api/user", {
+        const response = await fetch(`${API_BASE}/user`, {
           headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         const data = await response.json();

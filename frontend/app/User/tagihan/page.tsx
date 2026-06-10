@@ -15,7 +15,7 @@ import {
 import Sidebar from "@/app/components/sidebar/page";
 import AuthPopup from "@/app/components/auth_popup/Auth_popup";
 import Script from "next/script";
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 declare global {
   interface Window {
     snap: {
@@ -139,7 +139,7 @@ function PaymentDetail({
     const fetchDetail = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:8000/api/user-nota/${notaId}`, {
+        const res = await fetch(`${API_BASE}/user-nota/${notaId}`, {
           headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         const data = await res.json();
@@ -341,14 +341,14 @@ export default function TagihanPage() {
       const token = localStorage.getItem("token");
 
       // 1. Ambil data user
-      const userRes = await fetch("http://localhost:8000/api/user", {
+      const userRes = await fetch(`${API_BASE}/user`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       const userData = await userRes.json();
       setUser(userData);
 
       // 2. Ambil work order aktif (belum lunas) - gunakan RawWorkOrder[]
-      const activeRes = await fetch("http://localhost:8000/api/active-work-order", {
+      const activeRes = await fetch(`${API_BASE}/active-work-order`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       const activeWorkOrders = await activeRes.json() as RawWorkOrder[];
@@ -367,7 +367,7 @@ export default function TagihanPage() {
     setUnpaidList(unpaidInvoices);
 
     // 3. Ambil riwayat pembayaran (sudah lunas) - gunakan RawNota[]
-    const historyRes = await fetch("http://localhost:8000/api/payment-history", {
+    const historyRes = await fetch(`${API_BASE}/payment-history`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     const paidNotas = await historyRes.json() as RawNota[];
@@ -396,7 +396,7 @@ useEffect(() => {
 
 const handlePayment = async (notaId: number) => {
   const token = localStorage.getItem("token");
-  const res = await fetch(`http://localhost:8000/api/payment/create/${notaId}`, {
+  const res = await fetch(`${API_BASE}/payment/create/${notaId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });

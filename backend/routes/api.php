@@ -53,6 +53,11 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     );
 
     Route::post(
+        '/payment/create-bulk',
+        [PaymentController::class, 'createBulkPayment']
+    );
+
+    Route::post(
         '/payment/notification',
         [PaymentController::class, 'notificationHandler']
     );

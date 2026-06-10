@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import AuthPopup from '../components/auth_popup/Auth_popup';
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 export default function FinalStepPage() {
   const router = useRouter();
 
@@ -38,7 +38,7 @@ export default function FinalStepPage() {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8000/api/user', {
+        const response = await fetch(`${API_BASE}/user`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export default function FinalStepPage() {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await fetch('http://localhost:8000/api/update-profile', {
+      const response = await fetch(`${API_BASE}/update-profile`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import AuthPopup from '../../components/auth_popup/Auth_popup';
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -30,7 +30,7 @@ export default function LoginPage() {
     try {
 
       const res = await fetch(
-        "http://127.0.0.1:8000/api/login",
+        `${API_BASE}/login`,
         {
           method: "POST",
           headers: {

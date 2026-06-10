@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 type ServiceRecordStatus =
   | "pending"
   | "approved"
@@ -97,7 +97,7 @@ export default function RiwayatServicePage() {
     const fetchWorkOrders = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/api/work-order", {
+        const response = await fetch(`${API_BASE}/work-order`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",

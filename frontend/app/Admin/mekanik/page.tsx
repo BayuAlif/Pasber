@@ -114,6 +114,12 @@ export default function KelolaMekanikPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [newStatus, setNewStatus] = useState<StatusType>('available');
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageSrc =
+  form.foto?.startsWith("data:image/")
+    ? form.foto
+    : form.foto
+      ? `${API_BE}/storage/${form.foto}`
+      : "";
 
   // ── Filter & Pagination ────────────────────────────────────────────────
   const filtered = mekaniks.filter(m => {
@@ -520,12 +526,24 @@ export default function KelolaMekanikPage() {
             <div className="flex gap-5 mb-5">
               <div>
                 <p className="text-[10px] font-bold text-[#4b5563] uppercase tracking-widest mb-2">Foto Profil</p>
-                <div onClick={() => fileRef.current?.click()}
-                  className="w-24 h-28 rounded-xl border-2 border-dashed border-[#2a2f3e] hover:border-orange-500/50 flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden bg-[#0f1117]">
-                  {form.foto
-                    ? <img src={form.foto} alt="foto" className="w-full h-full object-cover" />
-                    : <><Upload size={20} className="text-[#4b5563] mb-1.5" /><span className="text-[9px] text-[#4b5563] uppercase tracking-widest">Upload</span></>
-                  }
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  className="w-24 h-28 rounded-xl border-2 border-dashed border-[#2a2f3e] hover:border-orange-500/50 flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden bg-[#0f1117]"
+                >
+                  {imageSrc ? (
+                    <img
+                      src={imageSrc}
+                      alt="foto"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <Upload size={20} className="text-[#4b5563] mb-1.5" />
+                      <span className="text-[9px] text-[#4b5563] uppercase tracking-widest">
+                        Upload
+                      </span>
+                    </>
+                  )}
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFotoChange} />
               </div>
@@ -626,12 +644,12 @@ export default function KelolaMekanikPage() {
                   className="relative w-24 h-28 rounded-xl border-2 border-dashed border-[#2a2f3e] hover:border-orange-500/50 flex items-center justify-center cursor-pointer transition-all overflow-hidden bg-[#0f1117]">
                   {form.foto
                     ? <Image
-                        src={`${API_BE}/storage/${form.foto}`}
-                        alt="foto"
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
+                      src={`${API_BE}/storage/${form.foto}`}
+                      alt="foto"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                     : <><Upload size={20} className="text-[#4b5563] mb-1.5" /><span className="text-[9px] text-[#4b5563] uppercase tracking-widest">Upload</span></>
                   }
                 </div>

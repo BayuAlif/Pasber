@@ -23,7 +23,7 @@ import BookingSuccessPopup, { BookingSuccessData } from "@/app/components/popUp/
 import BookingFailedPopup from "@/app/components/popUp/BookingFailedPopup";
 
 // ─── API URL ────────────────────────────────────────────────────────────────
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 type Vehicle = {
@@ -115,7 +115,7 @@ export default function BookingServicePage() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://127.0.0.1:8000/api/full-dates?bulan=${selectedMonth + 1}&tahun=${selectedYear}&bengkel_id=${selectedBengkel}`,
+        `${API_URL}/full-dates?bulan=${selectedMonth + 1}&tahun=${selectedYear}&bengkel_id=${selectedBengkel}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

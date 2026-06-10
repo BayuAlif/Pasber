@@ -6,7 +6,8 @@ import {
   Bell, Save, X, Eye, EyeOff, Camera, AlertTriangle, Loader2,
 } from "lucide-react";
 import Sidebar from "@/app/components/sidebar/page";
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UserProfile = {
@@ -152,7 +153,7 @@ export default function EditProfilePage() {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://127.0.0.1:8000/api/profile", {
+        const res = await fetch(`{API_BASE}/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
@@ -201,7 +202,7 @@ export default function EditProfilePage() {
         body.newPassword     = passwords.newPassword;
       }
 
-      const res = await fetch("http://127.0.0.1:8000/api/profile", {
+      const res = await fetch(`${API_BASE}/profile`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -235,7 +236,7 @@ export default function EditProfilePage() {
     setDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://127.0.0.1:8000/api/account", {
+      const res = await fetch(`${API_BASE}/account`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -305,7 +306,7 @@ export default function EditProfilePage() {
                 <div className="w-24 h-24 rounded-full bg-[#1a1d28] border-2 border-[#2a2f3e] flex items-center justify-center overflow-hidden">
                   {profile.avatarUrl ? (
                     <Image
-                      src={`http://localhost:8000/storage/${profile.avatarUrl}`}
+                      src={`{API_BE}/storage/${profile.avatarUrl}`}
                       alt="avatar"
                       width={96}
                       height={96}

@@ -236,7 +236,7 @@ export default function KelolaJadwalPage() {
 
       await axios.put(
 
-        `${API_BASE}/api/kelola-work-order/${workOrderId}`,
+        `${API_BASE}/kelola-work-order/${workOrderId}`,
 
         {
           statusWO: status,

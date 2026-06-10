@@ -64,6 +64,8 @@ type WorkOrderApiItem = {
   };
 };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
 const STATUS_CONFIG: Record<ServiceRecordStatus, { label: string; bg: string; border: string; color: string; icon: any }> = {
   pending: { label: "PENDING", bg: "rgba(234,179,8,0.12)", border: "rgba(234,179,8,0.3)", color: "#f59e0b", icon: Clock },
   approved: { label: "APPROVED", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.25)", color: "#22c55e", icon: CheckCircle2 },
@@ -108,7 +110,7 @@ export default function AdminRiwayatServicePage() {
     const fetchWorkOrders = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/api/admin/work-order", {
+        const response = await fetch(`${API_BASE}/admin/work-order`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",

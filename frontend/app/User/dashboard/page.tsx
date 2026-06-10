@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar/page";
 
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 type User = {
   name: string;
@@ -106,7 +106,7 @@ export default function DashboardPage() {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/api/user", {
+        const response = await fetch(`${API_BASE}/user`, {
           headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         const data = await response.json();
@@ -119,7 +119,7 @@ export default function DashboardPage() {
     const fetchUnpaidNotaCount = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://127.0.0.1:8000/api/user/unpaid-nota-count", {
+        const res = await fetch(`${API_BASE}/user/unpaid-nota-count`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -139,7 +139,7 @@ export default function DashboardPage() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://127.0.0.1:8000/api/active-work-order",
+          `${API_BASE}/active-work-order`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -168,7 +168,7 @@ export default function DashboardPage() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://127.0.0.1:8000/api/my-kendaraan",
+          `${API_BASE}/my-kendaraan`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

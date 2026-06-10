@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react'; // Tambahkan useState
 import Link from 'next/link';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function DashboardPage() {
 
     const token = localStorage.getItem('token');
 
-    const res = await fetch('http://127.0.0.1:8000/api/logout', {
+    const res = await fetch(`{API_BASE}/logout`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
