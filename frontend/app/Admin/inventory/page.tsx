@@ -10,6 +10,7 @@ import {
 import SidebarAdmin from '../../components/sidebar-admin/page';
 import axios from "axios";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type UpdateMode = 'tambah' | 'gunakan';
@@ -760,7 +761,7 @@ export default function InventoryPage() {
           : Math.max(0, item.stok - jumlah);
 
       const response = await axios.put(
-        `http://127.0.0.1:8000/api/material/${id}`,
+        `${API_BASE}/material/${id}`,
         {
           namaMaterial: item.namaMaterial,
           merekMaterial: item.merekMaterial,

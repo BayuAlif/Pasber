@@ -32,11 +32,26 @@ type Booking = {
 
   status: StatusType;
 
-    bengkel?: {
+  bengkel?: {
     id: number;
     nama: string;
   };
 };
+
+// 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+function getAuthHeaders() {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
+
+  return {
+    Authorization: token ? `Bearer ${token}` : "",
+    Accept: "application/json",
+  } as HeadersInit;
+}
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 const STATUS_STYLE: Record<StatusType, string> = {
@@ -110,10 +125,10 @@ function DetailModal({ booking, onClose, onApprove, onReject }: {
           ))}
         </div>
         <div className="flex items-center gap-3">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
-                <p>{booking.status}</p>
-              </span>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[booking.status as StatusType]}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[booking.status as StatusType]}`} />
+            <p>{booking.status}</p>
+          </span>
           <div className="flex-1" />
           {booking.status === 'pending' && (
             <>
@@ -128,8 +143,8 @@ function DetailModal({ booking, onClose, onApprove, onReject }: {
           {booking.status === 'rejected' && (
             <>
               <button onClick={onClose} className="px-5 py-2 bg-[#1a1d28] border border-[#2a2f3e] rounded-lg text-[11px] font-bold text-[#6b7280] hover:text-white transition-all">
-              Tutup
-            </button>
+                Tutup
+              </button>
             </>
           )}
           {booking.status !== 'pending' && (
@@ -502,7 +517,7 @@ function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () =>
         <span className="text-[#2a2f3e]">/</span>
         <span className="text-[11px] text-[#6b7280]">Jadwal & Work Order</span>
         <span className="text-[#2a2f3e]">/</span>
-        <span className="text-[11px] font-mono text-orange-400">{booking.id}</span>
+        <span className="text-[11px] font-mono text-orange-400">BOOK-{String(booking.id).padStart(3, '0')}</span>
       </div>
 
       {/* ── Main Content ── */}
@@ -607,51 +622,6 @@ function KelolaJadwalView({ booking, onBack }: { booking: Booking; onBack: () =>
             </span>
           </div>
         </div>
-
-        {/* ── Right: Catatan Pengerjaan ── */}
-        <div className="w-[340px] flex-shrink-0 flex flex-col gap-4">
-
-          {/* Catatan Card */}
-          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl overflow-hidden flex flex-col flex-1">
-            <div className="px-5 py-4 border-b border-[#1e2230] flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-md bg-orange-500/10 flex items-center justify-center">
-                <ClipboardList size={12} color="#f97316" />
-              </div>
-              <span className="text-[11px] font-bold text-[#6b7280] uppercase tracking-widest">Catatan Pengerjaan</span>
-            </div>
-            <div className="p-5 flex flex-col flex-1 gap-3">
-              <textarea
-                value={catatan}
-                onChange={e => setCatatan(e.target.value)}
-                placeholder="Tuliskan detail temuan teknis atau catatan khusus di sini..."
-                className="flex-1 min-h-[320px] bg-[#0c0e14] border border-[#1e2230] rounded-lg p-4 text-[12px] text-[#e2e8f0] placeholder:text-[#2d3340] outline-none focus:border-orange-500/40 resize-none leading-relaxed transition-colors"
-              />
-              <button
-                onClick={() => { }}
-                className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all"
-              >
-                Simpan Catatan
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Info Card */}
-          <div className="bg-[#13161e] border border-[#1e2230] rounded-xl p-5 flex flex-col gap-3">
-            <p className="text-[9px] font-bold text-[#4b5563] uppercase tracking-[2px]">Ringkasan Booking</p>
-            {[
-              { label: 'Booking ID', value: booking.id, mono: true },
-              { label: 'Schedule', value: booking.jadwalService, mono: false },
-              { label: 'Plate No.', value: booking.kendaraan.nomorPolisi, mono: true },
-              { label: 'Year', value: '-', mono: false },
-            ].map(({ label, value, mono }) => (
-              <div key={label} className="flex items-center justify-between gap-2">
-                <span className="text-[10px] text-[#4b5563]">{label}</span>
-                <span className={`text-[11px] font-semibold text-right ${mono ? 'font-mono text-orange-400' : 'text-[#e2e8f0]'}`}>{value}</span>
-              </div>
-            ))}
-          </div>
-
-        </div>
       </div>
     </div>
   );
@@ -671,18 +641,13 @@ export default function KelolaBookingPage() {
 
   // ================= FETCH BOOKINGS =================
   const fetchBookings = async () => {
-
     try {
-
-      const token = localStorage.getItem("token");
+      setLoading(true);
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/kelola-booking",
+        `${API_BASE}/kelola-booking`,
         {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders(),
         }
       );
 
@@ -692,19 +657,15 @@ export default function KelolaBookingPage() {
 
       const result = await response.json();
 
-      console.log("RESULT =", result);
-
-      // INI PENTING
-      setBookings(result.data);
-
+      setBookings(
+        Array.isArray(result.data)
+          ? result.data
+          : []
+      );
     } catch (error) {
-
-      console.log(error);
-
+      console.error(error);
     } finally {
-
       setLoading(false);
-
     }
   };
 
@@ -713,28 +674,17 @@ export default function KelolaBookingPage() {
     id: number,
     status: string
   ) => {
-
     try {
-
-      const token = localStorage.getItem("token");
-
-      console.log("STATUS =", status);
-      console.log("ID =", id);
-
       const response = await fetch(
-        `http://127.0.0.1:8000/api/kelola-booking/${id}`,
+        `${API_BASE}/kelola-booking/${id}`,
         {
-          method: "POST",
-
+          method: "PUT",
           headers: {
+            ...getAuthHeaders(),
             "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
           },
-
           body: JSON.stringify({
-            _method: "PUT",
-            status: status,
+            status,
           }),
         }
       );
@@ -743,28 +693,15 @@ export default function KelolaBookingPage() {
         throw new Error("Gagal update status");
       }
 
-      const result = await response.json();
-      console.log(result);
-
-      // refresh data
       await fetchBookings();
-
     } catch (error) {
-
-      console.log(error);
-
+      console.error(error);
     }
   };
 
   // ================= FIRST LOAD =================
   useEffect(() => {
-
-    const loadData = async () => {
-      await fetchBookings();
-    };
-
-    loadData();
-
+    fetchBookings();
   }, []);
 
   // ================= HANDLE VIEW WO =================

@@ -11,6 +11,9 @@ import SidebarAdmin from '../../components/sidebar-admin/page';
 import axios from "axios";
 import AuthPopup from '../../components/auth_popup/Auth_popup';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 // ── Types ──────────────────────────────────────────────────────────────────
 type StatusType = 'available' | 'unavailable';
 type Mekanik = {
@@ -130,7 +133,7 @@ export default function KelolaMekanikPage() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://127.0.0.1:8000/api/mekanik",
+        `${API_BASE}/mekanik`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -187,7 +190,7 @@ export default function KelolaMekanikPage() {
       formData.append("spesialisasi", form.spesialisasi);
       if (selectedFile) formData.append("foto", selectedFile);
 
-      await axios.post("http://127.0.0.1:8000/api/mekanik", formData, {
+      await axios.post(`${API_BASE}/mekanik`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -242,7 +245,7 @@ export default function KelolaMekanikPage() {
       formData.append("status", showEdit.status);
       if (selectedFile) formData.append("foto", selectedFile);
 
-      await axios.post(`http://127.0.0.1:8000/api/mekanik/${showEdit.id}`, formData, {
+      await axios.post(`${API_BASE}/mekanik/${showEdit.id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -265,7 +268,7 @@ export default function KelolaMekanikPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://127.0.0.1:8000/api/mekanik/${showStatus.id}`,
+        `${API_BASE}/mekanik/${showStatus.id}`,
         {
           nama: showStatus.nama,
           email: showStatus.email,
@@ -288,7 +291,7 @@ export default function KelolaMekanikPage() {
     if (!showDelete) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://127.0.0.1:8000/api/mekanik/${showDelete.id}`, {
+      await axios.delete(`${API_BASE}/mekanik/${showDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       showSuccess("Mekanik berhasil dihapus!", () => {
@@ -422,7 +425,7 @@ export default function KelolaMekanikPage() {
                   <tr key={m.id} className={`border-b border-[#1e2230] hover:bg-[#1a1d28] transition-colors ${i === paginated.length - 1 ? 'border-b-0' : ''}`}>
                     {/* ID */}
                     <td className="px-5 py-3.5">
-                      <span className="text-[12px] font-mono text-[#9ca3af]">{m.kodeMekanik}</span>
+                      <span className="text-[12px] font-mono text-[#9ca3af]">{m.kodeMekanik ?? m.id}</span>
                     </td>
                     {/* Nama */}
                     <td className="px-5 py-3.5">
@@ -623,7 +626,7 @@ export default function KelolaMekanikPage() {
                   className="relative w-24 h-28 rounded-xl border-2 border-dashed border-[#2a2f3e] hover:border-orange-500/50 flex items-center justify-center cursor-pointer transition-all overflow-hidden bg-[#0f1117]">
                   {form.foto
                     ? <Image
-                        src={`http://localhost:8000/storage/${form.foto}`}
+                        src={`${API_BE}/storage/${form.foto}`}
                         alt="foto"
                         fill
                         className="object-cover"

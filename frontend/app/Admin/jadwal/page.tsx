@@ -10,6 +10,8 @@ import {
 import SidebarAdmin from '../../components/sidebar-admin/page';
 import axios from "axios";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
 /// ── Types ──────────────────────────────────────────────────────────────────
 
 type WOStatus =
@@ -194,7 +196,7 @@ export default function KelolaJadwalPage() {
         localStorage.getItem("token");
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/mekanik",
+        `${API_BASE}/mekanik`,
         {
           headers: {
             Accept: "application/json",
@@ -234,7 +236,7 @@ export default function KelolaJadwalPage() {
 
       await axios.put(
 
-        `http://127.0.0.1:8000/api/kelola-work-order/${workOrderId}`,
+        `${API_BASE}/api/kelola-work-order/${workOrderId}`,
 
         {
           statusWO: status,
@@ -266,7 +268,7 @@ export default function KelolaJadwalPage() {
         localStorage.getItem("token");
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/kelola-work-order",
+        `${API_BASE}/kelola-work-order`,
         {
           headers: {
             Accept: "application/json",
@@ -450,7 +452,7 @@ export default function KelolaJadwalPage() {
 
       // update
       await axios.put(
-        `http://127.0.0.1:8000/api/kelola-work-order/${selectedWO.id}`,
+        `${API_BASE}/kelola-work-order/${selectedWO.id}`,
         {
           mekanik_id: selectedMechanic,
           estimasiWaktu,
