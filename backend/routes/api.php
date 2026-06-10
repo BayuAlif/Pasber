@@ -75,7 +75,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         return response()->json($request->user());
     });
 
-    Route::apiResource('admin/work-order', AdminWorkOrderController::class);
+    Route::apiResource('work-order-adm', AdminWorkOrderController::class);
     Route::apiResource('kelola-booking', KelolaBookingController::class);
     Route::apiResource('kelola-work-order', kelolaWorkOrderController::class);
     Route::apiResource('mekanik', MekanikController::class);

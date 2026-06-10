@@ -97,7 +97,7 @@ export default function AdminDashboardPage() {
 
       const [bookingResponse, workOrderResponse, materialResponse] = await Promise.all([
         fetch(`${API_BASE}/kelola-booking`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE}/admin/work-order`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/work-order-adm`, { headers: getAuthHeaders() }),
         fetch(`${API_BASE}/material`, { headers: getAuthHeaders() }),
       ]);
 
