@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -129,11 +130,15 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
         <div className="px-5 pt-3.5 border-t border-[#1e2230] flex items-center gap-2.5">
           <div className="w-[30px] h-[30px] rounded-full overflow-hidden shrink-0 bg-[#1e2230] flex items-center justify-center">
             {user.fotoProfile ? (
-              <img
-                src={`${API_BE}/storage/${user.fotoProfile}`}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+              <div className="w-full h-full relative">
+                <Image
+                  src={`${API_BE}/storage/${user.fotoProfile}`}
+                  alt="Profile"
+                  fill // Menggantikan w-full h-full
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
+              </div>
             ) : (
               <span className="text-[11px] font-bold text-white">
                 {user.name?.charAt(0).toUpperCase() || "U"}
