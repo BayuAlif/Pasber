@@ -14,12 +14,12 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { label: "Dashboard Saya",       icon: LayoutDashboard, href: "/User/dashboard" },
-  { label: "Pantau Service",       icon: Activity,        href: "/User/pantau"    },
-  { label: "Booking Service",      icon: CalendarPlus,    href: "/User/service"   },
-  { label: "Riwayat Service",      icon: History,         href: "/User/riwayat"   },
-  { label: "Tagihan & Pembayaran", icon: Receipt,         href: "/User/tagihan"   },
-  { label: "Edit Profile",         icon: User,            href: "/User/editProfile"},
+  { label: "Dashboard Saya", icon: LayoutDashboard, href: "/User/dashboard" },
+  { label: "Pantau Service", icon: Activity, href: "/User/pantau" },
+  { label: "Booking Service", icon: CalendarPlus, href: "/User/service" },
+  { label: "Riwayat Service", icon: History, href: "/User/riwayat" },
+  { label: "Tagihan & Pembayaran", icon: Receipt, href: "/User/tagihan" },
+  { label: "Edit Profile", icon: User, href: "/User/editProfile" },
 ];
 
 type SidebarProps = {
@@ -85,8 +85,8 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
         <div className="px-5 pb-7">
           <div className="font-extrabold text-[18px] text-white">PASBER</div>
         </div>
-        <div className="flex-1 animate-pulse space-y-2 px-5">
-          {[1,2,3,4,5].map(i => <div key={i} className="h-9 bg-[#1e2230] rounded" />)}
+        <div className="flex-1 space-y-2 px-5">
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-9 bg-[#1e2230] rounded" />)}
         </div>
       </aside>
     );
