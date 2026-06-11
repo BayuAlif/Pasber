@@ -52,7 +52,7 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
           setLoading(false);
           return;
         }
-        const res = await fetch(`${API_BASE}user`, {
+        const res = await fetch(`${API_BASE}/user`, {
           headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         if (res.ok) {
@@ -72,7 +72,7 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
-    await fetch(`${API_BASE}}logout`, {
+    await fetch(`${API_BASE}/logout`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
