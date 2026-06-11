@@ -12,7 +12,8 @@ import {
   LogOut,
   User,
 } from "lucide-react";
-
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
 const navItems = [
   { label: "Dashboard Saya", icon: LayoutDashboard, href: "/User/dashboard" },
   { label: "Pantau Service", icon: Activity, href: "/User/pantau" },
@@ -51,7 +52,7 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
           setLoading(false);
           return;
         }
-        const res = await fetch("http://127.0.0.1:8000/api/user", {
+        const res = await fetch(`${API_BASE}user`, {
           headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         if (res.ok) {
@@ -71,7 +72,7 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
-    await fetch('http://127.0.0.1:8000/api/logout', {
+    await fetch(`${API_BASE}}logout`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -129,7 +130,7 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
           <div className="w-[30px] h-[30px] rounded-full overflow-hidden shrink-0 bg-[#1e2230] flex items-center justify-center">
             {user.fotoProfile ? (
               <img
-                src={`http://127.0.0.1:8000/storage/${user.fotoProfile}`}
+                src={`${API_BE}/storage/${user.fotoProfile}`}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
