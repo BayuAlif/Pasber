@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import Sidebar from "@/app/components/sidebar/page";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-// const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
+const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UserProfile = {
@@ -306,7 +306,7 @@ export default function EditProfilePage() {
                 <div className="w-24 h-24 rounded-full bg-[#1a1d28] border-2 border-[#2a2f3e] flex items-center justify-center overflow-hidden">
                   {profile.avatarUrl ? (
                     <Image
-                      src={`{API_BE}/storage/${profile.avatarUrl}`}
+                      src={`${API_BE}/storage/${profile.avatarUrl}`}
                       alt="avatar"
                       width={96}
                       height={96}
