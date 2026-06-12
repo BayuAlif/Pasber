@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Mekanik;
+use App\Models\mekanik;
 use App\Models\Bengkel;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
