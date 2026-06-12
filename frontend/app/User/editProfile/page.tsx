@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import Sidebar from "@/app/components/sidebar/page";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
+// const API_BE = process.env.NEXT_PUBLIC_BACKEND_URL;
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UserProfile = {
@@ -153,7 +153,7 @@ export default function EditProfilePage() {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`{API_BASE}/profile`, {
+        const res = await fetch(`${API_BASE}/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
