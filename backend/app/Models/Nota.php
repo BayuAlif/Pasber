@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Nota extends Model
 {
-    protected $table = 'Nota';
+    protected $table = 'nota';
 
     protected $fillable = [
         'WOID',
