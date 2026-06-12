@@ -110,7 +110,7 @@ export default function AdminRiwayatServicePage() {
     const fetchWorkOrders = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE}/admin/work-order`, {
+        const response = await fetch(`${API_BASE}/work-order-adm`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
