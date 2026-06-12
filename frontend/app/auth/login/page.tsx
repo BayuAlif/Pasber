@@ -60,7 +60,6 @@ export default function LoginPage() {
         return;
       }
 
-
       localStorage.setItem("token", data.token);
       localStorage.setItem("is_profile_complete", data.user.is_profile_complete);
 
@@ -68,7 +67,17 @@ export default function LoginPage() {
       document.cookie = `role=${data.role}; path=/`;
 
       setPopupType("success");
-      if (data.role === "admin") { router.push("/Admin/admin-dashboard"); return; }
+      if (data.role === "admin") { 
+        // setPopupTitle("Login Berhasil");
+  
+        // setPopupMessage(
+        //   `Selamat datang, ${data.name}.`
+        // );
+  
+        // setShowPopup(true);
+        router.push("/Admin/admin-dashboard"); 
+        // return; 
+      }
       setPopupTitle("Login Berhasil");
 
       setPopupMessage(
@@ -91,15 +100,13 @@ export default function LoginPage() {
     }
   };
 
-
-
   const handleContinue = () => {
 
     setShowPopup(false);
 
     const isProfileComplete =
       localStorage.getItem("is_profile_complete");
-
+    
     if (isProfileComplete === "1") {
 
       router.push("/User/dashboard");

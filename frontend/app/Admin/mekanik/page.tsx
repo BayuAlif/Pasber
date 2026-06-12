@@ -330,7 +330,7 @@ export default function KelolaMekanikPage() {
     if (!file) return;
 
     setSelectedFile(file);
-    console.log(selectedFile);
+    // console.log(selectedFile);
 
     const reader = new FileReader();
 

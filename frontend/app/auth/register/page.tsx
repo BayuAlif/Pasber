@@ -131,8 +131,9 @@ export default function RegisterPage() {
         }
       }
     } catch (err) {
-      console.error(err);
-      alert("Terjadi error");
+      // console.error(err);
+      setPopupMessage("Terjadi error");
+      setShowPopup(true);
     }
   };
 

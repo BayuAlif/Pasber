@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
       setWorkOrders(Array.isArray(workOrderData.data) ? workOrderData.data : []);
       setMaterials(Array.isArray(materialData) ? materialData : []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setError('Gagal memuat data dari server. Pastikan Anda login sebagai admin.');
     } finally {
       setLoading(false);
@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
           : 'Booking berhasil ditolak. Status pelanggan telah diperbarui.',
       });
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setError('Gagal memperbarui status booking. Silakan coba lagi.');
       setPopup({
         open: true,

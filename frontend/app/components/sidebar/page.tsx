@@ -37,6 +37,16 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
   const router = useRouter();
   const [user, setUser] = useState(propUser ?? null);
   const [loading, setLoading] = useState(!propUser);
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [popupType, setPopupType] =
+    useState<'success' | 'error'>('success');
+
+  const [popupTitle, setPopupTitle] =
+    useState('');
+
+  const [popupMessage, setPopupMessage] =
+    useState('');
 
   useEffect(() => {
     if (propUser) {
@@ -62,7 +72,13 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
           setUser(data);
         }
       } catch (error) {
-        console.error("Gagal fetch user di sidebar:", error);
+        // console.error("Gagal fetch user di sidebar:", error);
+        setPopupType('error');
+        setPopupTitle('Server Error');
+        setPopupMessage(
+          'Tidak dapat terhubung ke server.'
+        );
+        setShowPopup(true);
       } finally {
         setLoading(false);
       }

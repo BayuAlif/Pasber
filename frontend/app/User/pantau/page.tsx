@@ -101,13 +101,13 @@ export default function PantauServicePage() {
           }
         );
 
-        console.log(response.status);
+        // console.log(response.status);
 
         if (!response.ok) {
           throw new Error("Gagal fetch work order");
         }
         const result = await response.json();
-        console.log(result.data);
+        // console.log(result.data);
 
         setWorkOrders(result.data);
         setLoading(false);

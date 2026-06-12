@@ -46,7 +46,7 @@ export default function FinalStepPage() {
           },
         });
 
-        console.log("TOKEN USER:", token);
+        // console.log("TOKEN USER:", token);
 
         if (response.ok) {
           const data = await response.json();
@@ -98,10 +98,10 @@ export default function FinalStepPage() {
       try {
         data = JSON.parse(text);
       } catch {
-        console.log("RESP BUKAN JSON:", text);
+        // console.log("RESP BUKAN JSON:", text);
         return;
       }
-      console.log("RESPONSE:", data);
+      // console.log("RESPONSE:", data);
 
       if (response.ok) {
 
@@ -160,7 +160,7 @@ export default function FinalStepPage() {
       }
     } catch (error) {
 
-      console.error("Error saving profile:", error);
+      // console.error("Error saving profile:", error);
 
       setPopupType('error');
 

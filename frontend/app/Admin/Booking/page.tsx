@@ -663,7 +663,7 @@ export default function KelolaBookingPage() {
           : []
       );
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     } finally {
       setLoading(false);
     }
@@ -695,7 +695,7 @@ export default function KelolaBookingPage() {
 
       await fetchBookings();
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     }
   };
 

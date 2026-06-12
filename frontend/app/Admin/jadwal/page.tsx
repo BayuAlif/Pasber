@@ -207,7 +207,7 @@ export default function KelolaJadwalPage() {
 
       const result = await response.json();
 
-      console.log("MEKANIK RESULT:", result);
+      // console.log("MEKANIK RESULT:", result);
 
       setMekaniks(
         Array.isArray(result.data)
@@ -217,7 +217,7 @@ export default function KelolaJadwalPage() {
 
     } catch (error) {
 
-      console.log(error);
+      // console.log(error);
 
       setMekaniks([]);
 
@@ -291,7 +291,7 @@ export default function KelolaJadwalPage() {
 
     } catch (error) {
 
-      console.log(error);
+      // console.log(error);
 
       // fallback
       setWorkOrders([]);

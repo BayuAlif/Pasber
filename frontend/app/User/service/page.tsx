@@ -194,7 +194,7 @@ export default function BookingServicePage() {
       },
 
       (error) => {
-        console.error(error);
+        
       }
 
     );
@@ -306,7 +306,7 @@ export default function BookingServicePage() {
 
       const result = await response.json();
 
-      console.log(result);
+      // console.log(result);
 
       setBengkels(result.data || []);
 
@@ -358,7 +358,7 @@ export default function BookingServicePage() {
         body: JSON.stringify({ nomorPolisi: vPlate, merek: vBrand, model: vModel, jenisKendaraan: vehicleType, tahun: vYear }),
       });
       const result = await response.json();
-      console.log(result);
+      // console.log(result);
       if (!response.ok) { setFormError(result.message || "Gagal menyimpan kendaraan"); return; }
       const newVehicle: Vehicle = {
         id: result.data.id.toString(),
@@ -414,7 +414,7 @@ export default function BookingServicePage() {
           }),
         });
         const result = await response.json();
-        console.log(result);
+        // console.log(result);
       }
 
       setSuccessData({

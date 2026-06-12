@@ -9,8 +9,8 @@ export default function DashboardPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
-    console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
-
+    // console.log("TOKEN SEBELUM LOGOUT:", localStorage.getItem('token'));
+// 
     const token = localStorage.getItem('token');
 
     const res = await fetch(`{API_BASE}/logout`, {
@@ -20,13 +20,13 @@ export default function DashboardPage() {
       },
     });
 
-    console.log("STATUS LOGOUT:", res.status);
+    // console.log("STATUS LOGOUT:", res.status);
 
     localStorage.removeItem('token');
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
-    console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
-    console.log("COOKIE SETELAH LOGOUT:", document.cookie);
+    // console.log("TOKEN SETELAH LOGOUT:", localStorage.getItem('token'));
+    // console.log("COOKIE SETELAH LOGOUT:", document.cookie);
 
     router.push('/auth/login');
   };
