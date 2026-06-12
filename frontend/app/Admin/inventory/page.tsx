@@ -800,7 +800,7 @@ export default function InventoryPage() {
       const token = localStorage.getItem('token');
 
       const response = await axios.get(
-        'http://127.0.0.1:8000/api/material',
+        `${API_BASE}/material`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -826,7 +826,7 @@ export default function InventoryPage() {
   const handleDelete = async (id: number) => {
     try {
       await axios.delete(
-        `http://127.0.0.1:8000/api/material/${id}`,
+        `${API_BASE}/material/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -848,7 +848,7 @@ export default function InventoryPage() {
       const token = localStorage.getItem('token');
 
       const response = await axios.post(
-        'http://127.0.0.1:8000/api/material',
+        `${API_BASE}/material`,
         newItem,
         {
           headers: {
