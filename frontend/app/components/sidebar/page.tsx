@@ -137,6 +137,7 @@ export default function Sidebar({ activeHref, user: propUser }: SidebarProps) {
                   fill // Menggantikan w-full h-full
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 33vw"
+                  unoptimized
                 />
               </div>
             ) : (
